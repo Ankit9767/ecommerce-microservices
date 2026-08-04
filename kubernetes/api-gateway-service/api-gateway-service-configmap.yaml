@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: gateway-config
+  namespace: ecommerce
+
+data:
+
+  SERVER_PORT: "8087"
+
+  SPRING_APPLICATION_NAME: api-gateway
+
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
+
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans

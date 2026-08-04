@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: payment-service-config
+  namespace: {{ .Values.namespace }}
+
+data:
+
+  SERVER_PORT: "8086"
+
+  SPRING_APPLICATION_NAME: payment-service
+
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db
+
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans

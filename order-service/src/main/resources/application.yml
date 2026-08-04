@@ -1,0 +1,126 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/order_db
+    username: root
+    password: root123
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+    consumer:
+      group-id: order-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.ecommerce.common.events.PaymentCompletedEvent
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: localhost
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+#service:
+#  product-service:
+#    url: http://localhost:8089
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics
+
+  endpoint:
+    health:
+      show-details: always
+
+    prometheus:
+      enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+  tracing:
+    sampling:
+      probability: 1.0
+
+    zipkin:
+      tracing:
+        endpoint: http://zipkin:9411/api/v2/spans
+
+resilience4j:
+
+  circuitbreaker:
+    instances:
+
+      paymentService:
+
+        registerHealthIndicator: true
+
+        slidingWindowSize: 10
+
+        minimumNumberOfCalls: 5
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 20s
+
+        permittedNumberOfCallsInHalfOpenState: 3
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+
+      paymentRetry:
+
+        maxAttempts: 3
+
+        waitDuration: 2s
+
+        enableExponentialBackoff: true
+
+        exponentialBackoffMultiplier: 2
+
+logging:
+
+  pattern:
+    level: "%5p [${spring.application.name:},trace=%X{traceId:-},span=%X{spanId:-}]"
+
+  level:
+
+    root: INFO
+
+    com.example.order_service: DEBUG
+
+    io.github.resilience4j.retry: DEBUG
+
+    io.github.resilience4j.circuitbreaker: DEBUG
+
+    org.springframework.cloud.openfeign: DEBUG

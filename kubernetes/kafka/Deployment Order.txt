@@ -1,0 +1,7 @@
+kubectl apply -f kubernetes/kafka/zookeeper-service.yaml
+
+kubectl apply -f kubernetes/kafka/zookeeper-statefulset.yaml
+
+kubectl apply -f kubernetes/kafka/kafka-service.yaml
+
+kubectl apply -f kubernetes/kafka/kafka-statefulset.yaml

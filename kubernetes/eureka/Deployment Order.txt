@@ -1,0 +1,5 @@
+kubectl apply -f kubernetes/eureka/eureka-configmap.yaml
+
+kubectl apply -f kubernetes/eureka/eureka-service.yaml
+
+kubectl apply -f kubernetes/eureka/eureka.yaml

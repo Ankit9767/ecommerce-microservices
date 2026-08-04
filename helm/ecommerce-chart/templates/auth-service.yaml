@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  replicas: {{ .Values.auth.replicas }}
+
+  selector:
+    matchLabels:
+      app: auth-service
+
+  template:
+
+    metadata:
+      labels:
+        app: auth-service
+
+    spec:
+
+      containers:
+
+        - name: auth-service
+
+          image: "{{ .Values.auth.image.repository }}:{{ .Values.auth.image.tag }}"
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+
+            - containerPort: 8090
+
+          envFrom:
+
+            - configMapRef:
+                name: auth-service-config
+
+            - secretRef:
+                name: auth-service-secret
+
+          resources:
+
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          readinessProbe:
+
+            httpGet:
+              path: /actuator/health
+
+              port: 8090
+
+            initialDelaySeconds: 30
+
+          livenessProbe:
+
+            httpGet:
+              path: /actuator/health
+
+              port: 8090
+
+            initialDelaySeconds: 60

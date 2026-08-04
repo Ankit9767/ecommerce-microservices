@@ -1,0 +1,9 @@
+kubectl apply -f kubernetes/payment-service/payment-service-configmap.yaml
+
+kubectl apply -f kubernetes/payment-service/payment-service-secret.yaml
+
+kubectl apply -f kubernetes/payment-service/payment-service-service.yaml
+
+kubectl apply -f kubernetes/payment-service/payment-service.yaml
+
+kubectl apply -f kubernetes/payment-service/payment-service-hpa.yaml

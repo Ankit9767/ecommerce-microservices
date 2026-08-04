@@ -1,0 +1,13 @@
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  tracing:
+    zipkin:
+      tracing:
+        endpoint: http://zipkin:9411/api/v2/spans

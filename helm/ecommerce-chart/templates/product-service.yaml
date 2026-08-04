@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: product-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: {{ .Values.product.replicas }}
+
+  selector:
+    matchLabels:
+      app: product-service
+
+  template:
+    metadata:
+      labels:
+        app: product-service
+
+    spec:
+      containers:
+        - name: product-service
+
+          image: "{{ .Values.product.image.repository }}:{{ .Values.product.image.tag }}"
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8089
+
+          envFrom:
+            - configMapRef:
+                name: product-service-config
+
+            - secretRef:
+                name: product-service-secret
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8089
+
+            initialDelaySeconds: 60
+
+            periodSeconds: 15
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8089
+
+            initialDelaySeconds: 30
+
+            periodSeconds: 10

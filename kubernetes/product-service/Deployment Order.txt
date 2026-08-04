@@ -1,0 +1,9 @@
+kubectl apply -f kubernetes/product-service/product-service-configmap.yaml
+
+kubectl apply -f kubernetes/product-service/product-service-secret.yaml
+
+kubectl apply -f kubernetes/product-service/product-service-service.yaml
+
+kubectl apply -f kubernetes/product-service/product-service.yaml
+
+kubectl apply -f kubernetes/product-service/product-service-hpa.yaml

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb
+  namespace: {{ .Values.namespace }}
+data:
+   init.sql: |-
+    {{ .Files.Get "init/init.sql" | nindent 4 }}

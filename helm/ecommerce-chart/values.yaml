@@ -1,0 +1,57 @@
+namespace: ecommerce
+
+mysql:
+  image:
+    repository: mysql
+    tag: "8.0"
+
+  username: ecommerce
+  password: root123
+
+kafka:
+  image:
+    repository: confluentinc/cp-kafka
+    tag: "7.6.1"
+  replicas: 1
+
+zookeeper:
+  image:
+    repository: confluentinc/cp-zookeeper
+    tag: "7.6.1"
+  replicas: 1
+
+eureka:
+  image:
+    repository: ecommerce-microservices-eureka-server
+    tag: latest
+  replicas: 1
+
+product:
+  image:
+    repository: ecommerce-microservices-product-service
+    tag: latest
+  replicas: 2
+
+order:
+  image:
+    repository: ecommerce-microservices-order-service
+    tag: latest
+  replicas: 2
+
+payment:
+  image:
+    repository: ecommerce-microservices-payment-service
+    tag: latest
+  replicas: 2
+
+auth:
+  image:
+    repository: ecommerce-microservices-auth-service
+    tag: latest
+  replicas: 2
+
+gateway:
+  image:
+    repository: ecommerce-microservices-api-gateway
+    tag: latest
+  replicas: 2

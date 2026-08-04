@@ -1,0 +1,11 @@
+docker build -f product-service/Dockerfile -t product-service .
+
+docker build -f order-service/Dockerfile -t order-service .
+
+docker build -f payment-service/Dockerfile -t payment-service .
+
+docker build -f api-gateway/Dockerfile -t api-gateway .
+
+docker build -f eureka-server/Dockerfile -t eureka-server .
+
+docker build -f auth-service/Dockerfile -t auth-service .

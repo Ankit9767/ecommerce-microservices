@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: product-service-config
+  namespace: {{ .Values.namespace }}
+
+data:
+
+  SERVER_PORT: "8089"
+
+  SPRING_APPLICATION_NAME: product-service
+
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/product_db
+
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
+
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans

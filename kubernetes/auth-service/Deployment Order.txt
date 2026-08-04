@@ -1,0 +1,9 @@
+kubectl apply -f kubernetes/auth-service/auth-service-configmap.yaml
+
+kubectl apply -f kubernetes/auth-service/auth-service-secret.yaml
+
+kubectl apply -f kubernetes/auth-service/auth-service-service.yaml
+
+kubectl apply -f kubernetes/auth-service/auth-service.yaml
+
+kubectl apply -f kubernetes/auth-service/auth-service-hpa.yaml

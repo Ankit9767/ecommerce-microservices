@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  # Name of the Deployment
+  name: nginx-deployment
+
+  # Namespace where the Deployment will be created
+  namespace: ecommerce
+
+  labels:
+    # Label for identifying the Deployment
+    app: nginx
+
+spec:
+  # Number of Pod replicas to maintain
+  replicas: 3
+
+  # Strategy used when updating the Deployment
+  strategy:
+
+    # Updates Pods gradually instead of replacing all Pods at once
+    type: RollingUpdate
+
+    rollingUpdate:
+
+      # Maximum number of Pods allowed to be unavailable during the update
+      maxUnavailable: 1
+
+      # Maximum number of extra Pods allowed to be created during the update
+      maxSurge: 1
+
+  # Deployment manages Pods with this label
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+
+    metadata:
+      labels:
+        # Label assigned to the Pods
+        app: nginx
+
+    spec:
+
+      containers:
+
+        - name: nginx
+
+          # Docker image to run( earlier was nginx:latest , changed to 1.27 )
+          image: nginx:1.27
+
+          ports:
+            # Container listens on port 80
+            - containerPort: 80
+
+          # Requests and limits for cpu
+          resources:
+
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # Liveness Probe:
+          # Checks if the container is healthy.
+          # If it fails 3 consecutive times, Kubernetes restarts the container.
+          livenessProbe:
+
+            httpGet:
+              # URL path to check
+              path: /
+
+              # Port to send the request
+              port: 80
+
+            # Wait 10 seconds before the first liveness check
+            initialDelaySeconds: 10
+
+            # Run the probe every 5 seconds
+            periodSeconds: 5
+
+            # Probe times out after 2 seconds
+            timeoutSeconds: 2
+
+            # Restart container after 3 consecutive failures
+            failureThreshold: 3
+
+          # Readiness Probe:
+          # Checks whether the Pod is ready to receive traffic.
+          # If it fails, the Pod remains running but is removed from Service endpoints.
+          readinessProbe:
+
+            httpGet:
+              # URL path to check
+              path: /
+
+              # Port to send the request
+              port: 80
+
+            # Wait 5 seconds before the first readiness check
+            initialDelaySeconds: 5
+
+            # Run the probe every 5 seconds
+            periodSeconds: 5
+
+            # Probe times out after 2 seconds
+            timeoutSeconds: 2
+
+            # Mark Pod as NotReady after 2 consecutive failures
+            failureThreshold: 2
+
+          # Startup Probe:
+          # Used for applications that need extra startup time.
+          # Liveness and Readiness probes start only after this probe succeeds.
+          startupProbe:
+
+            httpGet:
+              # URL path to check
+              path: /
+
+              # Port to send the request
+              port: 80
+
+            # Start checking immediately
+            initialDelaySeconds: 0
+
+            # Run the probe every 5 seconds
+            periodSeconds: 5
+
+            # Allow up to 12 failed attempts
+            # (12 × 5 = 60 seconds startup time)
+            failureThreshold: 12
+
+            # Probe times out after 2 seconds
+            timeoutSeconds: 2
+
+          # Load environment variables from ConfigMap and Secret
+          envFrom:
+            - configMapRef:
+                name: nginx-config
+            - secretRef:
+                name: nginx-secret
+
+          # Mount the Persistent Volume inside the container
+          volumeMounts:
+            - name: nginx-storage
+
+              # Mount location inside the container
+              mountPath: /usr/share/nginx/html
+
+      # Define the volume used by the container
+      volumes:
+        - name: nginx-storage
+
+          # Attach the PersistentVolumeClaim
+          persistentVolumeClaim:
+            claimName: nginx-pvc

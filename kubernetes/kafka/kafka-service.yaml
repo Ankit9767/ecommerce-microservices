@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: kafka
+  namespace: ecommerce
+
+spec:
+  clusterIP: None
+
+  selector:
+    app: kafka
+
+  ports:
+    - port: 9092
+      targetPort: 9092

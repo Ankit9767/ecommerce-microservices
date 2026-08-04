@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: payment-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  replicas: {{ .Values.payment.replicas }}
+
+  selector:
+    matchLabels:
+      app: payment-service
+
+  template:
+
+    metadata:
+      labels:
+        app: payment-service
+
+    spec:
+
+      containers:
+
+        - name: payment-service
+
+          image: "{{ .Values.payment.image.repository }}:{{ .Values.payment.image.tag }}"
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+
+            - containerPort: 8086
+
+          envFrom:
+
+            - configMapRef:
+                name: payment-service-config
+
+            - secretRef:
+                name: payment-service-secret
+
+          resources:
+
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          readinessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8086
+
+            initialDelaySeconds: 30
+
+          livenessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8086
+
+            initialDelaySeconds: 60

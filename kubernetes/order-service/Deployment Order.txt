@@ -1,0 +1,9 @@
+kubectl apply -f kubernetes/order-service/order-service-configmap.yaml
+
+kubectl apply -f kubernetes/order-service/order-service-secret.yaml
+
+kubectl apply -f kubernetes/order-service/order-service-service.yaml
+
+kubectl apply -f kubernetes/order-service/order-service.yaml
+
+kubectl apply -f kubernetes/order-service/order-service-hpa.yaml

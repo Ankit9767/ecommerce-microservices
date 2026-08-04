@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: order-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  replicas: {{ .Values.order.replicas }}
+
+  selector:
+    matchLabels:
+      app: order-service
+
+  template:
+
+    metadata:
+      labels:
+        app: order-service
+
+    spec:
+
+      containers:
+
+        - name: order-service
+
+          image: "{{ .Values.order.image.repository }}:{{ .Values.order.image.tag }}"
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+
+            - containerPort: 8088
+
+          envFrom:
+
+            - configMapRef:
+                name: order-service-config
+
+            - secretRef:
+                name: order-service-secret
+
+          resources:
+
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+          readinessProbe:
+
+            httpGet:
+
+              path: /actuator/health
+
+              port: 8088
+
+            initialDelaySeconds: 30
+
+          livenessProbe:
+
+            httpGet:
+
+              path: /actuator/health
+
+              port: 8088
+
+            initialDelaySeconds: 60

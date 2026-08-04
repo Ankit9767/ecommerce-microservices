@@ -1,0 +1,15 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "email"
+
+receivers:
+  - name: "email"
+    email_configs:
+      - to: yourmail@gmail.com
+        from: yourmail@gmail.com
+        smarthost: smtp.gmail.com:587
+        auth_username: yourmail@gmail.com
+        auth_password: YOUR_APP_PASSWORD
+        require_tls: true

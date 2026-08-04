@@ -1,0 +1,5 @@
+kubectl kustomize kubernetes/
+
+kubectl apply -k kubernetes/
+
+kubectl delete -k kubernetes/

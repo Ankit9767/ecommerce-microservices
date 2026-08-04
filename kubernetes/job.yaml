@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: hello-job
+  namespace: ecommerce
+
+spec:
+
+  template:
+
+    spec:
+
+      containers:
+
+        - name: hello
+
+          image: busybox
+
+          command:
+
+            - /bin/sh
+            - -c
+            - echo "Hello from Kubernetes Job!"
+
+      restartPolicy: Never

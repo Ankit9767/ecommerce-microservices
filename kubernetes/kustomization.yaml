@@ -1,0 +1,60 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+
+  # Namespace
+  - namespace/namespace.yaml
+
+  # Database
+  - mysql/mysql-secret.yaml
+  - mysql/mysql-service.yaml
+  - mysql/mysql-statefulset.yaml
+
+  # Kafka
+  - kafka/zookeeper-service.yaml
+  - kafka/zookeeper-statefulset.yaml
+  - kafka/kafka-service.yaml
+  - kafka/kafka-statefulset.yaml
+
+  # Eureka
+  - eureka/eureka-configmap.yaml
+  - eureka/eureka-service.yaml
+  - eureka/eureka.yaml
+
+  # Product
+  - product-service/product-service-configmap.yaml
+  - product-service/product-service-secret.yaml
+  - product-service/product-service-service.yaml
+  - product-service/product-service.yaml
+  - product-service/product-service-hpa.yaml
+
+  # Order
+  - order-service/order-service-configmap.yaml
+  - order-service/order-service-secret.yaml
+  - order-service/order-service-service.yaml
+  - order-service/order-service.yaml
+  - order-service/order-service-hpa.yaml
+
+  # Payment
+  - payment-service/payment-service-configmap.yaml
+  - payment-service/payment-service-secret.yaml
+  - payment-service/payment-service-service.yaml
+  - payment-service/payment-service.yaml
+  - payment-service/payment-service-hpa.yaml
+
+  # Auth
+  - auth-service/auth-service-configmap.yaml
+  - auth-service/auth-service-secret.yaml
+  - auth-service/auth-service-service.yaml
+  - auth-service/auth-service.yaml
+  - auth-service/auth-service-hpa.yaml
+
+  # Gateway
+  - api-gateway-service/api-gateway-service-configmap.yaml
+  - api-gateway-service/api-gateway-service-service.yaml
+  - api-gateway-service/api-gateway-service.yaml
+  - api-gateway-service/api-gateway-service-hpa.yaml
+
+  # Ingress
+  - ingress/ingress.yaml

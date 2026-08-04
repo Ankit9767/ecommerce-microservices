@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: hello-cronjob
+  namespace: ecommerce
+
+spec:
+
+  schedule: "*/2 * * * *"
+
+  jobTemplate:
+
+    spec:
+
+      template:
+
+        spec:
+
+          restartPolicy: Never
+
+          containers:
+
+            - name: hello
+
+              image: busybox
+
+              command:
+
+                - /bin/sh
+                - -c
+                - date

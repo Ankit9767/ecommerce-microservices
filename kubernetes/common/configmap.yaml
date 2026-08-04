@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: nginx-config
+  namespace: ecommerce
+
+data:
+  APP_NAME: Ecommerce Kubernetes Demo
+  APP_VERSION: v1
+  ENVIRONMENT: Development

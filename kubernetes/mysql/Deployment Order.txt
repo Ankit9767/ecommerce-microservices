@@ -1,0 +1,17 @@
+kubectl apply -f kubernetes/namespace/namespace.yaml
+
+kubectl apply -f kubernetes/mysql/secret.yaml
+
+kubectl apply -f kubernetes/mysql/service.yaml
+
+kubectl apply -f kubernetes/mysql/statefulset.yaml
+
+kubectl get pods -n ecommerce
+
+kubectl get svc -n ecommerce
+
+kubectl get pvc -n ecommerce
+
+kubectl get statefulsets -n ecommerce
+
+kubectl describe statefulset mysql -n ecommerce

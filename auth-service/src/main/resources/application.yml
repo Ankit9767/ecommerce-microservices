@@ -1,0 +1,51 @@
+server:
+  port: 8090
+
+spring:
+
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/auth_db
+    username: root
+    password: root123
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+jwt:
+  secret: MySuperSecretKeyForJwtAuthentication12345678901234567890
+  expiration: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+
+  tracing:
+    zipkin:
+      tracing:
+        endpoint: http://zipkin:9411/api/v2/spans
+
+logging:
+  level:
+    org.springframework.security: TRACE

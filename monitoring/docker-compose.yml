@@ -1,0 +1,97 @@
+version: "3.8"
+
+services:
+
+  zipkin:
+
+    image: openzipkin/zipkin
+
+    container_name: zipkin
+
+    restart: always
+
+    ports:
+      - "9411:9411"
+
+    networks:
+      - ecommerce-network
+
+  #######################################################
+
+  prometheus:
+
+    image: prom/prometheus
+
+    container_name: prometheus
+
+    restart: always
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
+
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+
+    networks:
+      - ecommerce-network
+
+  #######################################################
+
+  alertmanager:
+
+    image: prom/alertmanager
+
+    container_name: alertmanager
+
+    restart: always
+
+    ports:
+      - "9093:9093"
+
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+
+    networks:
+      - ecommerce-network
+
+  #######################################################
+
+  grafana:
+
+    image: grafana/grafana
+
+    container_name: grafana
+
+    restart: always
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+    depends_on:
+      - prometheus
+
+    networks:
+      - ecommerce-network
+
+#######################################################
+
+networks:
+
+  ecommerce-network:
+    external: true
+
+#######################################################
+
+volumes:
+
+  grafana-storage:

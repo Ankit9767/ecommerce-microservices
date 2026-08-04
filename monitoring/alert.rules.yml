@@ -1,0 +1,14 @@
+groups:
+  - name: microservices
+
+    rules:
+
+      - alert: PaymentServiceDown
+        expr: up{job="payment-service"} == 0
+
+        labels:
+          severity: critical
+
+        annotations:
+          summary: Payment Service Down
+          description: Payment Service has stopped.
