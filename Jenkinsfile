@@ -123,6 +123,8 @@ pipeline {
                 ]) {
 
                     bat '''
+                    echo Username is %DOCKER_USER%
+                    echo Token starts with %DOCKER_PASS:~0,8%
                     echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
                     '''
 
