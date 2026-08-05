@@ -1,4 +1,4 @@
-# E-Commerce Microservices
+# E-Commerce Microservices Project
 
 A Spring Boot microservices e-commerce platform using the **Transactional Outbox Pattern** with Kafka for reliable async communication between services.
 
