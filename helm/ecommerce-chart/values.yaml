@@ -1,57 +1,157 @@
 namespace: ecommerce
 
+# ===========================
+# MySQL
+# ===========================
 mysql:
   image:
     repository: mysql
     tag: "8.0"
+    pullPolicy: IfNotPresent
 
   username: ecommerce
   password: root123
 
-kafka:
-  image:
-    repository: confluentinc/cp-kafka
-    tag: "7.6.1"
-  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
 
+# ===========================
+# Zookeeper
+# ===========================
 zookeeper:
   image:
     repository: confluentinc/cp-zookeeper
     tag: "7.6.1"
+    pullPolicy: IfNotPresent
+
   replicas: 1
 
+# ===========================
+# Kafka
+# ===========================
+kafka:
+  image:
+    repository: confluentinc/cp-kafka
+    tag: "7.6.1"
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+# ===========================
+# Eureka Server
+# ===========================
 eureka:
   image:
     repository: ecommerce-microservices-eureka-server
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 1
 
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ===========================
+# Product Service
+# ===========================
 product:
   image:
     repository: ecommerce-microservices-product-service
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 2
 
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ===========================
+# Order Service
+# ===========================
 order:
   image:
     repository: ecommerce-microservices-order-service
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 2
 
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ===========================
+# Payment Service
+# ===========================
 payment:
   image:
     repository: ecommerce-microservices-payment-service
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 2
 
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ===========================
+# Auth Service
+# ===========================
 auth:
   image:
     repository: ecommerce-microservices-auth-service
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 2
 
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ===========================
+# API Gateway
+# ===========================
 gateway:
   image:
     repository: ecommerce-microservices-api-gateway
     tag: latest
+    pullPolicy: IfNotPresent
+
   replicas: 2
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
