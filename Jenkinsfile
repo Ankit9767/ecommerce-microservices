@@ -123,7 +123,6 @@ pipeline {
                 ]) {
 
                     bat '''
-                    docker logout
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
                     '''
 
