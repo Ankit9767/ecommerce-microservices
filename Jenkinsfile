@@ -139,17 +139,17 @@ pipeline {
 
                 bat '''
 
-                docker tag %DOCKER_USERNAME%/product-service:latest %DOCKER_USERNAME%/product-service:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-product-service:latest %DOCKER_USERNAME%/product-service:%IMAGE_TAG%
 
-                docker tag %DOCKER_USERNAME%/order-service:latest %DOCKER_USERNAME%/order-service:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-order-service:latest %DOCKER_USERNAME%/order-service:%IMAGE_TAG%
 
-                docker tag %DOCKER_USERNAME%/payment-service:latest %DOCKER_USERNAME%/payment-service:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-payment-service:latest %DOCKER_USERNAME%/payment-service:%IMAGE_TAG%
 
-                docker tag %DOCKER_USERNAME%/auth-service:latest %DOCKER_USERNAME%/auth-service:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-auth-service:latest %DOCKER_USERNAME%/auth-service:%IMAGE_TAG%
 
-                docker tag %DOCKER_USERNAME%/api-gateway:latest %DOCKER_USERNAME%/api-gateway:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-api-gateway:latest %DOCKER_USERNAME%/api-gateway:%IMAGE_TAG%
 
-                docker tag %DOCKER_USERNAME%/eureka-server:latest %DOCKER_USERNAME%/eureka-server:%IMAGE_TAG%
+                docker tag ecommerce-pipeline-eureka-server:latest %DOCKER_USERNAME%/eureka-server:%IMAGE_TAG%
 
                 '''
 
