@@ -15,7 +15,7 @@ pipeline {
 
         HELM_RELEASE = "ecommerce"
 
-        HELM_CHART = "./helm/ecommerce-chart"
+        HELM_CHART = ".\\helm\\ecommerce-chart"
 
     }
 
@@ -31,25 +31,28 @@ pipeline {
 
         }
 
+
         stage('Compile') {
 
             steps {
 
-                sh 'mvn clean compile'
+                bat 'mvn clean compile'
 
             }
 
         }
+
 
         stage('Unit Test') {
 
             steps {
 
-                sh 'mvn test'
+                bat 'mvn test'
 
             }
 
         }
+
 
         stage('SonarQube Analysis') {
 
@@ -57,16 +60,18 @@ pipeline {
 
                 withSonarQubeEnv('SonarQube') {
 
-                    sh '''
-                    mvn sonar:sonar \
-                    -Dsonar.projectKey=ecommerce \
+                    bat '''
+                    mvn sonar:sonar ^
+                    -Dsonar.projectKey=ecommerce ^
                     -Dsonar.projectName=ecommerce
                     '''
+
                 }
 
             }
 
         }
+
 
         stage('Quality Gate') {
 
@@ -82,25 +87,28 @@ pipeline {
 
         }
 
+
         stage('Package') {
 
             steps {
 
-                sh 'mvn clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
 
             }
 
         }
+
 
         stage('Build Docker Images') {
 
             steps {
 
-                sh 'docker compose build'
+                bat 'docker compose build'
 
             }
 
         }
+
 
         stage('Docker Login') {
 
@@ -114,8 +122,8 @@ pipeline {
                     )
                 ]) {
 
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    bat '''
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
                     '''
 
                 }
@@ -124,47 +132,49 @@ pipeline {
 
         }
 
+
         stage('Tag Images') {
 
             steps {
 
-                sh '''
+                bat '''
 
-                docker tag ${DOCKER_USERNAME}/product-service:latest ${DOCKER_USERNAME}/product-service:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/product-service:latest %DOCKER_USERNAME%/product-service:%IMAGE_TAG%
 
-                docker tag ${DOCKER_USERNAME}/order-service:latest ${DOCKER_USERNAME}/order-service:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/order-service:latest %DOCKER_USERNAME%/order-service:%IMAGE_TAG%
 
-                docker tag ${DOCKER_USERNAME}/payment-service:latest ${DOCKER_USERNAME}/payment-service:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/payment-service:latest %DOCKER_USERNAME%/payment-service:%IMAGE_TAG%
 
-                docker tag ${DOCKER_USERNAME}/auth-service:latest ${DOCKER_USERNAME}/auth-service:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/auth-service:latest %DOCKER_USERNAME%/auth-service:%IMAGE_TAG%
 
-                docker tag ${DOCKER_USERNAME}/api-gateway:latest ${DOCKER_USERNAME}/api-gateway:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/api-gateway:latest %DOCKER_USERNAME%/api-gateway:%IMAGE_TAG%
 
-                docker tag ${DOCKER_USERNAME}/eureka-server:latest ${DOCKER_USERNAME}/eureka-server:${IMAGE_TAG}
+                docker tag %DOCKER_USERNAME%/eureka-server:latest %DOCKER_USERNAME%/eureka-server:%IMAGE_TAG%
 
                 '''
 
             }
 
         }
+
 
         stage('Push Images') {
 
             steps {
 
-                sh '''
+                bat '''
 
-                docker push ${DOCKER_USERNAME}/product-service:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/product-service:%IMAGE_TAG%
 
-                docker push ${DOCKER_USERNAME}/order-service:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/order-service:%IMAGE_TAG%
 
-                docker push ${DOCKER_USERNAME}/payment-service:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/payment-service:%IMAGE_TAG%
 
-                docker push ${DOCKER_USERNAME}/auth-service:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/auth-service:%IMAGE_TAG%
 
-                docker push ${DOCKER_USERNAME}/api-gateway:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/api-gateway:%IMAGE_TAG%
 
-                docker push ${DOCKER_USERNAME}/eureka-server:${IMAGE_TAG}
+                docker push %DOCKER_USERNAME%/eureka-server:%IMAGE_TAG%
 
                 '''
 
@@ -172,33 +182,34 @@ pipeline {
 
         }
 
+
         stage('Deploy To Kubernetes') {
 
             steps {
 
-                sh """
-
-                helm upgrade --install ${HELM_RELEASE} ${HELM_CHART}
-
-                """
+                bat '''
+                helm upgrade --install %HELM_RELEASE% %HELM_CHART% --namespace ecommerce --create-namespace
+                '''
 
             }
 
         }
 
+
         stage('Verify Deployment') {
 
             steps {
 
-                sh 'kubectl get pods -n ecommerce'
+                bat 'kubectl get pods -n ecommerce'
 
-                sh 'kubectl get svc -n ecommerce'
+                bat 'kubectl get svc -n ecommerce'
 
             }
 
         }
 
     }
+
 
     post {
 
@@ -208,15 +219,17 @@ pipeline {
 
         }
 
+
         failure {
 
             echo 'Pipeline Failed'
 
         }
 
+
         always {
 
-            sh 'docker image prune -f'
+            bat 'docker image prune -f'
 
             cleanWs()
 
