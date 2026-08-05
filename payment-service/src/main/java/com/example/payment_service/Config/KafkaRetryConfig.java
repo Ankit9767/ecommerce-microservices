@@ -1,11 +1,13 @@
 package com.example.payment_service.Config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaRetryTopic;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
+@Profile("!test")
 @EnableKafka
 @EnableKafkaRetryTopic
 @EnableScheduling
