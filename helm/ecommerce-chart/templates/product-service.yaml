@@ -8,6 +8,14 @@ metadata:
 spec:
   replicas: {{ .Values.product.replicas }}
 
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
   selector:
     matchLabels:
       app: product-service
@@ -18,12 +26,19 @@ spec:
         app: product-service
 
     spec:
+
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+
       containers:
         - name: product-service
 
           image: "{{ .Values.product.image.repository }}:{{ .Values.product.image.tag }}"
 
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.product.image.pullPolicy }}
 
           ports:
             - containerPort: 8089
@@ -35,20 +50,36 @@ spec:
             - secretRef:
                 name: product-service-secret
 
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8089
-
-            initialDelaySeconds: 60
-
-            periodSeconds: 15
+          resources:
+            requests:
+              cpu: {{ .Values.product.resources.requests.cpu | quote }}
+              memory: {{ .Values.product.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.product.resources.limits.cpu | quote }}
+              memory: {{ .Values.product.resources.limits.memory | quote }}
 
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8089
-
             initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
 
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8089
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8089
+            failureThreshold: 30
             periodSeconds: 10

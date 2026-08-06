@@ -6,35 +6,43 @@ metadata:
   namespace: {{ .Values.namespace }}
 
 spec:
-
   replicas: {{ .Values.order.replicas }}
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
 
   selector:
     matchLabels:
       app: order-service
 
   template:
-
     metadata:
       labels:
         app: order-service
 
     spec:
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
 
       containers:
-
         - name: order-service
 
           image: "{{ .Values.order.image.repository }}:{{ .Values.order.image.tag }}"
 
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.order.image.pullPolicy }}
 
           ports:
-
             - containerPort: 8088
 
           envFrom:
-
             - configMapRef:
                 name: order-service-config
 
@@ -42,31 +50,35 @@ spec:
                 name: order-service-secret
 
           resources:
-
             requests:
-              cpu: "250m"
-              memory: "512Mi"
-
+              cpu: {{ .Values.order.resources.requests.cpu | quote }}
+              memory: {{ .Values.order.resources.requests.memory | quote }}
             limits:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: {{ .Values.order.resources.limits.cpu | quote }}
+              memory: {{ .Values.order.resources.limits.memory | quote }}
 
           readinessProbe:
-
             httpGet:
-
               path: /actuator/health
-
               port: 8088
-
             initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
 
           livenessProbe:
-
             httpGet:
-
               path: /actuator/health
-
               port: 8088
-
             initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8088
+            failureThreshold: 30
+            periodSeconds: 10

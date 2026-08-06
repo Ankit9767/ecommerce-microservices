@@ -1,0 +1,7 @@
+kubectl apply -f kubernetes/api-gateway-service/api-gateway-service-configmap.yaml
+
+kubectl apply -f kubernetes/api-gateway-service/api-gateway-service-service.yaml
+
+kubectl apply -f kubernetes/api-gateway-service/api-gateway-service.yaml
+
+kubectl apply -f kubernetes/api-gateway-service/api-gateway-service-hpa.yaml

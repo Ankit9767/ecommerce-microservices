@@ -6,64 +6,76 @@ metadata:
   namespace: {{ .Values.namespace }}
 
 spec:
-
   replicas: {{ .Values.gateway.replicas }}
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
 
   selector:
     matchLabels:
       app: api-gateway
 
   template:
-
     metadata:
       labels:
         app: api-gateway
 
     spec:
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
 
       containers:
-
         - name: api-gateway
 
           image: "{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}"
 
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
 
           ports:
-
             - containerPort: 8087
 
           envFrom:
-
             - configMapRef:
                 name: gateway-config
 
           resources:
-
             requests:
-              cpu: "250m"
-              memory: "512Mi"
-
+              cpu: {{ .Values.gateway.resources.requests.cpu | quote }}
+              memory: {{ .Values.gateway.resources.requests.memory | quote }}
             limits:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: {{ .Values.gateway.resources.limits.cpu | quote }}
+              memory: {{ .Values.gateway.resources.limits.memory | quote }}
 
           readinessProbe:
-
             httpGet:
-
               path: /actuator/health
-
               port: 8087
-
             initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
 
           livenessProbe:
-
             httpGet:
-
               path: /actuator/health
-
               port: 8087
-
             initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8087
+            failureThreshold: 30
+            periodSeconds: 10
