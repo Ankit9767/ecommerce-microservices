@@ -2,7 +2,7 @@ package com.example.payment_service.kafka;
 
 import com.ecommerce.common.events.OrderCreatedEvent;
 import com.ecommerce.common.kafka.KafkaTopics;
-import com.example.payment_service.Service.PaymentService;
+import com.example.payment_service.service.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

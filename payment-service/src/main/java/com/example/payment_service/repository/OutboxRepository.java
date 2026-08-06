@@ -1,6 +1,6 @@
-package com.example.payment_service.Repository;
+package com.example.payment_service.repository;
 
-import com.example.payment_service.Entity.OutboxEvent;
+import com.example.payment_service.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

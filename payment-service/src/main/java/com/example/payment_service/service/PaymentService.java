@@ -1,4 +1,4 @@
-package com.example.payment_service.Service;
+package com.example.payment_service.service;
 
 import com.ecommerce.common.dto.PaymentRequest;
 import com.ecommerce.common.dto.PaymentResponse;

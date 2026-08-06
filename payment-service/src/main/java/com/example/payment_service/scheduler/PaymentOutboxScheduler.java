@@ -1,8 +1,8 @@
 package com.example.payment_service.scheduler;
 
 import com.ecommerce.common.events.PaymentCompletedEvent;
-import com.example.payment_service.Entity.OutboxEvent;
-import com.example.payment_service.Repository.OutboxRepository;
+import com.example.payment_service.entity.OutboxEvent;
+import com.example.payment_service.repository.OutboxRepository;
 import com.example.payment_service.kafka.PaymentCompletedProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

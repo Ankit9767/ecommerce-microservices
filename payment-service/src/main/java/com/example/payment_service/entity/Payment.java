@@ -1,4 +1,4 @@
-package com.example.payment_service.Entity;
+package com.example.payment_service.entity;
 
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.enums.PaymentMethod;

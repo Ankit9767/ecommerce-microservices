@@ -1,13 +1,13 @@
-package com.example.payment_service.Service;
+package com.example.payment_service.service;
 
 import com.ecommerce.common.dto.PaymentRequest;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.events.OrderCreatedEvent;
 import com.ecommerce.common.events.PaymentCompletedEvent;
-import com.example.payment_service.Entity.Payment;
+import com.example.payment_service.entity.Payment;
 import com.ecommerce.common.enums.PaymentStatus;
-import com.example.payment_service.Exception.PaymentNotFoundException;
-import com.example.payment_service.Repository.PaymentRepository;
+import com.example.payment_service.exception.PaymentNotFoundException;
+import com.example.payment_service.repository.PaymentRepository;
 //import com.example.payment_service.kafka.PaymentCompletedProducer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micrometer.core.instrument.Counter;

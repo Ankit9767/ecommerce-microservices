@@ -1,8 +1,8 @@
-package com.example.payment_service.Controller;
+package com.example.payment_service.controller;
 
 import com.ecommerce.common.dto.PaymentRequest;
 import com.ecommerce.common.dto.PaymentResponse;
-import com.example.payment_service.Service.PaymentService;
+import com.example.payment_service.service.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
