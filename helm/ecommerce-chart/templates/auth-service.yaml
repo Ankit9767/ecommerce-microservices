@@ -34,6 +34,30 @@ spec:
         runAsGroup: 1001
         fsGroup: 1001
 
+      affinity:
+
+        podAntiAffinity:
+
+          preferredDuringSchedulingIgnoredDuringExecution:
+
+            - weight: 100
+
+              podAffinityTerm:
+
+                topologyKey: kubernetes.io/hostname
+
+                labelSelector:
+
+                  matchExpressions:
+
+                    - key: app
+
+                      operator: In
+
+                      values:
+
+                        - auth-service
+
       serviceAccountName: auth-service
 
       containers:
