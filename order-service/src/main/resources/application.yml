@@ -1,25 +1,29 @@
 server:
-  port: 8088
+  port: ${SERVER_PORT:8088}
+
 
 spring:
   application:
-    name: order-service
+    name: ${SPRING_APPLICATION_NAME:order-service}
+
 
   datasource:
-    url: jdbc:mysql://mysql:3306/order_db
-    username: root
-    password: root123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
         format_sql: true
 
+
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -30,53 +34,63 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
       properties:
         spring.json.trusted.packages: "*"
         spring.json.value.default.type: com.ecommerce.common.events.PaymentCompletedEvent
 
+
+
 eureka:
+
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
+
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
-#service:
-#  product-service:
-#    url: http://localhost:8089
+
 
 management:
+
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics}
+
 
   endpoint:
+
     health:
       show-details: always
 
     prometheus:
       enabled: true
 
+
   metrics:
     tags:
       application: ${spring.application.name}
 
+
   tracing:
+
     sampling:
-      probability: 1.0
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
     zipkin:
       tracing:
-        endpoint: http://zipkin:9411/api/v2/spans
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+
+
 
 resilience4j:
 
   circuitbreaker:
+
     instances:
 
       paymentService:
@@ -95,7 +109,9 @@ resilience4j:
 
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
+
   retry:
+
     instances:
 
       paymentRetry:
@@ -108,10 +124,13 @@ resilience4j:
 
         exponentialBackoffMultiplier: 2
 
+
+
 logging:
 
   pattern:
     level: "%5p [${spring.application.name:},trace=%X{traceId:-},span=%X{spanId:-}]"
+
 
   level:
 

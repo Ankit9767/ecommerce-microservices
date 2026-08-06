@@ -1,38 +1,37 @@
 server:
-  port: 8089
+  port: ${SERVER_PORT:8089}
 
 spring:
   application:
-    name: product-service
+    name: ${SPRING_APPLICATION_NAME:product-service}
 
   datasource:
-    url: jdbc:mysql://mysql:3306/product_db
-    username: root
-    password: root123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
 
 
 eureka:
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
+
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
 
   endpoint:
     health:
@@ -47,11 +46,12 @@ management:
 
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
-    zipkin:
-      tracing:
-        endpoint: http://zipkin:9411/api/v2/spans
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+
 
 logging:
   pattern:

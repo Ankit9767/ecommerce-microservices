@@ -1,51 +1,79 @@
 server:
-  port: 8090
+  port: ${SERVER_PORT:8090}
+
 
 spring:
 
   application:
-    name: auth-service
+    name: ${SPRING_APPLICATION_NAME:auth-service}
+
 
   datasource:
-    url: jdbc:mysql://mysql:3306/auth_db
-    username: root
-    password: root123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
 
     show-sql: true
 
+
+
 eureka:
+
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
+
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+
 
 jwt:
-  secret: MySuperSecretKeyForJwtAuthentication12345678901234567890
-  expiration: 3600000
+
+  secret: ${JWT_SECRET}
+
+  expiration: ${JWT_EXPIRATION:3600000}
+
+
 
 management:
+
   endpoints:
+
     web:
       exposure:
-        include: "*"
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+
 
   endpoint:
+
     health:
       show-details: always
 
 
   tracing:
+
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+
+
     zipkin:
+
       tracing:
-        endpoint: http://zipkin:9411/api/v2/spans
+
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+
+
 
 logging:
+
   level:
+
     org.springframework.security: TRACE

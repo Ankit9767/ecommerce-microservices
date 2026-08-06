@@ -13,9 +13,13 @@ data:
 
   SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order_db
 
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
   SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics"
 
   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
 

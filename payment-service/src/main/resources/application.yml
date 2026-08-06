@@ -1,23 +1,27 @@
 server:
-  port: 8086
+  port: ${SERVER_PORT:8086}
+
 
 spring:
   application:
-    name: payment-service
+    name: ${SPRING_APPLICATION_NAME:payment-service}
+
 
   datasource:
-    url: jdbc:mysql://mysql:3306/payment_db
-    username: root
-    password: root123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
+
 
   kafka:
 
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -40,23 +44,27 @@ spring:
         spring.json.value.default.type: com.ecommerce.common.events.OrderCreatedEvent
 
 
+
 eureka:
+
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
+
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
 
 
 management:
+
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+
 
   endpoint:
     health:
@@ -65,17 +73,22 @@ management:
     prometheus:
       enabled: true
 
+
   metrics:
     tags:
       application: ${spring.application.name}
 
+
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
-    zipkin:
-      tracing:
-        endpoint: http://zipkin:9411/api/v2/spans
+
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+
+
 
 logging:
   pattern:

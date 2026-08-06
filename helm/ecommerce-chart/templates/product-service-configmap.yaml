@@ -13,6 +13,8 @@ data:
 
   SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/product_db
 
+  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
