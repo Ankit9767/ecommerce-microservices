@@ -26,7 +26,7 @@ spec:
         app: order-service
 
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 40
 
       securityContext:
         runAsNonRoot: true

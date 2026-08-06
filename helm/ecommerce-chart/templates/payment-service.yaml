@@ -26,7 +26,7 @@ spec:
         app: payment-service
 
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 40
 
       securityContext:
         runAsNonRoot: true
