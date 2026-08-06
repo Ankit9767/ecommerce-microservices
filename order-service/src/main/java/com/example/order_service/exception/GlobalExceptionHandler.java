@@ -1,4 +1,4 @@
-package com.example.order_service.Exception;
+package com.example.order_service.exception;
 
 import com.ecommerce.common.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;

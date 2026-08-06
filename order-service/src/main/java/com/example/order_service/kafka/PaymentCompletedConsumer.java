@@ -2,7 +2,7 @@ package com.example.order_service.kafka;
 
 import com.ecommerce.common.events.PaymentCompletedEvent;
 import com.ecommerce.common.kafka.KafkaTopics;
-import com.example.order_service.Service.OrderService;
+import com.example.order_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

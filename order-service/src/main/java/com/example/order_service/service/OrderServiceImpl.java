@@ -1,4 +1,4 @@
-package com.example.order_service.Service;
+package com.example.order_service.service;
 
 import com.ecommerce.common.dto.PaymentRequest;
 import com.ecommerce.common.dto.PaymentResponse;
@@ -6,14 +6,14 @@ import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.events.OrderCreatedEvent;
 import com.ecommerce.common.events.PaymentCompletedEvent;
-import com.example.order_service.Client.PaymentClient;
-import com.example.order_service.Client.ProductClient;
-import com.example.order_service.Dto.CreateOrderRequest;
+import com.example.order_service.client.PaymentClient;
+import com.example.order_service.client.ProductClient;
+import com.example.order_service.dto.CreateOrderRequest;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ProductResponse;
-import com.example.order_service.Entity.Order;
-import com.example.order_service.Exception.OrderNotFoundException;
-import com.example.order_service.Repository.OrderRepository;
+import com.example.order_service.entity.Order;
+import com.example.order_service.exception.OrderNotFoundException;
+import com.example.order_service.repository.OrderRepository;
 import com.example.order_service.kafka.OrderKafkaProducer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

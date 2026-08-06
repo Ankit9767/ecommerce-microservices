@@ -1,6 +1,6 @@
-package com.example.order_service.Repository;
+package com.example.order_service.repository;
 
-import com.example.order_service.Entity.OutboxEvent;
+import com.example.order_service.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

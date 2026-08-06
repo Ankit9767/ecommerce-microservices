@@ -1,4 +1,4 @@
-//package com.example.order_service.Config;
+//package com.example.order_service.config;
 //
 //import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.context.annotation.Bean;

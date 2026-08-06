@@ -1,4 +1,4 @@
-//package com.example.order_service.Client;
+//package com.example.order_service.client;
 //
 //
 //import com.ecommerce.common.dto.ProductResponse;

@@ -1,4 +1,4 @@
-package com.example.order_service.Dto;
+package com.example.order_service.dto;
 
 
 import com.ecommerce.common.enums.PaymentMethod;
