@@ -40,7 +40,7 @@ kafka:
     tag: "7.6.1"
     pullPolicy: IfNotPresent
 
-  replicas: 1
+  replicas: 2
 
 # ===========================
 # Eureka Server
@@ -51,7 +51,7 @@ eureka:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 1
+  replicas: 2
 
   resources:
     requests:
@@ -70,7 +70,7 @@ product:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 3
 
   resources:
     requests:
@@ -89,7 +89,7 @@ order:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 3
 
   resources:
     requests:
@@ -108,7 +108,7 @@ payment:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 3
 
   resources:
     requests:
@@ -127,7 +127,7 @@ auth:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 3
 
   resources:
     requests:
@@ -146,7 +146,7 @@ gateway:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 3
 
   resources:
     requests:
