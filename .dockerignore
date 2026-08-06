@@ -1,19 +1,23 @@
-target
+.git
+.gitignore
+
 **/target
+
+**/.mvn
+
+.mvn
 
 .idea
 .vscode
 
-.git
-.gitignore
-
-*.iml
-
-logs
 *.log
 
 .DS_Store
 
 docker-compose.yml
 
+helm
+
 README.md
+
+Dockerfile*
