@@ -68,7 +68,7 @@ management:
 
       tracing:
 
-        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 

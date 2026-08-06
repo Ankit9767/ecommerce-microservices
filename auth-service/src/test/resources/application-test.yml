@@ -27,6 +27,10 @@ spring:
     discovery:
       enabled: false
 
+jwt:
+  secret: TestSecretKey12345678901234567890
+  expiration: 3600000
+
 eureka:
   client:
     enabled: false
