@@ -1,4 +1,4 @@
-package com.example.auth_service.Service;
+package com.example.auth_service.service;
 
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;

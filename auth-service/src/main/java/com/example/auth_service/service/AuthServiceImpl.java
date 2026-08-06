@@ -1,11 +1,11 @@
-package com.example.auth_service.Service;
+package com.example.auth_service.service;
 
-import com.example.auth_service.Dto.LoginRequest;
-import com.example.auth_service.Dto.LoginResponse;
-import com.example.auth_service.Dto.RegisterRequest;
-import com.example.auth_service.Dto.RegisterResponse;
-import com.example.auth_service.Entity.User;
-import com.example.auth_service.Repository.UserRepository;
+import com.example.auth_service.dto.LoginRequest;
+import com.example.auth_service.dto.LoginResponse;
+import com.example.auth_service.dto.RegisterRequest;
+import com.example.auth_service.dto.RegisterResponse;
+import com.example.auth_service.entity.User;
+import com.example.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

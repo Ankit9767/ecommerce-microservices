@@ -1,4 +1,4 @@
-package com.example.auth_service.Entity;
+package com.example.auth_service.entity;
 
 import com.ecommerce.common.enums.Role;
 import jakarta.persistence.*;

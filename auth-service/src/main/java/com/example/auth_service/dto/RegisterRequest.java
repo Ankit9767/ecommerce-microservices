@@ -1,4 +1,4 @@
-package com.example.auth_service.Dto;
+package com.example.auth_service.dto;
 
 import com.ecommerce.common.enums.Role;
 import jakarta.validation.constraints.Email;

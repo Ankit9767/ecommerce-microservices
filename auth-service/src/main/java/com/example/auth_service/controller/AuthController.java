@@ -1,10 +1,10 @@
-package com.example.auth_service.Controller;
+package com.example.auth_service.controller;
 
-import com.example.auth_service.Dto.LoginRequest;
-import com.example.auth_service.Dto.LoginResponse;
-import com.example.auth_service.Dto.RegisterRequest;
-import com.example.auth_service.Dto.RegisterResponse;
-import com.example.auth_service.Service.AuthService;
+import com.example.auth_service.dto.LoginRequest;
+import com.example.auth_service.dto.LoginResponse;
+import com.example.auth_service.dto.RegisterRequest;
+import com.example.auth_service.dto.RegisterResponse;
+import com.example.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

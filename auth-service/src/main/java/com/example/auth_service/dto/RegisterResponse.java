@@ -1,4 +1,4 @@
-package com.example.auth_service.Dto;
+package com.example.auth_service.dto;
 
 
 import lombok.Builder;
