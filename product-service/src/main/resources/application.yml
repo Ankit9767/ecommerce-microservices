@@ -1,9 +1,13 @@
 server:
   port: ${SERVER_PORT:8089}
+  shutdown: graceful
 
 spring:
   application:
     name: ${SPRING_APPLICATION_NAME:product-service}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   datasource:
     url: ${SPRING_DATASOURCE_URL}

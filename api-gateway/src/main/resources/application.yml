@@ -1,9 +1,14 @@
 server:
-  port: 8087
+  port: ${SERVER_PORT:8087}
+  shutdown: graceful
+
 
 spring:
   application:
-    name: api-gateway
+    name: ${SPRING_APPLICATION_NAME:api-gateway}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   cloud:
     gateway:
@@ -12,26 +17,29 @@ spring:
           uri: lb://PRODUCT-SERVICE
           predicates:
             - Path=/api/products/**
+
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
             - Path=/api/orders/**
 
+
 eureka:
   instance:
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:127.0.0.1}
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+
   client:
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
 
   endpoint:
     health:
@@ -46,11 +54,12 @@ management:
 
   tracing:
     sampling:
-      probability: 1.0
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
 
-    zipkin:
-      tracing:
-        endpoint: http://zipkin:9411/api/v2/spans
+  zipkin:
+    tracing:
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+
 
 logging:
   pattern:
@@ -58,5 +67,5 @@ logging:
 
 
 jwt:
-  secret: MySuperSecretKeyForJwtAuthentication12345678901234567890
-  expiration: 3600000
+  secret: ${JWT_SECRET:MySuperSecretKeyForJwtAuthentication12345678901234567890}
+  expiration: ${JWT_EXPIRATION:3600000}

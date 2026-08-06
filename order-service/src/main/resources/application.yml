@@ -1,10 +1,13 @@
 server:
   port: ${SERVER_PORT:8088}
-
+  shutdown: graceful
 
 spring:
   application:
     name: ${SPRING_APPLICATION_NAME:order-service}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 
   datasource:

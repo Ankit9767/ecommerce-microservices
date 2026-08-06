@@ -74,6 +74,9 @@ spec:
             - configMapRef:
                 name: gateway-config
 
+            - secretRef:
+                name: gateway-secret
+
           resources:
             requests:
               cpu: {{ .Values.gateway.resources.requests.cpu | quote }}
