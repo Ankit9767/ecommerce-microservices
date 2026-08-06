@@ -33,6 +33,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1001
 
+      serviceAccountName: product-service
+
       containers:
         - name: product-service
 

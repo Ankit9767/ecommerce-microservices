@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: order-service-network-policy
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  podSelector:
+    matchLabels:
+      app: order-service
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+
+      ports:
+        - protocol: TCP
+          port: 8088

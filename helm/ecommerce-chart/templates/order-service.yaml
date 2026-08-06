@@ -32,6 +32,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1001
 
+      serviceAccountName: order-service
+
       containers:
         - name: order-service
 

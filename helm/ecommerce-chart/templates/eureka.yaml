@@ -27,6 +27,8 @@ spec:
 
     spec:
 
+      serviceAccountName: eureka-server
+
       containers:
 
         - name: eureka-server

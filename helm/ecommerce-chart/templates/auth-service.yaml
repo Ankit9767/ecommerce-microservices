@@ -32,6 +32,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1001
 
+      serviceAccountName: auth-service
+
       containers:
         - name: auth-service
 
