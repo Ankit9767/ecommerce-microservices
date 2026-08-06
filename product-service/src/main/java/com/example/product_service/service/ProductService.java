@@ -1,6 +1,6 @@
-package com.example.product_service.Service;
+package com.example.product_service.service;
 
-import com.example.product_service.Entity.Product;
+import com.example.product_service.entity.Product;
 
 import java.util.List;
 

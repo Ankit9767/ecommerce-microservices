@@ -1,6 +1,6 @@
-package com.example.product_service.Repository;
+package com.example.product_service.repository;
 
-import com.example.product_service.Entity.Product;
+import com.example.product_service.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.math.BigDecimal;

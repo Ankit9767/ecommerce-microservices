@@ -1,33 +1,27 @@
-package com.example.product_service.Dto;
+package com.example.product_service.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
-public class ProductResponse {
+public class CreateProductRequest {
 
-    private Long id;
-
+    @NotBlank(message = "Name is required")
     private String name;
 
+    @Positive(message = "Price must be positive")
     private BigDecimal price;
 
     private String category;
 
-    public ProductResponse(Long id, String name, BigDecimal price, String category) {
-        this.id = id;
+    public CreateProductRequest(String name, BigDecimal price, String category) {
         this.name = name;
         this.price = price;
         this.category = category;
     }
 
-    public ProductResponse() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public CreateProductRequest() {
     }
 
     public String getName() {

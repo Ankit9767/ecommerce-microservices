@@ -1,10 +1,10 @@
-package com.example.product_service.Controller;
+package com.example.product_service.controller;
 
-import com.example.product_service.Dto.CreateProductRequest;
-import com.example.product_service.Dto.ProductResponse;
-import com.example.product_service.Entity.Product;
-import com.example.product_service.Mapper.ProductMapper;
-import com.example.product_service.Service.ProductService;
+import com.example.product_service.dto.CreateProductRequest;
+import com.example.product_service.dto.ProductResponse;
+import com.example.product_service.entity.Product;
+import com.example.product_service.mapper.ProductMapper;
+import com.example.product_service.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,8 +1,8 @@
-package com.example.product_service.Service;
+package com.example.product_service.service;
 
-import com.example.product_service.Entity.Product;
-import com.example.product_service.Exception.ProductNotFoundException;
-import com.example.product_service.Repository.ProductRepository;
+import com.example.product_service.entity.Product;
+import com.example.product_service.exception.ProductNotFoundException;
+import com.example.product_service.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
