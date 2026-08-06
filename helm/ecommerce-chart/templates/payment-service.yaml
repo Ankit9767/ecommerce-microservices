@@ -67,6 +67,14 @@ spec:
 
           imagePullPolicy: {{ .Values.payment.image.pullPolicy }}
 
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - sleep 15
+
           ports:
             - containerPort: 8086
 
