@@ -25,10 +25,7 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public AuthResponse generateTokens(User user) {
 
-        CustomUserDetails userDetails =
-                new CustomUserDetails(user);
-
-        String accessToken = jwtService.generateAccessToken(userDetails);
+        String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user));
 
         String refreshToken = refreshTokenService.createRefreshToken(user);
 
@@ -42,8 +39,7 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public AuthResponse refreshAccessToken(String refreshToken) {
 
-        RefreshToken storedToken =
-                refreshTokenService.verifyRefreshToken(refreshToken);
+        RefreshToken storedToken = refreshTokenService.verifyRefreshToken(refreshToken);
 
         User user = storedToken.getUser();
 

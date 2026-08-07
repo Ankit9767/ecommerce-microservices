@@ -37,17 +37,4 @@ public class JwtTokenGenerator {
                 .signWith(keyProvider.getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
-    public String generateRefreshToken(UserDetails userDetails) {
-
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claim(JwtConstants.TOKEN_TYPE, JwtTokenType.REFRESH.name())
-                .issuedAt(new Date())
-                .expiration(new Date(
-                        System.currentTimeMillis() + properties.getRefreshExpiration()
-                ))
-                .signWith(keyProvider.getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
 }

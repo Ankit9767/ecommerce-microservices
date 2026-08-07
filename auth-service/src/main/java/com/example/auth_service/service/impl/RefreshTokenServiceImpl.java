@@ -3,6 +3,7 @@ package com.example.auth_service.service.impl;
 import com.example.auth_service.entity.RefreshToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidRefreshTokenException;
+import com.example.auth_service.exception.TokenReuseDetectedException;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.security.refresh.RefreshTokenGenerator;
 import com.example.auth_service.security.refresh.TokenHashService;
@@ -12,13 +13,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl
         implements RefreshTokenService {
 
-    private final RefreshTokenRepository repository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final JwtProperties jwtProperties;
 
@@ -42,7 +44,7 @@ public class RefreshTokenServiceImpl
                 .revoked(false)
                 .build();
 
-        repository.save(refreshToken);
+        refreshTokenRepository.save(refreshToken);
 
         return token;
     }
@@ -53,24 +55,26 @@ public class RefreshTokenServiceImpl
         String hash = tokenHashService.hash(token);
 
         RefreshToken refreshToken =
-                repository.findByTokenHash(hash)
+                refreshTokenRepository.findByTokenHash(hash)
                         .orElseThrow(() ->
                                 new InvalidRefreshTokenException(
-                                        "Refresh token not found"
+                                        "Invalid refresh token"
                                 )
                         );
 
         if (refreshToken.getRevoked()) {
 
-            throw new InvalidRefreshTokenException(
-                    "Refresh token revoked"
+            revokeAllUserTokens(refreshToken.getUser());
+
+            throw new TokenReuseDetectedException(
+                    "Refresh token reuse detected"
             );
+
         }
 
-        if (refreshToken.getExpiryDate()
-                .isBefore(Instant.now())) {
+        if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
 
-            repository.delete(refreshToken);
+            refreshTokenRepository.delete(refreshToken);
 
             throw new InvalidRefreshTokenException(
                     "Refresh token expired"
@@ -83,15 +87,14 @@ public class RefreshTokenServiceImpl
     @Override
     public void revokeRefreshToken(String token) {
 
-        String tokenHash = tokenHashService.hash(token);
+        String hash = tokenHashService.hash(token);
 
-        repository.findByTokenHash(tokenHash)
+        refreshTokenRepository.findByTokenHash(hash)
+                .ifPresent(session -> {
 
-                .ifPresent(refreshToken -> {
+                    session.setRevoked(true);
 
-                    refreshToken.setRevoked(true);
-
-                    repository.save(refreshToken);
+                    refreshTokenRepository.save(session);
 
                 });
 
@@ -100,15 +103,15 @@ public class RefreshTokenServiceImpl
     @Override
     public void revokeAllUserTokens(User user) {
 
-        repository.findByUser(user)
+        List<RefreshToken> tokens = refreshTokenRepository.findByUser(user);
 
-                .forEach(refreshToken -> {
+        tokens.forEach(token ->
 
-                    refreshToken.setRevoked(true);
+                token.setRevoked(true)
 
-                    repository.save(refreshToken);
+        );
 
-                });
+        refreshTokenRepository.saveAll(tokens);
 
     }
 

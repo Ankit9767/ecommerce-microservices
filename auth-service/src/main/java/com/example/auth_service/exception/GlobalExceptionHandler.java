@@ -133,4 +133,19 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(TokenReuseDetectedException.class)
+    public ResponseEntity<ApiError> handleReuse(TokenReuseDetectedException ex) {
+
+        ApiError error = ApiError.builder()
+                .status(401)
+                .error("Unauthorized")
+                .message(ex.getMessage())
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(error);
+
+    }
 }
