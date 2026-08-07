@@ -4,6 +4,7 @@ import com.example.auth_service.entity.RefreshToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidRefreshTokenException;
 import com.example.auth_service.repository.RefreshTokenRepository;
+import com.example.auth_service.security.TokenHashService;
 import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,8 @@ public class RefreshTokenServiceImpl
 
     private final JwtProperties jwtProperties;
 
+    private final TokenHashService tokenHashService;
+
     @Override
     public RefreshToken createRefreshToken(
             User user,
@@ -29,7 +32,7 @@ public class RefreshTokenServiceImpl
         RefreshToken refreshToken =
                 RefreshToken.builder()
 
-                        .token(token)
+                        .tokenHash(tokenHashService.hash(token))
 
                         .user(user)
 
@@ -46,13 +49,12 @@ public class RefreshTokenServiceImpl
     }
 
     @Override
-    public RefreshToken verifyRefreshToken(
-            String token
-    ) {
+    public RefreshToken verifyRefreshToken(String token) {
+
+        String tokenHash = tokenHashService.hash(token);
 
         RefreshToken refreshToken =
-                repository.findByToken(token)
-
+                repository.findByTokenHash(tokenHash)
                         .orElseThrow(() ->
                                 new InvalidRefreshTokenException(
                                         "Refresh token not found"
@@ -80,11 +82,11 @@ public class RefreshTokenServiceImpl
     }
 
     @Override
-    public void revokeRefreshToken(
-            String token
-    ) {
+    public void revokeRefreshToken(String token) {
 
-        repository.findByToken(token)
+        String tokenHash = tokenHashService.hash(token);
+
+        repository.findByTokenHash(tokenHash)
 
                 .ifPresent(refreshToken -> {
 
