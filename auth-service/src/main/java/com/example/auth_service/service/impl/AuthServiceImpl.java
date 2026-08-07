@@ -10,14 +10,12 @@ import com.example.auth_service.exception.RoleNotFoundException;
 import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
-import com.example.auth_service.security.CustomUserDetailsService;
-import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.service.AuthService;
-import com.example.auth_service.security.jwt.JwtService;
+import com.example.auth_service.service.TokenManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,14 +31,10 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
 
-    private final JwtService jwtService;
-
-    private final CustomUserDetailsService customUserDetailsService;
-
-    private final JwtProperties jwtProperties;
+    private final TokenManager tokenManager;
 
     @Override
-    public void register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("Email already exists");
@@ -66,7 +60,9 @@ public class AuthServiceImpl implements AuthService {
 
         user.getRoles().add(customerRole);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return tokenManager.generateTokens(savedUser);
     }
 
     @Override
@@ -79,28 +75,23 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        UserDetails userDetails =
-                customUserDetailsService.loadUserByUsername(
-                        request.getUsernameOrEmail()
-                );
+        User user = userRepository
+                .findByUsername(request.getUsernameOrEmail())
+                .or(() -> userRepository.findByEmail(request.getUsernameOrEmail()))
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found"));
 
-        String accessToken =
-                jwtService.generateAccessToken(userDetails);
+        return tokenManager.generateTokens(user);
+    }
 
-        String refreshToken =
-                jwtService.generateRefreshToken(userDetails);;
+    @Override
+    public AuthResponse refreshToken(String refreshToken) {
+        return tokenManager.refreshAccessToken(refreshToken);
+    }
 
-        return AuthResponse.builder()
-
-                .accessToken(accessToken)
-
-                .refreshToken(refreshToken)
-
-                .tokenType("Bearer")
-
-                .expiresIn(jwtProperties.getExpiration())
-
-                .build();
+    @Override
+    public void logout(String refreshToken) {
+        tokenManager.logout(refreshToken);
     }
 
 }

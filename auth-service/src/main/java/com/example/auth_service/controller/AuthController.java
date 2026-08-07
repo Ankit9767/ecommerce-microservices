@@ -1,6 +1,7 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.request.LoginRequest;
+import com.example.auth_service.dto.request.RefreshTokenRequest;
 import com.example.auth_service.dto.request.RegisterRequest;
 import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.service.AuthService;
@@ -18,13 +19,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(
+    public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request) {
 
-        authService.register(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("User registered successfully");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(authService.register(request));
     }
 
     @PostMapping("/login")
@@ -33,6 +33,29 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 authService.login(request)
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid
+            @RequestBody
+            RefreshTokenRequest request) {
+        return ResponseEntity.ok(
+                authService.refreshToken(
+                        request.getRefreshToken())
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+            @Valid
+            @RequestBody
+            RefreshTokenRequest request) {
+        authService.logout(
+                request.getRefreshToken());
+        return ResponseEntity.ok(
+                "Logged out successfully"
         );
     }
 
