@@ -1,6 +1,8 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.request.LoginRequest;
 import com.example.auth_service.dto.request.RegisterRequest;
+import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,15 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("User registered successfully");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        return ResponseEntity.ok(
+                authService.login(request)
+        );
     }
 
 }

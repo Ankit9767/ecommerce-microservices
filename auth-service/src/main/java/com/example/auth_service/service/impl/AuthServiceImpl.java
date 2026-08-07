@@ -1,6 +1,8 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.dto.request.LoginRequest;
 import com.example.auth_service.dto.request.RegisterRequest;
+import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.entity.Role;
 import com.example.auth_service.entity.RoleName;
 import com.example.auth_service.entity.User;
@@ -8,8 +10,13 @@ import com.example.auth_service.exception.RoleNotFoundException;
 import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.security.CustomUserDetailsService;
 import com.example.auth_service.service.AuthService;
+import com.example.auth_service.service.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +29,12 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtService jwtService;
+
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     public void register(RegisterRequest request) {
@@ -51,6 +64,30 @@ public class AuthServiceImpl implements AuthService {
         user.getRoles().add(customerRole);
 
         userRepository.save(user);
+    }
+
+    @Override
+    public AuthResponse login(LoginRequest request) {
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsernameOrEmail(),
+                        request.getPassword()
+                )
+        );
+
+        UserDetails userDetails =
+                customUserDetailsService.loadUserByUsername(
+                        request.getUsernameOrEmail()
+                );
+
+        String token = jwtService.generateToken(userDetails);
+
+        return AuthResponse.builder()
+                .accessToken(token)
+                .tokenType("Bearer")
+                .expiresIn(86400000L)
+                .build();
     }
 
 }

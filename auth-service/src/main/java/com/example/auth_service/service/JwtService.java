@@ -9,6 +9,8 @@ import java.security.Key;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -29,14 +31,21 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(UserDetails userDetails) {
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+
+        claims.put(
+                "roles",
+                userDetails.getAuthorities()
+                        .stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList()
+        );
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(username)
+                .subject(userDetails.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -72,6 +81,17 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public String extractRole(String token) {
+
+        Claims claims = extractAllClaims(token);
+        Object roles = claims.get("roles");
+
+        if (roles instanceof java.util.List<?> roleList && !roleList.isEmpty()) {
+            return roleList.get(0).toString();
+        }
+        return "";
     }
 
 }
