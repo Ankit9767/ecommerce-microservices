@@ -1,5 +1,6 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidRefreshTokenException;
@@ -29,7 +30,7 @@ public class UserSessionServiceImpl
     private final RefreshTokenGenerator refreshTokenGenerator;
 
     @Override
-    public String createSession(User user) {
+    public String createSession(User user, SessionInfo sessionInfo) {
 
         String token = refreshTokenGenerator.generate();
 
@@ -41,9 +42,28 @@ public class UserSessionServiceImpl
                         .user(user)
                         .expiryDate(
                                 Instant.now()
-                                        .plusMillis(jwtProperties.getRefreshExpiration())
+                                        .plusMillis(
+                                                jwtProperties.getRefreshExpiration())
                         )
                         .revoked(false)
+                        .loginTime(
+                                Instant.now()
+                        )
+                        .lastActivity(
+                                Instant.now()
+                        )
+                        .deviceName(
+                                sessionInfo.getDeviceName()
+                        )
+                        .browser(
+                                sessionInfo.getBrowser()
+                        )
+                        .operatingSystem(
+                                sessionInfo.getOperatingSystem()
+                        )
+                        .ipAddress(
+                                sessionInfo.getIpAddress()
+                        )
                         .build();
 
         userSessionRepository.save(session);
@@ -74,6 +94,10 @@ public class UserSessionServiceImpl
                     "Refresh token expired"
             );
         }
+
+        session.setLastActivity(Instant.now());
+        userSessionRepository.save(session);
+
         return session;
     }
 

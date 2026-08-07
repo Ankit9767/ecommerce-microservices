@@ -1,11 +1,12 @@
 package com.example.auth_service.service;
 
+import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
 
 public interface UserSessionService {
 
-    String createSession(User user);
+    String createSession(User user, SessionInfo sessionInfo);
 
     UserSession verifySession(String refreshToken);
 

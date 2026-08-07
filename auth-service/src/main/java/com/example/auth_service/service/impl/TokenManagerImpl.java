@@ -1,6 +1,7 @@
 package com.example.auth_service.service.impl;
 
 import com.example.auth_service.dto.response.AuthResponse;
+import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.security.CustomUserDetails;
@@ -27,7 +28,16 @@ public class TokenManagerImpl implements TokenManager {
 
         String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user));
 
-        String refreshToken = userSessionService.createSession(user);
+        // for now adding this as unknown , later will populate this by http headers
+        SessionInfo sessionInfo =
+                SessionInfo.builder()
+                        .deviceName("Unknown")
+                        .browser("Unknown")
+                        .operatingSystem("Unknown")
+                        .ipAddress("Unknown")
+                        .build();
+
+        String refreshToken = userSessionService.createSession(user, sessionInfo);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
