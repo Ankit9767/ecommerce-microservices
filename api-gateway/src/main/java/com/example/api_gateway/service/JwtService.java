@@ -1,5 +1,6 @@
 package com.example.api_gateway.service;
 
+import com.ecommerce.common.security.JwtConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -42,14 +44,10 @@ public class JwtService {
                 .getSubject();
     }
 
-    public String extractRole(String token) {
+    public List<String> extractRoles(String token) {
 
-        Object role = extractAllClaims(token)
-                .get("role");
-
-        return role != null
-                ? role.toString()
-                : null;
+        return extractAllClaims(token)
+                .get(JwtConstants.ROLE, List.class);
     }
 
     public Date extractExpiration(String token) {

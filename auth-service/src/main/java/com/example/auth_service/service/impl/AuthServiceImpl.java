@@ -11,8 +11,9 @@ import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.CustomUserDetailsService;
+import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.service.AuthService;
-import com.example.auth_service.service.JwtService;
+import com.example.auth_service.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +36,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
 
     private final CustomUserDetailsService customUserDetailsService;
+
+    private final JwtProperties jwtProperties;
 
     @Override
     public void register(RegisterRequest request) {
@@ -81,12 +84,22 @@ public class AuthServiceImpl implements AuthService {
                         request.getUsernameOrEmail()
                 );
 
-        String token = jwtService.generateToken(userDetails);
+        String accessToken =
+                jwtService.generateAccessToken(userDetails);
+
+        String refreshToken =
+                jwtService.generateRefreshToken(userDetails);;
 
         return AuthResponse.builder()
-                .accessToken(token)
+
+                .accessToken(accessToken)
+
+                .refreshToken(refreshToken)
+
                 .tokenType("Bearer")
-                .expiresIn(86400000L)
+
+                .expiresIn(jwtProperties.getExpiration())
+
                 .build();
     }
 

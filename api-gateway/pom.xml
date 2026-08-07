@@ -88,6 +88,10 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>common-library</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

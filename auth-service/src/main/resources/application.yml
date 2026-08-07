@@ -43,6 +43,8 @@ jwt:
 
   expiration: ${JWT_EXPIRATION:3600000}
 
+  refresh-expiration: 604800000
+
 
 
 management:
