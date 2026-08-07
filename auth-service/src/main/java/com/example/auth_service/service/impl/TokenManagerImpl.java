@@ -28,16 +28,9 @@ public class TokenManagerImpl implements TokenManager {
         CustomUserDetails userDetails =
                 new CustomUserDetails(user);
 
-        String accessToken =
-                jwtService.generateAccessToken(userDetails);
+        String accessToken = jwtService.generateAccessToken(userDetails);
 
-        String refreshToken =
-                jwtService.generateRefreshToken(userDetails);
-
-        refreshTokenService.createRefreshToken(
-                user,
-                refreshToken
-        );
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)

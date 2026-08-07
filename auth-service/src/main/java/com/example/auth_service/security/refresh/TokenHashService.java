@@ -1,4 +1,4 @@
-package com.example.auth_service.security;
+package com.example.auth_service.security.refresh;
 
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;

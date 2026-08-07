@@ -17,10 +17,6 @@ public class JwtService {
         return tokenGenerator.generateAccessToken(userDetails);
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
-        return tokenGenerator.generateRefreshToken(userDetails);
-    }
-
     public String extractUsername(String token) {
         return tokenValidator.extractUsername(token);
     }

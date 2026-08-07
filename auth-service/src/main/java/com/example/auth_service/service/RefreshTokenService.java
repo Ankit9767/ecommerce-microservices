@@ -5,10 +5,7 @@ import com.example.auth_service.entity.User;
 
 public interface RefreshTokenService {
 
-    RefreshToken createRefreshToken(
-            User user,
-            String token
-    );
+    String  createRefreshToken(User user);
 
     RefreshToken verifyRefreshToken(String token);
 

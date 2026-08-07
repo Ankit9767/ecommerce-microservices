@@ -4,7 +4,8 @@ import com.example.auth_service.entity.RefreshToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidRefreshTokenException;
 import com.example.auth_service.repository.RefreshTokenRepository;
-import com.example.auth_service.security.TokenHashService;
+import com.example.auth_service.security.refresh.RefreshTokenGenerator;
+import com.example.auth_service.security.refresh.TokenHashService;
 import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
@@ -23,38 +24,36 @@ public class RefreshTokenServiceImpl
 
     private final TokenHashService tokenHashService;
 
+    private final RefreshTokenGenerator refreshTokenGenerator;
+
     @Override
-    public RefreshToken createRefreshToken(
-            User user,
-            String token
-    ) {
+    public String createRefreshToken(User user) {
 
-        RefreshToken refreshToken =
-                RefreshToken.builder()
+        String token = refreshTokenGenerator.generate();
 
-                        .tokenHash(tokenHashService.hash(token))
+        String tokenHash = tokenHashService.hash(token);
 
-                        .user(user)
+        RefreshToken refreshToken = RefreshToken.builder()
+                .tokenHash(tokenHash)
+                .user(user)
+                .expiryDate(
+                        Instant.now().plusMillis(jwtProperties.getRefreshExpiration())
+                )
+                .revoked(false)
+                .build();
 
-                        .expiryDate(
-                                Instant.now()
-                                        .plusMillis(jwtProperties.getRefreshExpiration())
-                        )
+        repository.save(refreshToken);
 
-                        .revoked(false)
-
-                        .build();
-
-        return repository.save(refreshToken);
+        return token;
     }
 
     @Override
     public RefreshToken verifyRefreshToken(String token) {
 
-        String tokenHash = tokenHashService.hash(token);
+        String hash = tokenHashService.hash(token);
 
         RefreshToken refreshToken =
-                repository.findByTokenHash(tokenHash)
+                repository.findByTokenHash(hash)
                         .orElseThrow(() ->
                                 new InvalidRefreshTokenException(
                                         "Refresh token not found"
