@@ -1,33 +1,56 @@
 package com.example.auth_service.entity;
 
-import com.ecommerce.common.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "email")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(nullable = false, length = 15)
+    private String phone;
 
-    private boolean enabled;
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+
+    @JoinTable(
+            name = "user_roles",
+
+            joinColumns = @JoinColumn(name = "user_id"),
+
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+
+    private Set<Role> roles = new HashSet<>();
+
 }
