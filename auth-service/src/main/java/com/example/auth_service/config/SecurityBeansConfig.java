@@ -17,13 +17,12 @@
 //    private final CustomUserDetailsService userDetailsService;
 //
 //    @Bean
-//    PasswordEncoder passwordEncoder() {
-//
+//    public PasswordEncoder passwordEncoder() {
 //        return new BCryptPasswordEncoder();
 //    }
 //
 //    @Bean
-//    DaoAuthenticationProvider authenticationProvider() {
+//    public DaoAuthenticationProvider authenticationProvider() {
 //
 //        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 //
@@ -34,7 +33,7 @@
 //    }
 //
 //    @Bean
-//    AuthenticationManager authenticationManager(
+//    public AuthenticationManager authenticationManager(
 //            AuthenticationConfiguration configuration)
 //            throws Exception {
 //
