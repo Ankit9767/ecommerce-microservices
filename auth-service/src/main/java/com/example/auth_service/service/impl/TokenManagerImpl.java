@@ -1,13 +1,13 @@
 package com.example.auth_service.service.impl;
 
 import com.example.auth_service.dto.response.AuthResponse;
-import com.example.auth_service.entity.RefreshToken;
+import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.security.CustomUserDetails;
 
 import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.security.jwt.JwtService;
-import com.example.auth_service.service.RefreshTokenService;
+import com.example.auth_service.service.UserSessionService;
 import com.example.auth_service.service.TokenManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class TokenManagerImpl implements TokenManager {
 
     private final JwtService jwtService;
 
-    private final RefreshTokenService refreshTokenService;
+    private final UserSessionService userSessionService;
 
     private final JwtProperties jwtProperties;
 
@@ -27,7 +27,7 @@ public class TokenManagerImpl implements TokenManager {
 
         String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user));
 
-        String refreshToken = refreshTokenService.createRefreshToken(user);
+        String refreshToken = userSessionService.createSession(user);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -39,11 +39,11 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public AuthResponse refreshAccessToken(String refreshToken) {
 
-        RefreshToken storedToken = refreshTokenService.verifyRefreshToken(refreshToken);
+        UserSession storedToken = userSessionService.verifySession(refreshToken);
 
         User user = storedToken.getUser();
 
-        refreshTokenService.revokeRefreshToken(refreshToken);
+        userSessionService.revokeSession(refreshToken);
 
         return generateTokens(user);
 
@@ -51,16 +51,16 @@ public class TokenManagerImpl implements TokenManager {
 
     @Override
     public void revokeRefreshToken(String refreshToken) {
-        refreshTokenService.revokeRefreshToken(refreshToken);
+        userSessionService.revokeSession(refreshToken);
     }
 
     @Override
     public void revokeAllTokens(User user) {
-        refreshTokenService.revokeAllUserTokens(user);
+        userSessionService.revokeAllSessions(user);
     }
 
     @Override
     public void logout(String refreshToken) {
-        refreshTokenService.revokeRefreshToken(refreshToken);
+        userSessionService.revokeSession(refreshToken);
     }
 }

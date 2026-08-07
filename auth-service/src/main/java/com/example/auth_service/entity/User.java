@@ -60,7 +60,6 @@ public class User extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<RefreshToken> refreshTokens =
-            new ArrayList<>();
+    private List<UserSession> userSessions = new ArrayList<>();
 
 }

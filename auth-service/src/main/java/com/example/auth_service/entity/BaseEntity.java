@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @MappedSuperclass
+@EntityListeners(EntityListeners.class)
 public abstract class BaseEntity {
 
     @Id

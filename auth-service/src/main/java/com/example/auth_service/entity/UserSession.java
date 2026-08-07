@@ -6,13 +6,13 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "user_sessions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RefreshToken extends BaseEntity {
+public class UserSession extends BaseEntity {
 
     @Column(nullable = false, unique = true, length = 64)
     private String tokenHash;
@@ -21,13 +21,10 @@ public class RefreshToken extends BaseEntity {
     private Instant expiryDate;
 
     @Column(nullable = false)
-    @Builder.Default
-    private Boolean revoked = false;
+    private Boolean revoked;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "user_id")
     private User user;
+
 }
