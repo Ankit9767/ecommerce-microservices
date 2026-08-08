@@ -149,27 +149,58 @@ public class UserSessionServiceImpl
     }
 
     @Override
-    public List<SessionResponse> getSessions(User user, String currentSessionId) {
+    public List<SessionResponse> getSessions(User user,
+            String currentSessionId) {
 
-        return userSessionRepository.findByUserAndRevokedFalse(user)
+        Instant now = Instant.now();
+
+        return userSessionRepository
+                .findByUserAndRevokedFalse(user)
                 .stream()
+
+                .filter(session ->
+                        session.getExpiryDate()
+                                .isAfter(now)
+                )
+
                 .map(session ->
                         SessionResponse.builder()
-                                .sessionId(session.getId())
-                                .deviceName(session.getDeviceName())
-                                .browser(session.getBrowser())
-                                .operatingSystem(session.getOperatingSystem())
-                                .ipAddress(session.getIpAddress())
-                                .loginTime(session.getLoginTime())
-                                .lastActivity(session.getLastActivity())
-                                .expiryDate(session.getExpiryDate())
+                                .sessionId(
+                                        session.getId()
+                                )
+                                .deviceName(
+                                        session.getDeviceName()
+                                )
+                                .deviceType(
+                                        session.getDeviceType()
+                                )
+                                .browser(
+                                        session.getBrowser()
+                                )
+                                .operatingSystem(
+                                        session.getOperatingSystem()
+                                )
+                                .ipAddress(
+                                        session.getIpAddress()
+                                )
+                                .loginTime(
+                                        session.getLoginTime()
+                                )
+                                .lastActivity(
+                                        session.getLastActivity()
+                                )
+                                .expiryDate(
+                                        session.getExpiryDate()
+                                )
                                 .currentSession(
                                         session.getSessionId()
-                                                .equals(currentSessionId)
+                                                .equals(
+                                                        currentSessionId
+                                                )
                                 )
-                                .build())
+                                .build()
+                )
                 .toList();
-
     }
 
     @Override

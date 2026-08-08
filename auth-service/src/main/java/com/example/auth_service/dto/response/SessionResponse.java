@@ -12,6 +12,8 @@ public class SessionResponse {
 
     private String deviceName;
 
+    private String deviceType;
+
     private String browser;
 
     private String operatingSystem;
