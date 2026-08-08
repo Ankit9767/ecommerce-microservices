@@ -3,15 +3,19 @@ package com.example.auth_service.session;
 import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.security.device.BrowserDetector;
 import com.example.auth_service.security.device.BrowserInfo;
+import com.example.auth_service.security.device.OperatingSystemDetector;
+import com.example.auth_service.security.device.OperatingSystemInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class SessionContextExtractorImpl implements SessionContextExtractor {
 
     private final BrowserDetector browserDetector;
+
+    private final OperatingSystemDetector operatingSystemDetector;
 
     @Override
     public SessionInfo extract(SessionContext context) {
@@ -22,13 +26,32 @@ public class SessionContextExtractorImpl implements SessionContextExtractor {
 
         BrowserInfo browser = browserDetector.detect(userAgent);
 
+        OperatingSystemInfo operatingSystem = operatingSystemDetector.detect(userAgent);
+
         String ipAddress = getClientIp(request);
 
         return SessionInfo.builder()
-                .browser(browser.getBrowserName() + " "
-                        + browser.getBrowserVersion())
+                .browser(
+                        browser.getBrowserName()
+                                + (browser.getBrowserVersion()
+                                        .isBlank()
+                                        ? ""
+                                        : " " +
+                                        browser.getBrowserVersion()
+                        )
+                )
+
+                .operatingSystem(
+                        operatingSystem.getOperatingSystem()
+                                + (operatingSystem.getVersion()
+                                        .isBlank()
+                                        ? ""
+                                        : " " +
+                                        operatingSystem.getVersion()
+                        )
+                )
+
                 .deviceName("Unknown")
-                .operatingSystem("Unknown")
                 .ipAddress(ipAddress)
                 .build();
     }
@@ -38,7 +61,15 @@ public class SessionContextExtractorImpl implements SessionContextExtractor {
         String forwarded = request.getHeader("X-Forwarded-For");
 
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0];
+            return forwarded
+                    .split(",")[0]
+                    .trim();
+        }
+
+        String realIp = request.getHeader("X-Real-IP");
+
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp;
         }
         return request.getRemoteAddr();
     }
