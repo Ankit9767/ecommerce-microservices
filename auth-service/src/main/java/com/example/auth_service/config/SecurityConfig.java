@@ -47,6 +47,15 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         )
                         .permitAll()
+                        .requestMatchers(
+                                "/api/admin/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/seller/**"
+                        ).hasRole("SELLER")
+                        .requestMatchers(
+                                "/api/customer/**"
+                        ).hasRole("CUSTOMER")
                         .anyRequest()
                         .authenticated()
                 );

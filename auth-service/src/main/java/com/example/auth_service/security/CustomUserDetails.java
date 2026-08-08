@@ -1,5 +1,6 @@
 package com.example.auth_service.security;
 
+import com.example.auth_service.entity.Role;
 import com.example.auth_service.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,7 +8,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -19,12 +19,10 @@ public class CustomUserDetails implements UserDetails {
 
         return user.getRoles()
                 .stream()
-                .map(role ->
-                        new SimpleGrantedAuthority(
-                                role.getRoleName().name()
-                        )
-                )
-                .collect(Collectors.toSet());
+                .map(Role::getRoleName)
+                .map(Enum::name)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
     }
 
     @Override

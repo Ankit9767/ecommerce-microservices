@@ -3,9 +3,6 @@ package com.example.auth_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity
 @Table(name = "roles")
 @Getter
@@ -16,10 +13,11 @@ import java.util.Set;
 public class Role extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
+    @Column(
+            name = "role_name",
+            nullable = false,
+            unique = true,
+            length = 50
+    )
     private RoleName roleName;
-
-    @ManyToMany(mappedBy = "roles")
-    private Set<User> users = new HashSet<>();
-
 }
