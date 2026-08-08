@@ -38,7 +38,11 @@ public class UserSessionServiceImpl
 
         String hash = tokenHashService.hash(token);
 
-        UserSession session = UserSession.builder()
+        UserSession session =
+            UserSession.builder()
+                .sessionId(
+                        sessionInfo.getSessionId()
+                )
                 .tokenHash(hash)
 
                 .expiryDate(Instant.now()
@@ -144,7 +148,7 @@ public class UserSessionServiceImpl
     }
 
     @Override
-    public List<SessionResponse> getSessions(User user) {
+    public List<SessionResponse> getSessions(User user, String currentSessionId) {
 
         return userSessionRepository.findByUserAndRevokedFalse(user)
                 .stream()
@@ -158,7 +162,10 @@ public class UserSessionServiceImpl
                                 .loginTime(session.getLoginTime())
                                 .lastActivity(session.getLastActivity())
                                 .expiryDate(session.getExpiryDate())
-                                .currentSession(false)
+                                .currentSession(
+                                        session.getSessionId()
+                                                .equals(currentSessionId)
+                                )
                                 .build())
                 .toList();
 

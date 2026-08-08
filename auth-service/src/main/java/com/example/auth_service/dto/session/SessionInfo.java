@@ -7,6 +7,8 @@ import lombok.Data;
 @Builder
 public class SessionInfo {
 
+    private String sessionId;
+
     private String deviceName;
 
     private String deviceType;

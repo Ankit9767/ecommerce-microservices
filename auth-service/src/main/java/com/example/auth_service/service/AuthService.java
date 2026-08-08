@@ -17,7 +17,7 @@ public interface AuthService {
 
     void logout(String refreshToken);
 
-    List<SessionResponse> getSessions();
+    List<SessionResponse> getSessions(String accessToken);
 
     void logoutSession(Long id);
 

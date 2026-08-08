@@ -12,6 +12,7 @@ import com.example.auth_service.exception.RoleNotFoundException;
 import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.security.jwt.JwtTokenValidator;
 import com.example.auth_service.service.AuthService;
 import com.example.auth_service.service.TokenManager;
 import com.example.auth_service.service.UserSessionService;
@@ -27,6 +28,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +47,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserSessionService userSessionService;
 
     private final SessionContextExtractor extractor;
+
+    private final JwtTokenValidator jwtTokenValidator;
 
     @Override
     public AuthResponse register(RegisterRequest request, HttpServletRequest servletRequest) {
@@ -104,7 +108,27 @@ public class AuthServiceImpl implements AuthService {
                         .request(servletRequest)
                         .build();
 
-        SessionInfo sessionInfo = extractor.extract(context);
+        SessionInfo extractedInfo = extractor.extract(context);
+
+        SessionInfo sessionInfo =
+                SessionInfo.builder()
+                        .sessionId(UUID.randomUUID().toString())
+                        .deviceName(
+                                extractedInfo.getDeviceName()
+                        )
+                        .deviceType(
+                                extractedInfo.getDeviceType()
+                        )
+                        .browser(
+                                extractedInfo.getBrowser()
+                        )
+                        .operatingSystem(
+                                extractedInfo.getOperatingSystem()
+                        )
+                        .ipAddress(
+                                extractedInfo.getIpAddress()
+                        )
+                        .build();
         return tokenManager.generateTokens(user, sessionInfo);
     }
 
@@ -119,9 +143,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public List<SessionResponse> getSessions() {
+    public List<SessionResponse> getSessions(String accessToken) {
         User user = getCurrentUser();
-        return userSessionService.getSessions(user);
+        String sessionId =
+                jwtTokenValidator.extractSessionId(
+                        accessToken
+                );
+        return userSessionService.getSessions(user, sessionId);
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.example.auth_service.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -61,8 +62,10 @@ public class AuthController {
     }
 
     @GetMapping("/sessions")
-    public ResponseEntity<List<SessionResponse>> getSessions() {
-        return ResponseEntity.ok(authService.getSessions());
+    public ResponseEntity<List<SessionResponse>> getSessions( @RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                                  String authorizationHeader) {
+        String accessToken = authorizationHeader.replaceFirst("(?i)^Bearer\\s+", "");
+        return ResponseEntity.ok(authService.getSessions(accessToken));
     }
 
     @DeleteMapping("/sessions/{id}")

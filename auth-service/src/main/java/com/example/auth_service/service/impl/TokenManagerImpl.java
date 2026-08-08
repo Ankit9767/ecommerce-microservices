@@ -26,7 +26,7 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public AuthResponse generateTokens(User user, SessionInfo sessionInfo) {
 
-        String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user));
+        String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user), sessionInfo.getSessionId());
 
         String refreshToken = userSessionService.createSession(user, sessionInfo);
 
@@ -40,18 +40,67 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public AuthResponse refreshAccessToken(String refreshToken) {
 
-        UserSession storedToken = userSessionService.verifySession(refreshToken);
+        /*
+         * 1. Verify the opaque refresh token.
+         */
 
-        User user = storedToken.getUser();
+        UserSession storedSession  = userSessionService.verifySession(refreshToken);
 
-        SessionInfo sessionInfo = SessionInfo.builder()
-                .deviceName(storedToken.getDeviceName())
-                .browser(storedToken.getBrowser())
-                .operatingSystem(storedToken.getOperatingSystem())
-                .ipAddress(storedToken.getIpAddress())
-                .build();
+        User user = storedSession.getUser();
+
+        /*
+         * 2. IMPORTANT:
+         *
+         * Reuse the existing session ID.
+         *
+         * We do NOT generate a new session ID.
+         */
+
+        String sessionId = storedSession.getSessionId();
+
+        /*
+         * 3. Preserve the existing device/session
+         * information during token rotation.
+         */
+
+
+        SessionInfo sessionInfo =
+                SessionInfo.builder()
+
+                        .sessionId(sessionId)
+
+                        .deviceName(
+                                storedSession.getDeviceName()
+                        )
+
+                        .deviceType(
+                                storedSession.getDeviceType()
+                        )
+
+                        .browser(
+                                storedSession.getBrowser()
+                        )
+
+                        .operatingSystem(
+                                storedSession.getOperatingSystem()
+                        )
+
+                        .ipAddress(
+                                storedSession.getIpAddress()
+                        )
+
+                        .build();
+
+        /*
+         * 4. Revoke the old refresh token.
+         */
 
         userSessionService.revokeSession(refreshToken);
+
+        /*
+         * 5. Generate the new tokens using
+         * the SAME session ID.
+         */
 
         return generateTokens(user, sessionInfo);
 

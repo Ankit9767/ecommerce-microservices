@@ -14,6 +14,9 @@ import java.time.Instant;
 @Builder
 public class UserSession extends BaseEntity {
 
+    @Column(nullable = false, length = 36)
+    private String sessionId;
+
     @Column(nullable = false, unique = true, length = 64)
     private String tokenHash;
 

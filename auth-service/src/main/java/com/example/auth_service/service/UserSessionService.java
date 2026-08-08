@@ -16,7 +16,7 @@ public interface UserSessionService {
 
     void revokeAllSessions(User user);
 
-    List<SessionResponse> getSessions(User user);
+    List<SessionResponse> getSessions(User user, String currentSessionId);
 
     void revokeSession(Long sessionId, User user);
 

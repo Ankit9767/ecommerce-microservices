@@ -95,4 +95,13 @@ public class JwtTokenValidator {
                 .getPayload();
     }
 
+    public String extractSessionId(String token) {
+        return extractClaim(
+                token,
+                claims -> claims.get(
+                        "sessionId",
+                        String.class
+                )
+        );
+    }
 }

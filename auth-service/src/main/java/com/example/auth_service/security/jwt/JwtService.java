@@ -13,8 +13,8 @@ public class JwtService {
 
     private final JwtTokenValidator tokenValidator;
 
-    public String generateAccessToken(UserDetails userDetails) {
-        return tokenGenerator.generateAccessToken(userDetails);
+    public String generateAccessToken(UserDetails userDetails, String sessionId) {
+        return tokenGenerator.generateAccessToken(userDetails, sessionId);
     }
 
     public String extractUsername(String token) {
