@@ -38,35 +38,34 @@ public class UserSessionServiceImpl
 
         String hash = tokenHashService.hash(token);
 
-        UserSession session =
-                UserSession.builder()
-                        .tokenHash(hash)
-                        .user(user)
-                        .expiryDate(
-                                Instant.now()
-                                        .plusMillis(
-                                                jwtProperties.getRefreshExpiration())
-                        )
-                        .revoked(false)
-                        .loginTime(
-                                Instant.now()
-                        )
-                        .lastActivity(
-                                Instant.now()
-                        )
-                        .deviceName(
-                                sessionInfo.getDeviceName()
-                        )
-                        .browser(
-                                sessionInfo.getBrowser()
-                        )
-                        .operatingSystem(
-                                sessionInfo.getOperatingSystem()
-                        )
-                        .ipAddress(
-                                sessionInfo.getIpAddress()
-                        )
-                        .build();
+        UserSession session = UserSession.builder()
+                .tokenHash(hash)
+
+                .expiryDate(Instant.now()
+                            .plusMillis(
+                                jwtProperties.getRefreshExpiration()))
+
+                .revoked(false)
+
+                .deviceName(sessionInfo.getDeviceName())
+
+                .deviceType(sessionInfo.getDeviceType())
+
+                .browser(sessionInfo.getBrowser())
+
+                .operatingSystem(
+                        sessionInfo.getOperatingSystem()
+                )
+
+                .ipAddress(sessionInfo.getIpAddress())
+
+                .loginTime(Instant.now())
+
+                .lastActivity(Instant.now())
+
+                .user(user)
+
+                .build();
 
         userSessionRepository.save(session);
         return token;

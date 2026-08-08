@@ -26,10 +26,11 @@ public class UserSession extends BaseEntity {
     @Column(length = 100)
     private String deviceName;
 
+    @Column(length = 50)
+    private String deviceType;
 
     @Column(length = 100)
     private String browser;
-
 
     @Column(length = 100)
     private String operatingSystem;

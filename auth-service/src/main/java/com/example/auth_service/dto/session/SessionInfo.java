@@ -9,6 +9,8 @@ public class SessionInfo {
 
     private String deviceName;
 
+    private String deviceType;
+
     private String browser;
 
     private String operatingSystem;
