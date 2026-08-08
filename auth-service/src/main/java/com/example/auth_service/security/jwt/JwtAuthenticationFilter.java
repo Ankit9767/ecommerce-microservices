@@ -1,6 +1,7 @@
 package com.example.auth_service.security.jwt;
 
 import com.example.auth_service.security.CustomUserDetailsService;
+import com.example.auth_service.service.UserSessionService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,18 +23,30 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenValidator jwtTokenValidator;
+
     private final CustomUserDetailsService userDetailsService;
 
+    private final UserSessionService userSessionService;
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
 
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (header == null || !header.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+        /*
+         * No Bearer token.
+         *
+         * Let Spring Security decide whether
+         * the endpoint is public or protected.
+         */
+        if (header == null ||
+                !header.startsWith("Bearer ")) {
+
+            filterChain.doFilter(
+                    request,
+                    response
+            );
             return;
         }
 
@@ -44,13 +57,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtTokenValidator.extractUsername(token);
 
             if (username != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication() == null) {
+
 
                 UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+                        userDetailsService
+                                .loadUserByUsername(
+                                        username
+                                );
+
 
                 if (jwtTokenValidator.isTokenValid(token, userDetails)) {
 
+                    /*
+                     * Authenticate the request.
+                     */
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -63,19 +86,61 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     .buildDetails(request)
                     );
 
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(
+                                    authentication
+                            );
+
+
+                    /*
+                     * Extract the session ID from
+                     * the access JWT.
+                     */
+                    String sessionId = jwtTokenValidator.extractSessionId(token);
+
+
+                    /*
+                     * Update last activity of the
+                     * corresponding user session.
+                     */
+                    if (sessionId != null) {
+
+                        userSessionService
+                                .updateLastActivity(
+                                        sessionId
+                                );
+                    }
                 }
             }
 
         } catch (JwtException ex) {
 
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid JWT Token");
+            SecurityContextHolder.clearContext();
+
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
+
+            response.setContentType(
+                    "application/json"
+            );
+
+            response.getWriter().write(
+                    """
+                    {
+                        "error": "Invalid JWT token"
+                    }
+                    """
+            );
+
             return;
 
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(
+                request,
+                response
+        );
     }
 }

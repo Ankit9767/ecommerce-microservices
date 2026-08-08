@@ -56,7 +56,7 @@ public class TokenManagerImpl implements TokenManager {
          * We do NOT generate a new session ID.
          */
 
-        String sessionId = storedSession.getSessionId();
+        String existingSessionId  = storedSession.getSessionId();
 
         /*
          * 3. Preserve the existing device/session
@@ -67,7 +67,7 @@ public class TokenManagerImpl implements TokenManager {
         SessionInfo sessionInfo =
                 SessionInfo.builder()
 
-                        .sessionId(sessionId)
+                        .sessionId(existingSessionId )
 
                         .deviceName(
                                 storedSession.getDeviceName()

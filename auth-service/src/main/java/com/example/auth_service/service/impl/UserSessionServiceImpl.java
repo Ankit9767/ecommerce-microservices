@@ -15,6 +15,7 @@ import com.example.auth_service.service.UserSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 
@@ -182,6 +183,31 @@ public class UserSessionServiceImpl
 
         session.setRevoked(true);
         userSessionRepository.save(session);
+    }
+
+    @Override
+    @Transactional
+    public void updateLastActivity(String sessionId) {
+
+        userSessionRepository
+                .findBySessionId(sessionId)
+                .ifPresent(session -> {
+
+                    if (!Boolean.TRUE.equals(
+                            session.getRevoked()
+                    )
+                            && !session.getExpiryDate()
+                            .isBefore(Instant.now())) {
+
+                        session.setLastActivity(
+                                Instant.now()
+                        );
+
+                        userSessionRepository.save(
+                                session
+                        );
+                    }
+                });
     }
 
 }
