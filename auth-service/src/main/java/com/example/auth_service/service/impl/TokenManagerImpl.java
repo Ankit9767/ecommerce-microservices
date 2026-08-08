@@ -24,18 +24,9 @@ public class TokenManagerImpl implements TokenManager {
     private final JwtProperties jwtProperties;
 
     @Override
-    public AuthResponse generateTokens(User user) {
+    public AuthResponse generateTokens(User user, SessionInfo sessionInfo) {
 
         String accessToken = jwtService.generateAccessToken(new CustomUserDetails(user));
-
-        // for now adding this as unknown , later will populate this by http headers
-        SessionInfo sessionInfo =
-                SessionInfo.builder()
-                        .deviceName("Unknown")
-                        .browser("Unknown")
-                        .operatingSystem("Unknown")
-                        .ipAddress("Unknown")
-                        .build();
 
         String refreshToken = userSessionService.createSession(user, sessionInfo);
 
@@ -53,9 +44,16 @@ public class TokenManagerImpl implements TokenManager {
 
         User user = storedToken.getUser();
 
+        SessionInfo sessionInfo = SessionInfo.builder()
+                .deviceName(storedToken.getDeviceName())
+                .browser(storedToken.getBrowser())
+                .operatingSystem(storedToken.getOperatingSystem())
+                .ipAddress(storedToken.getIpAddress())
+                .build();
+
         userSessionService.revokeSession(refreshToken);
 
-        return generateTokens(user);
+        return generateTokens(user, sessionInfo);
 
     }
 

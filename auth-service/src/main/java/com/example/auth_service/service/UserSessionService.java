@@ -1,8 +1,10 @@
 package com.example.auth_service.service;
 
+import com.example.auth_service.dto.response.SessionResponse;
 import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
+import java.util.List;
 
 public interface UserSessionService {
 
@@ -13,5 +15,9 @@ public interface UserSessionService {
     void revokeSession(String refreshToken);
 
     void revokeAllSessions(User user);
+
+    List<SessionResponse> getSessions(User user);
+
+    void revokeSession(Long sessionId, User user);
 
 }

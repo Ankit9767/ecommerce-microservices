@@ -1,11 +1,12 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.response.AuthResponse;
+import com.example.auth_service.dto.session.SessionInfo;
 import com.example.auth_service.entity.User;
 
 public interface TokenManager {
 
-    AuthResponse generateTokens(User user);
+    AuthResponse generateTokens(User user,  SessionInfo sessionInfo);
 
     AuthResponse refreshAccessToken(String refreshToken);
 
