@@ -161,4 +161,22 @@ public class UserServiceImpl implements UserService {
             userSessionService.revokeAllSessions(user);
         }
     }
+
+    @Override
+    public void deleteUser(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User not found: " + userId
+                        )
+                );
+
+        /*
+         * Revoke all refresh-token sessions first.
+         */
+        userSessionService.revokeAllSessions(user);
+
+        userRepository.delete(user);
+    }
 }

@@ -53,10 +53,17 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         )
                         .permitAll()
+
                         .requestMatchers(HttpMethod.PATCH,
                                 "/api/users/*/status"
                         )
                         .hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/users/*"
+                        )
+                        .hasRole("ADMIN")
+
                         /*
                          * Permission-based authorization
                          */
