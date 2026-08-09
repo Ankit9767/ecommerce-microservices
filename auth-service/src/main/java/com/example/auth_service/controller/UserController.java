@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
 import com.example.auth_service.dto.response.UserProfileResponse;
 import com.example.auth_service.service.UserService;
@@ -30,5 +31,14 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.updateCurrentUser(request)
         );
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        userService.changePassword(request);
+
+        return ResponseEntity.noContent().build();
     }
 }

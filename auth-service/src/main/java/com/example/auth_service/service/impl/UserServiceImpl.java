@@ -1,14 +1,19 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
 import com.example.auth_service.dto.response.UserProfileResponse;
 import com.example.auth_service.entity.User;
+import com.example.auth_service.exception.InvalidPasswordException;
+import com.example.auth_service.exception.PasswordMismatchException;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.UserService;
+import com.example.auth_service.service.UserSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final UserSessionService userSessionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,5 +89,49 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .build();
+    }
+
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+
+        User user = getAuthenticatedUser();
+
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword()
+        )) {
+
+            throw new InvalidPasswordException(
+                    "Current password is incorrect"
+            );
+        }
+
+        if (!request.getNewPassword()
+                .equals(request.getConfirmPassword())) {
+
+            throw new PasswordMismatchException(
+                    "New password and confirmation password do not match"
+            );
+        }
+
+        if (passwordEncoder.matches(
+                request.getNewPassword(),
+                user.getPassword()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "New password must be different from current password"
+            );
+        }
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getNewPassword()
+                )
+        );
+
+        userRepository.save(user);
+
+        userSessionService.revokeAllSessions(user);
     }
 }
