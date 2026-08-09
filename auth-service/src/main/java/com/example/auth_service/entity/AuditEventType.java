@@ -1,0 +1,34 @@
+package com.example.auth_service.entity;
+
+public enum AuditEventType {
+
+    LOGIN_SUCCESS,
+
+    LOGIN_FAILED,
+
+    LOGOUT,
+
+    LOGOUT_ALL,
+
+    TOKEN_REFRESH,
+
+    PASSWORD_CHANGED,
+
+    PASSWORD_RESET,
+
+    ACCOUNT_ENABLED,
+
+    ACCOUNT_DISABLED,
+
+    ROLE_ASSIGNED,
+
+    ROLE_REMOVED,
+
+    PERMISSION_ASSIGNED,
+
+    PERMISSION_REMOVED,
+
+    SESSION_CREATED,
+
+    SESSION_REVOKED
+}
