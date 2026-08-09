@@ -1,5 +1,6 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.request.AccountStatusRequest;
 import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
 import com.example.auth_service.dto.response.UserProfileResponse;
@@ -38,6 +39,15 @@ public class UserController {
             @Valid @RequestBody ChangePasswordRequest request) {
 
         userService.changePassword(request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{userId}/status")
+    public ResponseEntity<Void> updateAccountStatus(@PathVariable Long userId,
+            @Valid @RequestBody AccountStatusRequest request) {
+
+        userService.updateAccountStatus(userId, request);
 
         return ResponseEntity.noContent().build();
     }

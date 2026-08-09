@@ -1,5 +1,6 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.dto.request.AccountStatusRequest;
 import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
 import com.example.auth_service.dto.response.UserProfileResponse;
@@ -133,5 +134,31 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         userSessionService.revokeAllSessions(user);
+    }
+
+    @Override
+    public void updateAccountStatus(Long userId, AccountStatusRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User not found: " + userId
+                        )
+                );
+
+        boolean enabled = request.getEnabled();
+
+        user.setEnabled(enabled);
+
+        userRepository.save(user);
+
+        /*
+         * If the account is disabled,
+         * immediately revoke all refresh sessions.
+         */
+        if (!enabled) {
+
+            userSessionService.revokeAllSessions(user);
+        }
     }
 }
