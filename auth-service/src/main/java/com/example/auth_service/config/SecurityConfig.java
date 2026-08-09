@@ -3,7 +3,6 @@ package com.example.auth_service.config;
 import com.example.auth_service.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -54,34 +53,6 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
-                        .requestMatchers(
-                                "/api/admin/**")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers(
-                                "/api/seller/**")
-                        .hasRole("SELLER")
-
-                        .requestMatchers(
-                                "/api/customer/**")
-                        .hasRole("CUSTOMER")
-
-                        .requestMatchers(HttpMethod.PATCH,
-                                "/api/users/*/status")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.DELETE,
-                                "/api/users/*")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers(
-                                "/api/roles/**")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers(
-                                "/api/users/*/roles/**")
-                        .hasRole("ADMIN")
-
                         /*
                          * Permission-based authorization
                          */
@@ -89,26 +60,21 @@ public class SecurityConfig {
                                 "/api/products/**")
                         .hasAuthority("PRODUCT_READ")
 
-
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/products/**")
                         .hasAuthority("PRODUCT_CREATE")
-
 
                         .requestMatchers(org.springframework.http.HttpMethod.PUT,
                                 "/api/products/**")
                         .hasAuthority("PRODUCT_UPDATE")
 
-
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE,
                                 "/api/products/**")
                         .hasAuthority("PRODUCT_DELETE")
 
-
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/orders/**")
                         .hasAuthority("ORDER_CREATE")
-
 
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
                                 "/api/orders/**")
@@ -118,18 +84,6 @@ public class SecurityConfig {
                                 org.springframework.http.HttpMethod.POST,
                                 "/api/payments/**")
                         .hasAuthority("PAYMENT_CREATE")
-
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/users/**")
-                        .hasAuthority("USER_READ")
-
-                        .requestMatchers(HttpMethod.DELETE,
-                                "/api/users/**")
-                        .hasAuthority("USER_DELETE")
-
-                        .requestMatchers(HttpMethod.PUT,
-                                "/api/users/**")
-                        .hasAuthority("USER_UPDATE")
 
                         .anyRequest()
                         .authenticated()
