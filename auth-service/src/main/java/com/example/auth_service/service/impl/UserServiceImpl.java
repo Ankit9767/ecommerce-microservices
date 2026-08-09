@@ -291,6 +291,21 @@ public class UserServiceImpl implements UserService {
         user.getRoles().add(role);
 
         userRepository.save(user);
+
+        securityAuditService.record(
+                AuditEventType.ROLE_ASSIGNED,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Role " + role.getRoleName()
+                        + " assigned to user"
+        );
     }
 
     @Override
@@ -331,5 +346,20 @@ public class UserServiceImpl implements UserService {
         user.getRoles().remove(role);
 
         userRepository.save(user);
+
+        securityAuditService.record(
+                AuditEventType.ROLE_REMOVED,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Role " + role.getRoleName()
+                        + " removed from user"
+        );
     }
 }

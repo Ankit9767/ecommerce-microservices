@@ -1,12 +1,14 @@
 package com.example.auth_service.service.impl;
 
 import com.example.auth_service.dto.response.PermissionResponse;
+import com.example.auth_service.entity.AuditEventType;
 import com.example.auth_service.entity.Permission;
 import com.example.auth_service.entity.Role;
 import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.PermissionRepository;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.service.RolePermissionService;
+import com.example.auth_service.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,8 @@ public class RolePermissionServiceImpl implements RolePermissionService {
     private final RoleRepository roleRepository;
 
     private final PermissionRepository permissionRepository;
+
+    private final SecurityAuditService securityAuditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,6 +56,23 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         role.getPermissions().add(permission);
 
         roleRepository.save(role);
+
+        securityAuditService.record(
+                AuditEventType.PERMISSION_ASSIGNED,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Permission "
+                        + permission.getPermissionName()
+                        + " assigned to role "
+                        + role.getRoleName()
+        );
     }
 
     @Override
@@ -72,6 +93,23 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         role.getPermissions().remove(permission);
 
         roleRepository.save(role);
+
+        securityAuditService.record(
+                AuditEventType.PERMISSION_REMOVED,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Permission "
+                        + permission.getPermissionName()
+                        + " removed from role "
+                        + role.getRoleName()
+        );
     }
 
     private Role findRole(Long roleId) {
