@@ -3,10 +3,14 @@ package com.example.auth_service.service.impl;
 import com.example.auth_service.dto.request.AccountStatusRequest;
 import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
+import com.example.auth_service.dto.response.RoleResponse;
 import com.example.auth_service.dto.response.UserProfileResponse;
+import com.example.auth_service.entity.Role;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidPasswordException;
 import com.example.auth_service.exception.PasswordMismatchException;
+import com.example.auth_service.exception.ResourceNotFoundException;
+import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.UserService;
 import com.example.auth_service.service.UserSessionService;
@@ -18,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +34,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserSessionService userSessionService;
+
+    private final RoleRepository roleRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -178,5 +186,111 @@ public class UserServiceImpl implements UserService {
         userSessionService.revokeAllSessions(user);
 
         userRepository.delete(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleResponse> getUserRoles(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found: " + userId
+                        )
+                );
+
+        return user.getRoles()
+                .stream()
+                .map(role ->
+                        RoleResponse.builder()
+                                .id(role.getId())
+                                .roleName(role.getRoleName())
+                                .permissions(
+                                        role.getPermissions()
+                                                .stream()
+                                                .map(permission ->
+                                                        permission
+                                                                .getPermissionName()
+                                                                .name()
+                                                )
+                                                .collect(
+                                                        java.util.stream.Collectors
+                                                                .toSet()
+                                                )
+                                )
+                                .build()
+                )
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void assignRole(Long userId, Long roleId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found: " + userId
+                        )
+                );
+
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Role not found: " + roleId
+                        )
+                );
+
+        if (user.getRoles().contains(role)) {
+
+            throw new IllegalStateException(
+                    "User already has role: "
+                            + role.getRoleName()
+            );
+        }
+
+        user.getRoles().add(role);
+
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void removeRole(Long userId, Long roleId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found: " + userId
+                        )
+                );
+
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Role not found: " + roleId
+                        )
+                );
+
+        if (!user.getRoles().contains(role)) {
+
+            throw new IllegalStateException("User does not have role: "
+                            + role.getRoleName()
+            );
+        }
+
+        /*
+         * Don't allow a user to have zero roles.
+         */
+        if (user.getRoles().size() == 1) {
+
+            throw new IllegalStateException(
+                    "User must have at least one role"
+            );
+        }
+
+        user.getRoles().remove(role);
+
+        userRepository.save(user);
     }
 }

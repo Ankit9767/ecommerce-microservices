@@ -68,6 +68,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/roles/**")
                         .hasRole("ADMIN")
 
+                        .requestMatchers("/api/users/*/roles/**")
+                        .hasRole("ADMIN")
+
                         /*
                          * Permission-based authorization
                          */
