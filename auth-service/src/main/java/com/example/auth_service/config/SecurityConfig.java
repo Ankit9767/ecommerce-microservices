@@ -58,10 +58,14 @@ public class SecurityConfig {
                                 "/api/users/*/status"
                         )
                         .hasRole("ADMIN")
+
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/users/*"
                         )
+                        .hasRole("ADMIN")
+
+                        .requestMatchers("/api/roles/**")
                         .hasRole("ADMIN")
 
                         /*
