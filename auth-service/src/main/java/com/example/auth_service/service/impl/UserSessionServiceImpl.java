@@ -2,6 +2,7 @@ package com.example.auth_service.service.impl;
 
 import com.example.auth_service.dto.response.SessionResponse;
 import com.example.auth_service.dto.session.SessionInfo;
+import com.example.auth_service.entity.AuditEventType;
 import com.example.auth_service.entity.UserSession;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidRefreshTokenException;
@@ -11,6 +12,7 @@ import com.example.auth_service.repository.UserSessionRepository;
 import com.example.auth_service.security.refresh.RefreshTokenGenerator;
 import com.example.auth_service.security.refresh.TokenHashService;
 import com.example.auth_service.security.jwt.JwtProperties;
+import com.example.auth_service.service.SecurityAuditService;
 import com.example.auth_service.service.UserSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +33,8 @@ public class UserSessionServiceImpl
     private final TokenHashService tokenHashService;
 
     private final RefreshTokenGenerator refreshTokenGenerator;
+
+    private final SecurityAuditService securityAuditService;
 
     @Override
     public String createSession(User user, SessionInfo sessionInfo) {
@@ -73,6 +77,21 @@ public class UserSessionServiceImpl
                 .build();
 
         userSessionRepository.save(session);
+
+        securityAuditService.record(
+                AuditEventType.SESSION_CREATED,
+                user,
+                user.getUsername(),
+                session.getIpAddress(),
+                session.getDeviceName(),
+                session.getDeviceType(),
+                session.getBrowser(),
+                session.getOperatingSystem(),
+                session.getSessionId(),
+                true,
+                "User session created"
+        );
+
         return token;
     }
 
@@ -126,6 +145,24 @@ public class UserSessionServiceImpl
         session.setLastActivity(Instant.now());
 
         userSessionRepository.save(session);
+
+        User user = session.getUser();
+
+        securityAuditService.record(
+                AuditEventType.SESSION_REVOKED,
+                user,
+                user != null
+                        ? user.getUsername()
+                        : null,
+                session.getIpAddress(),
+                session.getDeviceName(),
+                session.getDeviceType(),
+                session.getBrowser(),
+                session.getOperatingSystem(),
+                session.getSessionId(),
+                true,
+                "User session revoked"
+        );
     }
 
     @Override
@@ -146,6 +183,20 @@ public class UserSessionServiceImpl
         });
 
         userSessionRepository.saveAll(sessions);
+
+        securityAuditService.record(
+                AuditEventType.LOGOUT_ALL,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "All user sessions revoked"
+        );
     }
 
     @Override
@@ -214,6 +265,20 @@ public class UserSessionServiceImpl
 
         session.setRevoked(true);
         userSessionRepository.save(session);
+
+        securityAuditService.record(
+                AuditEventType.SESSION_REVOKED,
+                user,
+                user.getUsername(),
+                session.getIpAddress(),
+                session.getDeviceName(),
+                session.getDeviceType(),
+                session.getBrowser(),
+                session.getOperatingSystem(),
+                session.getSessionId(),
+                true,
+                "User session revoked"
+        );
     }
 
     @Override
