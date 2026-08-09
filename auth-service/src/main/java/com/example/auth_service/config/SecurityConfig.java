@@ -54,76 +54,83 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
-                        .requestMatchers(HttpMethod.PATCH,
-                                "/api/users/*/status"
-                        )
+                        .requestMatchers(
+                                "/api/admin/**")
                         .hasRole("ADMIN")
 
                         .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/users/*"
-                        )
+                                "/api/seller/**")
+                        .hasRole("SELLER")
+
+                        .requestMatchers(
+                                "/api/customer/**")
+                        .hasRole("CUSTOMER")
+
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/api/users/*/status")
                         .hasRole("ADMIN")
 
-                        .requestMatchers("/api/roles/**")
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/users/*")
                         .hasRole("ADMIN")
 
-                        .requestMatchers("/api/users/*/roles/**")
+                        .requestMatchers(
+                                "/api/roles/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/api/users/*/roles/**")
                         .hasRole("ADMIN")
 
                         /*
                          * Permission-based authorization
                          */
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.GET,
-                                "/api/products/**"
-                        ).hasAuthority("PRODUCT_READ")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/products/**")
+                        .hasAuthority("PRODUCT_READ")
 
 
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.POST,
-                                "/api/products/**"
-                        ).hasAuthority("PRODUCT_CREATE")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,
+                                "/api/products/**")
+                        .hasAuthority("PRODUCT_CREATE")
 
 
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.PUT,
-                                "/api/products/**"
-                        ).hasAuthority("PRODUCT_UPDATE")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT,
+                                "/api/products/**")
+                        .hasAuthority("PRODUCT_UPDATE")
 
 
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.DELETE,
-                                "/api/products/**"
-                        ).hasAuthority("PRODUCT_DELETE")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE,
+                                "/api/products/**")
+                        .hasAuthority("PRODUCT_DELETE")
 
 
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.POST,
-                                "/api/orders/**"
-                        ).hasAuthority("ORDER_CREATE")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,
+                                "/api/orders/**")
+                        .hasAuthority("ORDER_CREATE")
 
 
-                        .requestMatchers(
-                                org.springframework.http.HttpMethod.GET,
-                                "/api/orders/**"
-                        ).hasAuthority("ORDER_READ")
-
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/orders/**")
+                        .hasAuthority("ORDER_READ")
 
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.POST,
-                                "/api/payments/**"
-                        ).hasAuthority("PAYMENT_CREATE")
+                                "/api/payments/**")
+                        .hasAuthority("PAYMENT_CREATE")
 
-                        .requestMatchers(
-                                "/api/admin/**"
-                        ).hasRole("ADMIN")
-                        .requestMatchers(
-                                "/api/seller/**"
-                        ).hasRole("SELLER")
-                        .requestMatchers(
-                                "/api/customer/**"
-                        ).hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/users/**")
+                        .hasAuthority("USER_READ")
+
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/users/**")
+                        .hasAuthority("USER_DELETE")
+
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/users/**")
+                        .hasAuthority("USER_UPDATE")
+
                         .anyRequest()
                         .authenticated()
                 );
