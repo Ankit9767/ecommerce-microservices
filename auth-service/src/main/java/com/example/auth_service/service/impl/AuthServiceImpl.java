@@ -20,6 +20,7 @@ import com.example.auth_service.session.SessionContext;
 import com.example.auth_service.session.SessionContextExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -137,6 +138,7 @@ public class AuthServiceImpl implements AuthService {
         return tokenManager.refreshAccessToken(refreshToken);
     }
 
+    @PreAuthorize("@sessionSecurity.isOwner(#id, authentication.name)")
     @Override
     public void logout(String refreshToken) {
         tokenManager.logout(refreshToken);
@@ -152,6 +154,7 @@ public class AuthServiceImpl implements AuthService {
         return userSessionService.getSessions(user, sessionId);
     }
 
+    @PreAuthorize("@sessionSecurity.isOwner(#id, authentication.name)")
     @Override
     public void logoutSession(Long id) {
         userSessionService.revokeSession(id, getCurrentUser());
