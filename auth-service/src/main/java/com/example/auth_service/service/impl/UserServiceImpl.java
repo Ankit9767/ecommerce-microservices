@@ -5,6 +5,7 @@ import com.example.auth_service.dto.request.ChangePasswordRequest;
 import com.example.auth_service.dto.request.UpdateProfileRequest;
 import com.example.auth_service.dto.response.RoleResponse;
 import com.example.auth_service.dto.response.UserProfileResponse;
+import com.example.auth_service.entity.AuditEventType;
 import com.example.auth_service.entity.Role;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidPasswordException;
@@ -12,6 +13,7 @@ import com.example.auth_service.exception.PasswordMismatchException;
 import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.service.SecurityAuditService;
 import com.example.auth_service.service.UserService;
 import com.example.auth_service.service.UserSessionService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,8 @@ public class UserServiceImpl implements UserService {
     private final UserSessionService userSessionService;
 
     private final RoleRepository roleRepository;
+
+    private final SecurityAuditService securityAuditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -142,6 +146,20 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         userSessionService.revokeAllSessions(user);
+
+        securityAuditService.record(
+                AuditEventType.PASSWORD_CHANGED,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "User changed password"
+        );
     }
 
     @Override
@@ -159,6 +177,27 @@ public class UserServiceImpl implements UserService {
         user.setEnabled(enabled);
 
         userRepository.save(user);
+
+        AuditEventType eventType =
+                Boolean.TRUE.equals(user.getEnabled())
+                        ? AuditEventType.ACCOUNT_ENABLED
+                        : AuditEventType.ACCOUNT_DISABLED;
+
+        securityAuditService.record(
+                eventType,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                Boolean.TRUE.equals(user.getEnabled())
+                        ? "User account enabled"
+                        : "User account disabled"
+        );
 
         /*
          * If the account is disabled,

@@ -1,5 +1,6 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.entity.AuditEventType;
 import com.example.auth_service.entity.PasswordResetToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.exception.InvalidPasswordException;
@@ -7,6 +8,7 @@ import com.example.auth_service.exception.PasswordMismatchException;
 import com.example.auth_service.repository.PasswordResetTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.PasswordResetService;
+import com.example.auth_service.service.SecurityAuditService;
 import com.example.auth_service.service.UserSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +36,8 @@ public class PasswordResetServiceImpl
     private final PasswordEncoder passwordEncoder;
 
     private final UserSessionService userSessionService;
+
+    private final SecurityAuditService securityAuditService;
 
     private final SecureRandom secureRandom =
             new SecureRandom();
@@ -148,6 +152,20 @@ public class PasswordResetServiceImpl
          * all refresh-token sessions.
          */
         userSessionService.revokeAllSessions(user);
+
+        securityAuditService.record(
+                AuditEventType.PASSWORD_RESET,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "User password was reset"
+        );
 
         /*
          * Make token single-use.
