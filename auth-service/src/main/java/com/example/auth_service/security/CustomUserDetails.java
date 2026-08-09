@@ -1,13 +1,16 @@
 package com.example.auth_service.security;
 
 import com.example.auth_service.entity.Role;
+import com.example.auth_service.entity.Permission;
 import com.example.auth_service.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -17,12 +20,35 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        return user.getRoles()
-                .stream()
-                .map(Role::getRoleName)
-                .map(Enum::name)
-                .map(SimpleGrantedAuthority::new)
-                .toList();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        for (Role role : user.getRoles()) {
+
+            /*
+             * Role authority
+             */
+            authorities.add(
+                    new SimpleGrantedAuthority(
+                            role.getRoleName().name()
+                    )
+            );
+
+            /*
+             * Permission authorities
+             */
+            for (Permission permission : role.getPermissions()) {
+
+                authorities.add(
+                        new SimpleGrantedAuthority(
+                                permission
+                                        .getPermissionName()
+                                        .name()
+                        )
+                );
+            }
+        }
+
+        return authorities;
     }
 
     @Override

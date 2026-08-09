@@ -1,0 +1,27 @@
+package com.example.auth_service.entity;
+
+public enum PermissionName {
+
+    USER_READ,
+    USER_CREATE,
+    USER_UPDATE,
+    USER_DELETE,
+
+    PRODUCT_READ,
+    PRODUCT_CREATE,
+    PRODUCT_UPDATE,
+    PRODUCT_DELETE,
+
+    ORDER_READ,
+    ORDER_CREATE,
+    ORDER_UPDATE,
+    ORDER_CANCEL,
+    ORDER_VIEW_ALL,
+
+    PAYMENT_CREATE,
+    PAYMENT_READ,
+
+    SESSION_READ,
+    SESSION_REVOKE,
+    SESSION_REVOKE_ALL
+}

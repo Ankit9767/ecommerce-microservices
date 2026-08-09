@@ -44,9 +44,54 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/actuator/**",
                                 "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         )
                         .permitAll()
+                        /*
+                         * Permission-based authorization
+                         */
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/products/**"
+                        ).hasAuthority("PRODUCT_READ")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/products/**"
+                        ).hasAuthority("PRODUCT_CREATE")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.PUT,
+                                "/api/products/**"
+                        ).hasAuthority("PRODUCT_UPDATE")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.DELETE,
+                                "/api/products/**"
+                        ).hasAuthority("PRODUCT_DELETE")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/orders/**"
+                        ).hasAuthority("ORDER_CREATE")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/orders/**"
+                        ).hasAuthority("ORDER_READ")
+
+
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/payments/**"
+                        ).hasAuthority("PAYMENT_CREATE")
+
                         .requestMatchers(
                                 "/api/admin/**"
                         ).hasRole("ADMIN")
