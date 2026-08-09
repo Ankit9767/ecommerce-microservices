@@ -5,6 +5,7 @@ import com.example.auth_service.dto.request.RegisterRequest;
 import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.dto.response.SessionResponse;
 import com.example.auth_service.dto.session.SessionInfo;
+import com.example.auth_service.entity.AuditEventType;
 import com.example.auth_service.entity.Role;
 import com.example.auth_service.entity.RoleName;
 import com.example.auth_service.entity.User;
@@ -14,6 +15,7 @@ import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.jwt.JwtTokenValidator;
 import com.example.auth_service.service.AuthService;
+import com.example.auth_service.service.SecurityAuditService;
 import com.example.auth_service.service.TokenManager;
 import com.example.auth_service.service.UserSessionService;
 import com.example.auth_service.session.SessionContext;
@@ -50,6 +52,8 @@ public class AuthServiceImpl implements AuthService {
     private final SessionContextExtractor extractor;
 
     private final JwtTokenValidator jwtTokenValidator;
+
+    private final SecurityAuditService securityAuditService;
 
     @Override
     public AuthResponse register(RegisterRequest request, HttpServletRequest servletRequest) {
@@ -90,26 +94,56 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest request, HttpServletRequest servletRequest) {
+    public AuthResponse login(LoginRequest request,
+                              HttpServletRequest servletRequest) {
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsernameOrEmail(),
-                        request.getPassword()
-                )
-        );
-
-        User user = userRepository
-                .findByUsername(request.getUsernameOrEmail())
-                .or(() -> userRepository.findByEmail(request.getUsernameOrEmail()))
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found"));
-
-        SessionContext context = SessionContext.builder()
+        SessionContext context =
+                SessionContext.builder()
                         .request(servletRequest)
                         .build();
 
         SessionInfo extractedInfo = extractor.extract(context);
+
+        try {
+
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsernameOrEmail(),
+                            request.getPassword()
+                    )
+            );
+
+        } catch (RuntimeException ex) {
+
+            securityAuditService.record(
+                    AuditEventType.LOGIN_FAILED,
+                    null,
+                    request.getUsernameOrEmail(),
+                    extractedInfo.getIpAddress(),
+                    extractedInfo.getDeviceName(),
+                    extractedInfo.getDeviceType(),
+                    extractedInfo.getBrowser(),
+                    extractedInfo.getOperatingSystem(),
+                    null,
+                    false,
+                    "Login authentication failed"
+            );
+
+            throw ex;
+        }
+
+        User user = userRepository
+                .findByUsername(request.getUsernameOrEmail())
+                .or(() ->
+                        userRepository.findByEmail(
+                                request.getUsernameOrEmail()
+                        )
+                )
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User not found"
+                        )
+                );
 
         SessionInfo sessionInfo =
                 SessionInfo.builder()
@@ -130,18 +164,71 @@ public class AuthServiceImpl implements AuthService {
                                 extractedInfo.getIpAddress()
                         )
                         .build();
-        return tokenManager.generateTokens(user, sessionInfo);
+
+        AuthResponse response =
+                tokenManager.generateTokens(
+                        user,
+                        sessionInfo
+                );
+
+        securityAuditService.record(
+                AuditEventType.LOGIN_SUCCESS,
+                user,
+                user.getUsername(),
+                extractedInfo.getIpAddress(),
+                extractedInfo.getDeviceName(),
+                extractedInfo.getDeviceType(),
+                extractedInfo.getBrowser(),
+                extractedInfo.getOperatingSystem(),
+                sessionInfo.getSessionId(),
+                true,
+                "User logged in successfully"
+        );
+
+        return response;
     }
 
     @Override
     public AuthResponse refreshToken(String refreshToken) {
-        return tokenManager.refreshAccessToken(refreshToken);
+
+        AuthResponse response = tokenManager.refreshAccessToken(refreshToken);
+
+        securityAuditService.record(
+                AuditEventType.TOKEN_REFRESH,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Access token refreshed"
+        );
+
+        return response;
     }
 
     @PreAuthorize("@sessionSecurity.isOwner(#id, authentication.name)")
     @Override
     public void logout(String refreshToken) {
+
         tokenManager.logout(refreshToken);
+
+        securityAuditService.record(
+                AuditEventType.LOGOUT,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "User logged out"
+        );
     }
 
     @Override
