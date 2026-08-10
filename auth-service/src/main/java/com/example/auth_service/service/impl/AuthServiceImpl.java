@@ -14,10 +14,7 @@ import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.jwt.JwtTokenValidator;
-import com.example.auth_service.service.AuthService;
-import com.example.auth_service.service.SecurityAuditService;
-import com.example.auth_service.service.TokenManager;
-import com.example.auth_service.service.UserSessionService;
+import com.example.auth_service.service.*;
 import com.example.auth_service.session.SessionContext;
 import com.example.auth_service.session.SessionContextExtractor;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,26 +52,38 @@ public class AuthServiceImpl implements AuthService {
 
     private final SecurityAuditService securityAuditService;
 
+    private final LoginAttemptService loginAttemptService;
+
     @Override
-    public AuthResponse register(RegisterRequest request, HttpServletRequest servletRequest) {
+    public AuthResponse register(RegisterRequest request,
+                                 HttpServletRequest servletRequest) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("Email already exists");
+            throw new UserAlreadyExistsException(
+                    "Email already exists"
+            );
         }
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("Username already exists");
+            throw new UserAlreadyExistsException(
+                    "Username already exists"
+            );
         }
 
-        Role customerRole = roleRepository.findByRoleName(RoleName.ROLE_CUSTOMER)
-                .orElseThrow(() ->
-                        new RoleNotFoundException("ROLE_CUSTOMER not found"));
+        Role customerRole =
+                roleRepository.findByRoleName(RoleName.ROLE_CUSTOMER)
+                        .orElseThrow(() ->
+                                new RoleNotFoundException(
+                                        "ROLE_CUSTOMER not found"
+                                )
+                        );
 
-        SessionContext context = SessionContext.builder()
-                .request(servletRequest)
-                .build();
+        SessionContext context =
+                SessionContext.builder()
+                        .request(servletRequest)
+                        .build();
 
-        SessionInfo sessionInfo = extractor.extract(context);
+        SessionInfo extractedInfo = extractor.extract(context);
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -90,7 +99,65 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return tokenManager.generateTokens(savedUser, sessionInfo);
+        SessionInfo sessionInfo =
+                SessionInfo.builder()
+                        .sessionId(
+                                UUID.randomUUID().toString()
+                        )
+                        .deviceName(
+                                extractedInfo.getDeviceName()
+                        )
+                        .deviceType(
+                                extractedInfo.getDeviceType()
+                        )
+                        .browser(
+                                extractedInfo.getBrowser()
+                        )
+                        .operatingSystem(
+                                extractedInfo.getOperatingSystem()
+                        )
+                        .ipAddress(
+                                extractedInfo.getIpAddress()
+                        )
+                        .build();
+
+        /*
+         * TokenManager -> UserSessionService will create
+         * the UserSession and record SESSION_CREATED.
+         */
+        AuthResponse response =
+                tokenManager.generateTokens(
+                        savedUser,
+                        sessionInfo
+                );
+
+        /*
+         * Registration automatically authenticates the user,
+         * so record it as a successful authentication.
+         */
+        loginAttemptService.recordSuccess(
+                request.getUsername(),
+                extractedInfo.getIpAddress()
+        );
+
+        /*
+         * Record successful authentication.
+         */
+        securityAuditService.record(
+                AuditEventType.LOGIN_SUCCESS,
+                savedUser,
+                savedUser.getUsername(),
+                extractedInfo.getIpAddress(),
+                extractedInfo.getDeviceName(),
+                extractedInfo.getDeviceType(),
+                extractedInfo.getBrowser(),
+                extractedInfo.getOperatingSystem(),
+                sessionInfo.getSessionId(),
+                true,
+                "User registered and logged in successfully"
+        );
+
+        return response;
     }
 
     @Override
@@ -114,6 +181,11 @@ public class AuthServiceImpl implements AuthService {
             );
 
         } catch (RuntimeException ex) {
+
+            loginAttemptService.recordFailure(
+                    request.getUsernameOrEmail(),
+                    extractedInfo.getIpAddress()
+            );
 
             securityAuditService.record(
                     AuditEventType.LOGIN_FAILED,
@@ -170,6 +242,11 @@ public class AuthServiceImpl implements AuthService {
                         user,
                         sessionInfo
                 );
+
+        loginAttemptService.recordSuccess(
+                request.getUsernameOrEmail(),
+                extractedInfo.getIpAddress()
+        );
 
         securityAuditService.record(
                 AuditEventType.LOGIN_SUCCESS,
