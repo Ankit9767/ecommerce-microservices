@@ -3,6 +3,7 @@ package com.example.auth_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,13 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean enabled = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean accountLocked = false;
+
+    @Column
+    private Instant accountLockedUntil;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)

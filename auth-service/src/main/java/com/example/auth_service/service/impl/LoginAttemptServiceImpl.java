@@ -1,5 +1,6 @@
 package com.example.auth_service.service.impl;
 
+import com.example.auth_service.config.BruteForceProperties;
 import com.example.auth_service.entity.LoginAttempt;
 import com.example.auth_service.repository.LoginAttemptRepository;
 import com.example.auth_service.service.LoginAttemptService;
@@ -17,7 +18,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
 
     private final LoginAttemptRepository loginAttemptRepository;
 
-    private static final Duration FAILURE_WINDOW = Duration.ofMinutes(15);
+    private final BruteForceProperties bruteForceProperties;
 
     @Override
     public void recordSuccess(String username, String ipAddress) {
@@ -51,7 +52,12 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Transactional(readOnly = true)
     public long countRecentFailuresByUsername(String username) {
 
-        Instant after = Instant.now().minus(FAILURE_WINDOW);
+        Instant after =
+                Instant.now()
+                        .minus(
+                                bruteForceProperties
+                                        .getFailureWindow()
+                        );
 
         return loginAttemptRepository
                 .countByUsernameAndSuccessfulFalseAndAttemptedAtAfter(
@@ -64,12 +70,25 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     @Transactional(readOnly = true)
     public long countRecentFailuresByIp(String ipAddress) {
 
-        Instant after = Instant.now().minus(FAILURE_WINDOW);
+        Instant after =
+                Instant.now()
+                        .minus(
+                                bruteForceProperties
+                                        .getFailureWindow()
+                        );
 
         return loginAttemptRepository
                 .countByIpAddressAndSuccessfulFalseAndAttemptedAtAfter(
                         ipAddress,
                         after
                 );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasExceededFailureLimit(String username) {
+
+        return countRecentFailuresByUsername(username)
+                >= bruteForceProperties.getMaxFailures();
     }
 }

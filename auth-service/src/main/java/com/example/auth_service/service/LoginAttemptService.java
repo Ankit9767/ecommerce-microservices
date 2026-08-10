@@ -9,4 +9,6 @@ public interface LoginAttemptService {
     long countRecentFailuresByUsername(String username);
 
     long countRecentFailuresByIp(String ipAddress);
+
+    boolean hasExceededFailureLimit(String username);
 }

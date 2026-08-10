@@ -35,7 +35,11 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
 
-
+security:
+  brute-force:
+    max-failures: 5
+    failure-window: 15m
+    lock-duration: 15m
 
 jwt:
 

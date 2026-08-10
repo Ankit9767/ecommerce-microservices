@@ -20,6 +20,8 @@ public enum AuditEventType {
 
     ACCOUNT_DISABLED,
 
+    ACCOUNT_LOCKED,
+
     ROLE_ASSIGNED,
 
     ROLE_REMOVED,

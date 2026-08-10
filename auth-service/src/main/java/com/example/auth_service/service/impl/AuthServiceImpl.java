@@ -21,6 +21,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,6 +55,8 @@ public class AuthServiceImpl implements AuthService {
     private final SecurityAuditService securityAuditService;
 
     private final LoginAttemptService loginAttemptService;
+
+    private final AccountLockoutService accountLockoutService;
 
     @Override
     public AuthResponse register(RegisterRequest request,
@@ -171,6 +175,27 @@ public class AuthServiceImpl implements AuthService {
 
         SessionInfo extractedInfo = extractor.extract(context);
 
+        User user = userRepository
+                .findByUsername(request.getUsernameOrEmail())
+                .or(() ->
+                        userRepository.findByEmail(
+                                request.getUsernameOrEmail()
+                        )
+                )
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "User not found"
+                        )
+                );
+
+        accountLockoutService.unlockIfExpired(user);
+
+        if (accountLockoutService.isLocked(user)) {
+            throw new LockedException(
+                    "Account is temporarily locked"
+            );
+        }
+
         try {
 
             authenticationManager.authenticate(
@@ -180,12 +205,14 @@ public class AuthServiceImpl implements AuthService {
                     )
             );
 
-        } catch (RuntimeException ex) {
+        } catch (BadCredentialsException ex) {
 
             loginAttemptService.recordFailure(
                     request.getUsernameOrEmail(),
                     extractedInfo.getIpAddress()
             );
+
+            accountLockoutService.registerFailedLogin(user);
 
             securityAuditService.record(
                     AuditEventType.LOGIN_FAILED,
@@ -203,19 +230,6 @@ public class AuthServiceImpl implements AuthService {
 
             throw ex;
         }
-
-        User user = userRepository
-                .findByUsername(request.getUsernameOrEmail())
-                .or(() ->
-                        userRepository.findByEmail(
-                                request.getUsernameOrEmail()
-                        )
-                )
-                .orElseThrow(() ->
-                        new UsernameNotFoundException(
-                                "User not found"
-                        )
-                );
 
         SessionInfo sessionInfo =
                 SessionInfo.builder()
@@ -247,6 +261,8 @@ public class AuthServiceImpl implements AuthService {
                 request.getUsernameOrEmail(),
                 extractedInfo.getIpAddress()
         );
+
+        accountLockoutService.registerSuccessfulLogin(user);
 
         securityAuditService.record(
                 AuditEventType.LOGIN_SUCCESS,
