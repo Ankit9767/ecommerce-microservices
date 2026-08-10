@@ -1,6 +1,7 @@
 server:
   port: ${SERVER_PORT:8090}
   shutdown: graceful
+  forward-headers-strategy: framework
 
 spring:
 
@@ -36,6 +37,10 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
 
 security:
+  proxy:
+    enabled: false
+    trusted-proxies: []
+
   brute-force:
     max-failures: 5
     max-ip-failures: 20
@@ -79,8 +84,6 @@ management:
       tracing:
 
         endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
-
-
 
 logging:
 
