@@ -38,8 +38,10 @@ eureka:
 security:
   brute-force:
     max-failures: 5
+    max-ip-failures: 20
     failure-window: 15m
     lock-duration: 15m
+    ip-block-duration: 15m
 
 jwt:
 

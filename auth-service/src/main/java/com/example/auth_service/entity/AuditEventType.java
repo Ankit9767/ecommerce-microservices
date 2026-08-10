@@ -6,6 +6,8 @@ public enum AuditEventType {
 
     LOGIN_FAILED,
 
+    REGISTRATION_SUCCESS,
+
     LOGOUT,
 
     LOGOUT_ALL,
@@ -21,6 +23,8 @@ public enum AuditEventType {
     ACCOUNT_DISABLED,
 
     ACCOUNT_LOCKED,
+
+    IP_BLOCKED,
 
     ROLE_ASSIGNED,
 

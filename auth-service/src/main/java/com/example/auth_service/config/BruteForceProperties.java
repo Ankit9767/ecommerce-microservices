@@ -13,7 +13,11 @@ public class BruteForceProperties {
 
     private int maxFailures = 5;
 
+    private int maxIpFailures = 20;
+
     private Duration failureWindow = Duration.ofMinutes(15);
 
     private Duration lockDuration = Duration.ofMinutes(15);
+
+    private Duration ipBlockDuration = Duration.ofMinutes(15);
 }

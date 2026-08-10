@@ -58,6 +58,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final AccountLockoutService accountLockoutService;
 
+    private final IpBlockService ipBlockService;
+
     @Override
     public AuthResponse register(RegisterRequest request,
                                  HttpServletRequest servletRequest) {
@@ -88,6 +90,17 @@ public class AuthServiceImpl implements AuthService {
                         .build();
 
         SessionInfo extractedInfo = extractor.extract(context);
+
+        String ipAddress = extractedInfo.getIpAddress();
+
+        ipBlockService.unblockIfExpired(ipAddress);
+
+        if (ipBlockService.isBlocked(ipAddress)) {
+
+            throw new LockedException(
+                    "Too many attempts from this IP address"
+            );
+        }
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -148,6 +161,20 @@ public class AuthServiceImpl implements AuthService {
          * Record successful authentication.
          */
         securityAuditService.record(
+                AuditEventType.REGISTRATION_SUCCESS,
+                savedUser,
+                savedUser.getUsername(),
+                extractedInfo.getIpAddress(),
+                extractedInfo.getDeviceName(),
+                extractedInfo.getDeviceType(),
+                extractedInfo.getBrowser(),
+                extractedInfo.getOperatingSystem(),
+                sessionInfo.getSessionId(),
+                true,
+                "User registered successfully"
+        );
+
+        securityAuditService.record(
                 AuditEventType.LOGIN_SUCCESS,
                 savedUser,
                 savedUser.getUsername(),
@@ -174,6 +201,17 @@ public class AuthServiceImpl implements AuthService {
                         .build();
 
         SessionInfo extractedInfo = extractor.extract(context);
+
+        String ipAddress = extractedInfo.getIpAddress();
+
+        ipBlockService.unblockIfExpired(ipAddress);
+
+        if (ipBlockService.isBlocked(ipAddress)) {
+
+            throw new LockedException(
+                    "Too many login attempts from this IP address"
+            );
+        }
 
         User user = userRepository
                 .findByUsername(request.getUsernameOrEmail())
@@ -213,6 +251,10 @@ public class AuthServiceImpl implements AuthService {
             );
 
             accountLockoutService.registerFailedLogin(user);
+
+            ipBlockService.registerFailedAttempt(
+                    extractedInfo.getIpAddress()
+            );
 
             securityAuditService.record(
                     AuditEventType.LOGIN_FAILED,
