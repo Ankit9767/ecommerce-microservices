@@ -32,6 +32,19 @@ public class SecurityConfig {
 
                 .cors(cors -> {})
 
+                .headers(headers -> headers
+                        .contentTypeOptions(contentTypeOptions -> {})
+                        .frameOptions(frameOptions ->
+                                frameOptions.deny()
+                        )
+                        .httpStrictTransportSecurity(hsts ->
+                                hsts
+                                        .includeSubDomains(true)
+                                        .preload(true)
+                                        .maxAgeInSeconds(31536000)
+                        )
+                )
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
