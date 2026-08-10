@@ -24,7 +24,11 @@ public enum AuditEventType {
 
     ACCOUNT_LOCKED,
 
+    ACCOUNT_UNLOCKED,
+
     IP_BLOCKED,
+
+    IP_UNBLOCKED,
 
     ROLE_ASSIGNED,
 

@@ -16,8 +16,7 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AccountLockoutServiceImpl
-        implements AccountLockoutService {
+public class AccountLockoutServiceImpl implements AccountLockoutService {
 
     private final UserRepository userRepository;
 
@@ -128,5 +127,19 @@ public class AccountLockoutServiceImpl
         user.setAccountLockedUntil(null);
 
         userRepository.save(user);
+
+        securityAuditService.record(
+                AuditEventType.ACCOUNT_UNLOCKED,
+                user,
+                user.getUsername(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Account automatically unlocked after lockout expiration"
+        );
     }
 }

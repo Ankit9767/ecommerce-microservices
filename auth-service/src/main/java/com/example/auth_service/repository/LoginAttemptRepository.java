@@ -15,4 +15,8 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     List<LoginAttempt> findByUsernameAndAttemptedAtAfter(String username, Instant after);
 
     List<LoginAttempt> findByIpAddressAndAttemptedAtAfter(String ipAddress, Instant after);
+
+    void deleteByUsernameAndSuccessfulFalse(String username);
+
+    void deleteByIpAddressAndSuccessfulFalse(String ipAddress);
 }

@@ -116,6 +116,20 @@ public class IpBlockServiceImpl
                         blockedIpRepository.save(
                                 blockedIp
                         );
+
+                        securityAuditService.record(
+                                AuditEventType.IP_UNBLOCKED,
+                                null,
+                                null,
+                                ipAddress,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                true,
+                                "IP block expired"
+                        );
                     }
                 });
     }
