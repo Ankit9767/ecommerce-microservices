@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,8 +17,7 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ApiError> handleUserAlreadyExists(
-            UserAlreadyExistsException ex,
+    public ResponseEntity<ApiError> handleUserAlreadyExists(UserAlreadyExistsException ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -32,8 +32,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ApiError> handleRoleNotFound(
-            RoleNotFoundException ex,
+    public ResponseEntity<ApiError> handleRoleNotFound(RoleNotFoundException ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -48,8 +47,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleResourceNotFound(
-            ResourceNotFoundException ex,
+    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -64,8 +62,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ApiError> handleInvalidCredentials(
-            InvalidCredentialsException ex,
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -80,8 +77,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(
-            MethodArgumentNotValidException ex,
+    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
         List<String> errors = ex.getBindingResult()
@@ -103,8 +99,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiError> handleConstraintViolation(
-            ConstraintViolationException ex,
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -119,8 +114,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGenericException(
-            Exception ex,
+    public ResponseEntity<ApiError> handleGenericException(Exception ex,
             HttpServletRequest request) {
 
         ApiError error = ApiError.builder()
@@ -164,5 +158,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(error);
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ApiError> handleLockedException(LockedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.LOCKED)
+                .body(
+                        ApiError.builder()
+                                .message(ex.getMessage())
+                                .build()
+                );
     }
 }
