@@ -11,17 +11,34 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
 
     @Bean
-    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http) {
 
-        http
+        return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/auth/**").permitAll()
-                        .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("/eureka/**").permitAll()
-                        .anyExchange().permitAll()
-                );
 
-        return http.build();
+                .authorizeExchange(exchange -> exchange
+
+                        .pathMatchers(
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/refresh",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password"
+                        )
+                        .permitAll()
+
+                        .pathMatchers("/actuator/health")
+                        .permitAll()
+
+                        .anyExchange()
+                        .authenticated()
+                )
+
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt -> {})
+                )
+
+                .build();
     }
 }

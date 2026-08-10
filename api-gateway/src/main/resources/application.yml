@@ -13,26 +13,45 @@ spring:
   cloud:
     gateway:
       routes:
+
+        # Eureka-based routing
+        # - id: auth-service
+        #   uri: lb://AUTH-SERVICE
+        #   predicates:
+        #     - Path=/api/auth/**
+
+        # - id: product-service
+        #   uri: lb://PRODUCT-SERVICE
+        #   predicates:
+        #     - Path=/api/products/**
+
+        # - id: order-service
+        #   uri: lb://ORDER-SERVICE
+        #   predicates:
+        #     - Path=/api/orders/**
+
+        # - id: payment-service
+        #   uri: lb://PAYMENT-SERVICE
+        #   predicates:
+        #     - Path=/api/payments/**
+
         - id: auth-service
-          uri: lb://AUTH-SERVICE
+          uri: http://localhost:8090
           predicates:
             - Path=/api/auth/**
 
-
         - id: product-service
-          uri: lb://PRODUCT-SERVICE
+          uri: http://localhost:8089
           predicates:
             - Path=/api/products/**
 
-
         - id: order-service
-          uri: lb://ORDER-SERVICE
+          uri: http://localhost:8088
           predicates:
             - Path=/api/orders/**
 
-
         - id: payment-service
-          uri: lb://PAYMENT-SERVICE
+          uri: http://localhost:8086
           predicates:
             - Path=/api/payments/**
 
