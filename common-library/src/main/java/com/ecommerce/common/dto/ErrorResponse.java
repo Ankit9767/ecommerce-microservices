@@ -1,6 +1,7 @@
 package com.ecommerce.common.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ErrorResponse(
 
@@ -12,6 +13,8 @@ public record ErrorResponse(
 
         String message,
 
-        String path
+        String path,
+
+        List<String> details
 
 ) {}
