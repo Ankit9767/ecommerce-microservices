@@ -1,5 +1,6 @@
 package com.example.api_gateway.security;
 
+import com.ecommerce.common.security.JwtConstants;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
@@ -12,9 +13,9 @@ public class AccessTokenJwtValidator implements OAuth2TokenValidator<Jwt> {
     @Override
     public OAuth2TokenValidatorResult validate(Jwt jwt) {
 
-        String tokenType = jwt.getClaimAsString("TOKEN_TYPE");
+        String tokenType = jwt.getClaimAsString(JwtConstants.TOKEN_TYPE);
 
-        if (!"ACCESS".equals(tokenType)) {
+        if (!JwtConstants.ACCESS.equals(tokenType)) {
 
             OAuth2Error error = new OAuth2Error(
                     "invalid_token",
