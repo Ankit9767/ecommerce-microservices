@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class JwtConfig {
@@ -14,15 +15,21 @@ public class JwtConfig {
     private String secret;
 
     @Bean
-    public NimbusReactiveJwtDecoder jwtDecoder() {
+    public NimbusReactiveJwtDecoder jwtDecoder(
+            AccessTokenJwtValidator accessTokenJwtValidator) {
 
         SecretKeySpec key = new SecretKeySpec(
-                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                secret.getBytes(StandardCharsets.UTF_8),
                 "HmacSHA256"
         );
 
-        return NimbusReactiveJwtDecoder
-                .withSecretKey(key)
-                .build();
+        NimbusReactiveJwtDecoder decoder =
+                NimbusReactiveJwtDecoder
+                        .withSecretKey(key)
+                        .build();
+
+        decoder.setJwtValidator(accessTokenJwtValidator);
+
+        return decoder;
     }
 }
