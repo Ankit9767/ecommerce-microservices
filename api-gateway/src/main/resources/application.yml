@@ -34,7 +34,11 @@ spring:
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:
-            - Path=/api/payment/**
+            - Path=/api/payments/**
+
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
 
 
 eureka:
