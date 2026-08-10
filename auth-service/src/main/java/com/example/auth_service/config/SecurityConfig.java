@@ -1,5 +1,7 @@
 package com.example.auth_service.config;
 
+import com.example.auth_service.security.RestAccessDeniedHandler;
+import com.example.auth_service.security.RestAuthenticationEntryPoint;
 import com.example.auth_service.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,10 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+
+    private final RestAccessDeniedHandler accessDeniedHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
@@ -43,6 +49,16 @@ public class SecurityConfig {
                                         .preload(true)
                                         .maxAgeInSeconds(31536000)
                         )
+                )
+
+                .exceptionHandling(exception ->
+                        exception
+                                .authenticationEntryPoint(
+                                        authenticationEntryPoint
+                                )
+                                .accessDeniedHandler(
+                                        accessDeniedHandler
+                                )
                 )
 
                 .sessionManagement(session ->
