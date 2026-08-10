@@ -37,6 +37,10 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
 
 security:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+
   proxy:
     enabled: false
     trusted-proxies: []
