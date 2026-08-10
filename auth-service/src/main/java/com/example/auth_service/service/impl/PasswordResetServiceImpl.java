@@ -91,7 +91,7 @@ public class PasswordResetServiceImpl
          * Later this will be replaced by
          * an email notification service.
          */
-        System.out.println("PASSWORD RESET TOKEN: " + rawToken);
+//        System.out.println("PASSWORD RESET TOKEN: " + rawToken);
     }
 
     @Override
