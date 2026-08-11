@@ -39,21 +39,41 @@ spring:
           uri: http://localhost:8090
           predicates:
             - Path=/api/auth/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: authServiceCircuitBreaker
+                fallbackUri: forward:/fallback/auth
 
         - id: product-service
           uri: http://localhost:8089
           predicates:
             - Path=/api/products/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: productServiceCircuitBreaker
+                fallbackUri: forward:/fallback/products
 
         - id: order-service
           uri: http://localhost:8088
           predicates:
             - Path=/api/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/orders
 
         - id: payment-service
           uri: http://localhost:8086
           predicates:
             - Path=/api/payments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: paymentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/payments
 
       httpclient:
         connect-timeout: 2000
