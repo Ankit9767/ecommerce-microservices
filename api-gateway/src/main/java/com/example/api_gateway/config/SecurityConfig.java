@@ -73,6 +73,13 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
+                        .pathMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        )
+                        .permitAll()
+
                         .pathMatchers("/actuator/health")
                         .permitAll()
 
