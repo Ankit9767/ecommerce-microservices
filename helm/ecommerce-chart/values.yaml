@@ -7,6 +7,11 @@ namespace: ecommerce
 cors:
   allowedOrigin: "http://localhost:3000"
 
+jwt:
+  secret: "MySuperSecretKeyForJwtAuthentication12345678901234567890"
+  expiration: "86400000"
+  refreshExpiration: "604800000"
+
 # ===========================
 # MySQL
 # ===========================
