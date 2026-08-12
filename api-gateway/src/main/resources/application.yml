@@ -139,21 +139,21 @@ eureka:
 
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
 
 
 management:
   endpoints:
     web:
       exposure:
-        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+        include: health,info,prometheus
 
   endpoint:
     gateway:
       access: read-only
 
     health:
-      show-details: always
+      show-details: when_authorized
 
     prometheus:
       enabled: true
