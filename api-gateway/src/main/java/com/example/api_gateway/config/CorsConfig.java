@@ -44,6 +44,12 @@ public class CorsConfig {
                 )
         );
 
+        configuration.setExposedHeaders(
+                List.of(
+                        "X-Request-ID"
+                )
+        );
+
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
