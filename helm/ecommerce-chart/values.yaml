@@ -63,7 +63,7 @@ eureka:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:

@@ -63,14 +63,30 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                         .request(
                                 exchange.getRequest()
                                         .mutate()
-                                        .header(
-                                                "X-Authenticated-User",
-                                                username
-                                        )
-                                        .header(
-                                                "X-User-Roles",
-                                                String.join(",", roles)
-                                        )
+                                        .headers(headers -> {
+
+                                            // Never trust security headers
+                                            // supplied by the client.
+                                            headers.remove(
+                                                    "X-Authenticated-User"
+                                            );
+
+                                            headers.remove(
+                                                    "X-User-Roles"
+                                            );
+
+                                            // Recreate them from the
+                                            // validated JWT.
+                                            headers.set(
+                                                    "X-Authenticated-User",
+                                                    username
+                                            );
+
+                                            headers.set(
+                                                    "X-User-Roles",
+                                                    String.join(",", roles)
+                                            );
+                                        })
                                         .build()
                         )
                         .build();

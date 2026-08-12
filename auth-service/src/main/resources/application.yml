@@ -35,10 +35,13 @@ eureka:
 
   instance:
     prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
   client:
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 5
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 

@@ -19,4 +19,4 @@ spec:
 
       targetPort: 8761
 
-  type: ClusterIP
+  type: LoadBalancer

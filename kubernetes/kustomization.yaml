@@ -17,10 +17,10 @@ resources:
   - kafka/kafka-service.yaml
   - kafka/kafka-statefulset.yaml
 
-  # Eureka
-  - eureka/eureka-configmap.yaml
-  - eureka/eureka-service.yaml
-  - eureka/eureka.yaml
+#  # Eureka
+#  - eureka/eureka-configmap.yaml
+#  - eureka/eureka-service.yaml
+#  - eureka/eureka.yaml
 
   # Product
   - product-service/product-service-configmap.yaml
@@ -56,5 +56,5 @@ resources:
   - api-gateway-service/api-gateway-service.yaml
   - api-gateway-service/api-gateway-service-hpa.yaml
 
-  # Ingress
-  - ingress/gateway-ingress.yaml
+#  # Ingress
+#  - ingress/gateway-ingress.yaml

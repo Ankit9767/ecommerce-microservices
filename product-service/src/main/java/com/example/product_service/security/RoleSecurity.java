@@ -1,37 +1,58 @@
 package com.example.product_service.security;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+
 @Component
-@RequiredArgsConstructor
 public class RoleSecurity {
 
-    private final HttpServletRequest request;
+    public boolean hasRole(Authentication authentication,
+                           String role) {
 
-    public boolean hasRole(String role) {
-
-        String currentRole =
-                request.getHeader("X-User-Role");
-
-        return role.equals(currentRole);
-    }
-
-    public boolean hasAnyRole(String... roles) {
-
-        String currentRole = request.getHeader("X-User-Role");
-
-        System.out.println("Current Role = " + currentRole);
-
-        for (String role : roles) {
-            System.out.println("Checking against = " + role);
-
-            if (role.equals(currentRole)) {
-                return true;
-            }
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+            return false;
         }
 
-        return false;
+        String requiredRole = normalizeRole(role);
+
+        return authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(this::normalizeRole)
+                .anyMatch(requiredRole::equals);
+    }
+
+    public boolean hasAnyRole(Authentication authentication,
+                              String... roles) {
+
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        return authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(this::normalizeRole)
+                .anyMatch(currentRole ->
+                        Arrays.stream(roles)
+                                .map(this::normalizeRole)
+                                .anyMatch(currentRole::equals)
+                );
+    }
+
+    private String normalizeRole(String role) {
+
+        if (role == null) {
+            return null;
+        }
+
+        return role.startsWith("ROLE_")
+                ? role.substring(5)
+                : role;
     }
 }

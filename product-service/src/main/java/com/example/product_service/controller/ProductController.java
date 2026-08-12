@@ -23,13 +23,8 @@ public class ProductController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasAnyRole('ADMIN','USER')")
-    public ResponseEntity<List<ProductResponse>> getAllProducts(
-            @RequestHeader("X-Authenticated-User") String username,
-            @RequestHeader("X-User-Role") String role) {
-
-        System.out.println(username);
-        System.out.println(role);
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    public ResponseEntity<List<ProductResponse>> getAllProducts() {
 
         return ResponseEntity.ok(
                 service.getAllProducts()
@@ -37,8 +32,12 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole('ADMIN','USER')")
-    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication,'ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ProductResponse> getProduct(
+            @PathVariable Long id) {
+
+        System.out.println("========== PRODUCT CONTROLLER HIT ==========");
+        System.out.println("Product ID = " + id);
 
         return ResponseEntity.ok(
                 service.getProduct(id)
@@ -46,7 +45,7 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleSecurity.hasRole('ADMIN')")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
     public ResponseEntity<ProductResponse> createProduct(
             @Valid @RequestBody CreateProductRequest request) {
 
@@ -58,7 +57,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole('ADMIN')")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id,
             @Valid @RequestBody UpdateProductRequest request) {
 
@@ -68,7 +67,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole('ADMIN')")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
 
         service.deleteProduct(id);
