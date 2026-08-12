@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CreateProductRequest {
+public class UpdateProductRequest {
 
     @NotBlank(message = "Product name is required")
     @Size(max = 150, message = "Product name must not exceed 150 characters")
