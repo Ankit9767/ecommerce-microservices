@@ -65,8 +65,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 1
-                redis-rate-limiter.burstCapacity: 1
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -86,8 +86,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -124,6 +124,11 @@ spring:
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
+
+      default-filters:
+        - name: RequestSize
+          args:
+            maxSize: 2MB
 
 
 eureka:
