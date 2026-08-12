@@ -1,15 +1,28 @@
 server:
   port: 0
+  shutdown: graceful
+  forward-headers-strategy: framework
 
 spring:
   application:
     name: auth-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
 
   jpa:
     hibernate:
@@ -27,13 +40,37 @@ spring:
     discovery:
       enabled: false
 
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    enabled: false
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+security:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+
+  proxy:
+    enabled: false
+    trusted-proxies: []
+
+  brute-force:
+    max-failures: 5
+    max-ip-failures: 20
+    failure-window: 15m
+    lock-duration: 15m
+    ip-block-duration: 15m
+
 jwt:
   secret: TestSecretKey12345678901234567890
   expiration: 3600000
-
-eureka:
-  client:
-    enabled: false
+  refresh-expiration: 604800000
 
 management:
   endpoints:
@@ -54,3 +91,7 @@ management:
 
   tracing:
     enabled: false
+
+logging:
+  level:
+    org.springframework.security: TRACE

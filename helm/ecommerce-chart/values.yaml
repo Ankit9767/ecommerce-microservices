@@ -1,6 +1,13 @@
 namespace: ecommerce
 
 # ===========================
+# Global Configuration
+# ===========================
+
+cors:
+  allowedOrigin: "http://localhost:3000"
+
+# ===========================
 # MySQL
 # ===========================
 mysql:

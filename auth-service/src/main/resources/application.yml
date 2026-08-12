@@ -1,20 +1,20 @@
 server:
-  port: ${SERVER_PORT:8090}
+  port: ${SERVER_PORT}
   shutdown: graceful
   forward-headers-strategy: framework
 
 spring:
 
   application:
-    name: ${SPRING_APPLICATION_NAME:auth-service}
+    name: ${SPRING_APPLICATION_NAME}
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/auth_db}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root123}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
     hikari:
       maximum-pool-size: 10
@@ -27,7 +27,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
 
     show-sql: true
 
@@ -40,12 +40,11 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
 security:
   cors:
-    allowed-origins:
-      - http://localhost:3000
+    allowed-origin: ${CORS_ALLOWED_ORIGIN}
 
   proxy:
     enabled: false
@@ -60,9 +59,9 @@ security:
 
 jwt:
 
-  secret: ${JWT_SECRET:MySuperSecretKeyForJwtAuthentication12345678901234567890}
+  secret: ${JWT_SECRET}
 
-  expiration: ${JWT_EXPIRATION:3600000}
+  expiration: ${JWT_EXPIRATION}
 
   refresh-expiration: 604800000
 
@@ -74,7 +73,7 @@ management:
 
     web:
       exposure:
-        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE}
 
 
   endpoint:
@@ -86,14 +85,14 @@ management:
   tracing:
 
     sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
 
 
     zipkin:
 
       tracing:
 
-        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
 
 logging:
 
