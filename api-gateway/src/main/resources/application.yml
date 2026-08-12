@@ -1,16 +1,16 @@
 server:
-  port: ${SERVER_PORT:8087}
+  port: ${SERVER_PORT}
   shutdown: graceful
 
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:api-gateway}
+    name: ${SPRING_APPLICATION_NAME}
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
@@ -134,12 +134,12 @@ spring:
 eureka:
   instance:
     prefer-ip-address: true
-    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:127.0.0.1}
-    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS}
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
 
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
 
 management:
@@ -164,11 +164,11 @@ management:
 
   tracing:
     sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
 
   zipkin:
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
 
 
 logging:
@@ -177,8 +177,8 @@ logging:
 
 
 jwt:
-  secret: ${JWT_SECRET:MySuperSecretKeyForJwtAuthentication12345678901234567890}
-  expiration: ${JWT_EXPIRATION:3600000}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 
 cors:
-  allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:3000}
+  allowed-origin: ${CORS_ALLOWED_ORIGIN:http}

@@ -1,0 +1,49 @@
+server:
+  port: 8087
+  shutdown: graceful
+
+spring:
+  application:
+    name: api-gateway
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: localhost
+
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},trace=%X{traceId:-},span=%X{spanId:-}]"
+
+jwt:
+  secret: MySuperSecretKeyForJwtAuthentication12345678901234567890
+  expiration: 3600000
+
+cors:
+  allowed-origin: http://localhost:3000
