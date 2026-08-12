@@ -6,6 +6,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
+import org.springframework.security.web.server.header.XFrameOptionsServerHttpHeadersWriter;
+
+import java.time.Duration;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -22,6 +26,29 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+
+                .headers(headers -> headers
+                        .contentTypeOptions(contentTypeOptions -> {})
+
+                        .frameOptions(frameOptions ->
+                                frameOptions.mode(
+                                        XFrameOptionsServerHttpHeadersWriter.Mode.DENY
+                                )
+                        )
+
+                        .referrerPolicy(referrerPolicy ->
+                                referrerPolicy.policy(
+                                        ReferrerPolicyServerHttpHeadersWriter.ReferrerPolicy
+                                                .STRICT_ORIGIN_WHEN_CROSS_ORIGIN
+                                )
+                        )
+
+                        .hsts(hsts ->
+                                hsts
+                                        .maxAge(Duration.ofDays(365))
+                                        .includeSubdomains(true)
+                        )
+                )
 
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling
