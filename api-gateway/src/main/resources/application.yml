@@ -181,4 +181,4 @@ jwt:
   expiration: ${JWT_EXPIRATION}
 
 cors:
-  allowed-origin: ${CORS_ALLOWED_ORIGIN}
+  allowed-origin: ${SECURITY_CORS_ALLOWED_ORIGINS}

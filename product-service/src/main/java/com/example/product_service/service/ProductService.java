@@ -1,19 +1,23 @@
 package com.example.product_service.service;
 
-import com.example.product_service.entity.Product;
+import com.example.product_service.dto.CreateProductRequest;
+import com.example.product_service.dto.ProductResponse;
+import com.example.product_service.dto.UpdateProductRequest;
 
 import java.util.List;
 
 public interface ProductService {
 
-    Product createProduct(Product product);
+    ProductResponse createProduct(CreateProductRequest request);
 
-    Product getProduct(Long id);
+    ProductResponse getProduct(Long id);
 
-    List<Product> getAllProducts();
+    List<ProductResponse> getAllProducts();
 
-    Product updateProduct(Long id,
-                          Product product);
+    ProductResponse updateProduct(
+            Long id,
+            UpdateProductRequest request
+    );
 
     void deleteProduct(Long id);
 }
