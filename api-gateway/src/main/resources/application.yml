@@ -17,6 +17,9 @@ spring:
 
   cloud:
     gateway:
+      rate-limit:
+        use-forwarded-for: ${GATEWAY_RATE_LIMIT_USE_FORWARDED_FOR:false}
+
       routes:
 
         # Local-based routing
