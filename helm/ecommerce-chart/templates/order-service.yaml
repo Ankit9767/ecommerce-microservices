@@ -6,8 +6,6 @@ metadata:
   namespace: {{ .Values.namespace }}
 
 spec:
-  replicas: {{ .Values.order.replicas }}
-
   revisionHistoryLimit: 10
 
   strategy:

@@ -16,6 +16,14 @@ import java.util.List;
 public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getRequestURI();
+
+        return path.startsWith("/actuator/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
@@ -29,20 +37,6 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                 request.getHeader(
                         GatewaySecurityHeaders.USER_ROLES
                 );
-
-        System.out.println("========== COMMON GATEWAY AUTH ==========");
-        System.out.println("URI = " + request.getRequestURI());
-        System.out.println(
-                "X-Authenticated-User = [" +
-                        username +
-                        "]"
-        );
-        System.out.println(
-                "X-User-Roles = [" +
-                        rolesHeader +
-                        "]"
-        );
-        System.out.println("=========================================");
 
         if (username == null ||
                 username.isBlank() ||
