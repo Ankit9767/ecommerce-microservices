@@ -1,4 +1,4 @@
-package com.example.auth_service.entity;
+package com.ecommerce.common.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -1,6 +1,7 @@
 package com.example.auth_service.entity;
 
 import jakarta.persistence.*;
+import com.ecommerce.common.entity.BaseEntity;
 import lombok.*;
 
 import java.time.Instant;

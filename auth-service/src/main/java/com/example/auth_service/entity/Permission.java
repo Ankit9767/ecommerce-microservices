@@ -2,6 +2,7 @@ package com.example.auth_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.ecommerce.common.entity.BaseEntity;
 
 @Entity
 @Table(
