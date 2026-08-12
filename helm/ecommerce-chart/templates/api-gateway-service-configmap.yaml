@@ -18,3 +18,7 @@ data:
   MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
 
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+
+  REDIS_HOST: {{ .Values.gateway.redis.host | quote }}
+
+  REDIS_PORT: {{ .Values.gateway.redis.port | quote }}

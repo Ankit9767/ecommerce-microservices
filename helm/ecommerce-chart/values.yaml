@@ -146,6 +146,10 @@ gateway:
     tag: latest
     pullPolicy: IfNotPresent
 
+  redis:
+    host: redis
+    port: 6379
+
   replicas: 3
 
   resources:
@@ -155,3 +159,45 @@ gateway:
     limits:
       cpu: "500m"
       memory: "1Gi"
+
+
+# ===========================
+# Redis
+# ===========================
+
+redis:
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+
+# ===========================
+# Zipkin
+# ===========================
+
+zipkin:
+  image:
+    repository: openzipkin/zipkin
+    tag: "3"
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"

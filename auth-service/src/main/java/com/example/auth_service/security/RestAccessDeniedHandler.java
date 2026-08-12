@@ -38,7 +38,7 @@ public class RestAccessDeniedHandler
 
         ApiError error =
                 ApiError.builder()
-                        .timestamp(LocalDateTime.from(Instant.now()))
+                        .timestamp(LocalDateTime.now())
                         .status(403)
                         .error("Forbidden")
                         .message("Access denied")

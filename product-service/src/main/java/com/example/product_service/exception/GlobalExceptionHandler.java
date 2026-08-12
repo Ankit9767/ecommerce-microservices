@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,10 +26,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value(),
                 "Product Not Found",
                 ex.getMessage(),
-                request.getRequestURI()
+                request.getRequestURI(),
+                null
         );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -36,19 +40,25 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        String message = ex.getBindingResult()
-                .getFieldError()
-                .getDefaultMessage();
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError ->
+                        fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .toList();
 
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation Failed",
-                message,
-                request.getRequestURI()
+                "Request validation failed",
+                request.getRequestURI(),
+                errors
         );
 
-        return ResponseEntity.badRequest().body(error);
+        return ResponseEntity
+                .badRequest()
+                .body(error);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
@@ -61,10 +71,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.FORBIDDEN.value(),
                 "Forbidden",
                 "You are not authorized to access this resource.",
-                request.getRequestURI()
+                request.getRequestURI(),
+                null
         );
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(error);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -77,10 +90,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.FORBIDDEN.value(),
                 "Forbidden",
                 "Access denied.",
-                request.getRequestURI()
+                request.getRequestURI(),
+                null
         );
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(error);
     }
 
     @ExceptionHandler(Exception.class)
@@ -93,10 +109,12 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
                 ex.getMessage(),
-                request.getRequestURI()
+                request.getRequestURI(),
+                null
         );
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
     }
 }

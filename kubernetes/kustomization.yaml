@@ -57,4 +57,4 @@ resources:
   - api-gateway-service/api-gateway-service-hpa.yaml
 
   # Ingress
-  - ingress/ingress.yaml
+  - ingress/gateway-ingress.yaml

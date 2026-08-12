@@ -5,10 +5,7 @@ WORKDIR /build
 
 COPY . .
 
-RUN mvn clean package \
-    -pl auth-service \
-    -am \
-    -DskipTests
+RUN mvn clean package -pl auth-service -am -DskipTests
 
 
 # ---------- Runtime Stage ----------
