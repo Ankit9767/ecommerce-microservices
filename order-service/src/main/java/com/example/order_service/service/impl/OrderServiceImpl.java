@@ -6,6 +6,7 @@ import com.ecommerce.common.enums.OrderStatus;
 import com.example.order_service.client.ProductClient;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
+import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
 import com.example.order_service.exception.OrderNotFoundException;
@@ -160,5 +161,66 @@ public class OrderServiceImpl implements OrderService {
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateOrder(Long id,
+                                     UpdateOrderRequest request) {
+
+        Order existingOrder = repository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(id)
+                );
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Remove existing items.
+        existingOrder.getItems().clear();
+
+        for (CreateOrderItemRequest requestItem : request.getItems()) {
+
+            ProductResponse product =
+                    productClient.getProduct(
+                            requestItem.getProductId()
+                    );
+
+            if (product == null ||
+                    Boolean.FALSE.equals(product.getActive())) {
+
+                throw new IllegalStateException(
+                        "Product is not available: "
+                                + requestItem.getProductId()
+                );
+            }
+
+            BigDecimal unitPrice = product.getPrice();
+
+            BigDecimal lineTotal =
+                    unitPrice.multiply(
+                            BigDecimal.valueOf(
+                                    requestItem.getQuantity()
+                            )
+                    );
+
+            OrderItem orderItem = OrderItem.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .sku(product.getSku())
+                    .unitPrice(unitPrice)
+                    .quantity(requestItem.getQuantity())
+                    .lineTotal(lineTotal)
+                    .build();
+
+            existingOrder.addItem(orderItem);
+
+            totalAmount = totalAmount.add(lineTotal);
+        }
+
+        existingOrder.setTotalAmount(totalAmount);
+
+        Order savedOrder = repository.save(existingOrder);
+
+        return mapper.toResponse(savedOrder);
     }
 }

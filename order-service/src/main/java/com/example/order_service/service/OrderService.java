@@ -2,6 +2,7 @@ package com.example.order_service.service;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.example.order_service.dto.CreateOrderRequest;
+import com.example.order_service.dto.UpdateOrderRequest;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface OrderService {
     List<OrderResponse> getAllOrders();
 
     List<OrderResponse> getOrdersByCustomer(Long customerId);
+
+    OrderResponse updateOrder(Long id, UpdateOrderRequest request);
 }

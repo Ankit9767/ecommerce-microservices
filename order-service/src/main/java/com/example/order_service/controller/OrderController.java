@@ -2,6 +2,7 @@ package com.example.order_service.controller;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.example.order_service.dto.CreateOrderRequest;
+import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -58,5 +59,13 @@ public class OrderController {
         return ResponseEntity.ok(
                 service.getOrdersByCustomer(customerId)
         );
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    public ResponseEntity<OrderResponse> updateOrder(@PathVariable Long id,
+            @Valid @RequestBody UpdateOrderRequest request) {
+
+        return ResponseEntity.ok(service.updateOrder(id, request));
     }
 }
