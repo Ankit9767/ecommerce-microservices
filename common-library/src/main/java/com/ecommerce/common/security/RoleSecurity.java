@@ -1,4 +1,4 @@
-package com.example.product_service.security;
+package com.ecommerce.common.security;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
-@Component
+@Component("roleSecurity")
 public class RoleSecurity {
 
     public boolean hasRole(Authentication authentication,
