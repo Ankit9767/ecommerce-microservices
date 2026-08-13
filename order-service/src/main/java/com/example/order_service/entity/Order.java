@@ -1,58 +1,76 @@
 package com.example.order_service.entity;
+
+import com.ecommerce.common.entity.BaseEntity;
 import com.ecommerce.common.enums.OrderStatus;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import lombok.*;
-import java.time.Instant;
 
-@Entity
-@Table(name = "orders")
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Order {
+@Entity
+@Table(
+        name = "orders",
+        indexes = {
+                @Index(
+                        name = "idx_order_customer",
+                        columnList = "customer_id"
+                ),
+                @Index(
+                        name = "idx_order_status",
+                        columnList = "status"
+                )
+        }
+)
+public class Order extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private Long productId;
-
-    @Column(nullable = false)
+    @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(
+            name = "total_amount",
+            nullable = false,
+            precision = 19,
+            scale = 2
+    )
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private OrderStatus status;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<OrderItem> items = new ArrayList<>();
 
     @PrePersist
-    public void prePersist() {
-        Instant now = Instant.now();
-        this.createdAt = now;
-        this.updatedAt = now;
+    @Override
+    public void onCreate() {
 
         if (status == null) {
             status = OrderStatus.PENDING_PAYMENT;
         }
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
+    public void addItem(OrderItem item) {
+
+        items.add(item);
+        item.setOrder(this);
+    }
+
+    public void removeItem(OrderItem item) {
+
+        items.remove(item);
+        item.setOrder(null);
     }
 }
