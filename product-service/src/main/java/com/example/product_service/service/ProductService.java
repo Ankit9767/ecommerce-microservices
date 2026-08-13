@@ -14,12 +14,11 @@ public interface ProductService {
 
     ProductResponse getProduct(Long id);
 
-    Page<ProductResponse> getAllProducts(Pageable pageable);
+    Page<ProductResponse> getAllProducts(String search, String category,
+                                         Pageable pageable);
 
-    ProductResponse updateProduct(
-            Long id,
-            UpdateProductRequest request
-    );
+    ProductResponse updateProduct(Long id,
+            UpdateProductRequest request);
 
     void deactivateProduct(Long id);
 }

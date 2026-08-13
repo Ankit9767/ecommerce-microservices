@@ -12,8 +12,10 @@ import com.example.product_service.mapper.ProductMapper;
 import com.example.product_service.repository.CategoryRepository;
 import com.example.product_service.repository.ProductRepository;
 import com.example.product_service.service.ProductService;
+import com.example.product_service.specification.ProductSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,9 +90,29 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+    public Page<ProductResponse> getAllProducts(String search, String category,
+                                                Pageable pageable) {
 
-        return repository.findByActiveTrue(pageable)
+        Specification<Product> specification = ProductSpecification.active();
+
+        if (search != null && !search.isBlank()) {
+
+            specification =
+                    specification.and(
+                            ProductSpecification.search(search)
+                    );
+        }
+
+        if (category != null && !category.isBlank()) {
+
+            specification =
+                    specification.and(
+                            ProductSpecification.category(category)
+                    );
+        }
+
+        return repository
+                .findAll(specification, pageable)
                 .map(mapper::toResponse);
     }
 

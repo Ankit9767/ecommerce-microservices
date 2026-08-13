@@ -26,10 +26,14 @@ public class ProductController {
 
     @GetMapping
     @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(@RequestParam(required = false)
+                                                                String search,
+                                                                @RequestParam(required = false)
+                                                                String category,
+                                                                Pageable pageable) {
 
         return ResponseEntity.ok(
-                service.getAllProducts(pageable)
+                service.getAllProducts(search, category, pageable)
         );
     }
 
