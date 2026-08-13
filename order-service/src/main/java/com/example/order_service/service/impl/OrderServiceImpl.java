@@ -1,4 +1,4 @@
-package com.example.order_service.service;
+package com.example.order_service.service.impl;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ProductResponse;
@@ -11,6 +11,7 @@ import com.example.order_service.entity.OrderItem;
 import com.example.order_service.exception.OrderNotFoundException;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.repository.OrderRepository;
+import com.example.order_service.service.OrderService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;

@@ -1,8 +1,9 @@
-package com.example.order_service.service;
+package com.example.order_service.service.impl;
 
 import com.ecommerce.common.events.OrderCreatedEvent;
 import com.example.order_service.entity.OutboxEvent;
 import com.example.order_service.repository.OutboxRepository;
+import com.example.order_service.service.OutboxService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

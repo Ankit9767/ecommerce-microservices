@@ -146,3 +146,8 @@ logging:
     io.github.resilience4j.circuitbreaker: DEBUG
 
     org.springframework.cloud.openfeign: DEBUG
+
+
+security:
+  gateway:
+    enabled: true

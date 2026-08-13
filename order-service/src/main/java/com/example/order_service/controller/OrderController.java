@@ -2,11 +2,11 @@ package com.example.order_service.controller;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.example.order_service.dto.CreateOrderRequest;
-import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +22,7 @@ public class OrderController {
     }
 
     @PostMapping
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request) {
 
@@ -33,6 +34,7 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
 
         return ResponseEntity.ok(
@@ -41,6 +43,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<OrderResponse> getOrder(
             @PathVariable Long id) {
 
@@ -48,6 +51,7 @@ public class OrderController {
     }
 
     @GetMapping("/customer/{customerId}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(
             @PathVariable Long customerId) {
 

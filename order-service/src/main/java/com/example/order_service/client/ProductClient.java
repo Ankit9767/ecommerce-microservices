@@ -15,6 +15,7 @@
 package com.example.order_service.client;
 
 import com.ecommerce.common.dto.ProductResponse;
+import com.ecommerce.common.security.FeignSecurityConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +27,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 //use when not using the ureka server for service discovery
 
 @FeignClient(
-        name = "product-service"
+        name = "product-service",
+        configuration = FeignSecurityConfiguration.class
 )
 public interface ProductClient {
 

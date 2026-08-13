@@ -57,6 +57,8 @@ public class Order extends BaseEntity {
     @Override
     public void onCreate() {
 
+        super.onCreate();
+
         if (status == null) {
             status = OrderStatus.PENDING_PAYMENT;
         }
