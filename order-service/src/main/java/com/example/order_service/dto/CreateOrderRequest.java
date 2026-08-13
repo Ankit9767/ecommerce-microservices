@@ -15,9 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateOrderRequest {
 
-    @NotNull(message = "Customer ID is required")
-    private Long customerId;
-
     @NotNull(message = "Order items are required")
     @Valid
     private List<CreateOrderItemRequest> items;
