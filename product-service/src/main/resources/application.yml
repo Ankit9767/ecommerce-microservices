@@ -1,22 +1,22 @@
 server:
-  port: ${SERVER_PORT:8089}
+  port: ${SERVER_PORT}
   shutdown: graceful
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:product-service}
+    name: ${SPRING_APPLICATION_NAME}
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/product_db}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root123}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     show-sql: true
 
 
@@ -38,7 +38,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE}
 
   endpoint:
     health:
@@ -53,11 +53,11 @@ management:
 
   tracing:
     sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
 
   zipkin:
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
 
 
 logging:

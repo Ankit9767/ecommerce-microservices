@@ -9,6 +9,7 @@ import com.example.product_service.exception.CategoryNotFoundException;
 import com.example.product_service.exception.DuplicateSkuException;
 import com.example.product_service.exception.ProductNotFoundException;
 import com.example.product_service.mapper.ProductMapper;
+import com.example.product_service.metrics.ProductMetrics;
 import com.example.product_service.repository.CategoryRepository;
 import com.example.product_service.repository.ProductRepository;
 import com.example.product_service.service.ProductService;
@@ -30,12 +31,15 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductMapper mapper;
 
+    private final ProductMetrics metrics;
+
     public ProductServiceImpl(ProductRepository repository, CategoryRepository categoryRepository,
-                              ProductMapper mapper) {
+                              ProductMapper mapper, ProductMetrics metrics) {
 
         this.repository = repository;
         this.categoryRepository = categoryRepository;
         this.mapper = mapper;
+        this.metrics = metrics;
     }
 
     @Override
@@ -48,6 +52,7 @@ public class ProductServiceImpl implements ProductService {
                         .toUpperCase();
 
         if (repository.existsBySku(normalizedSku)) {
+            metrics.duplicateSku();
             throw new DuplicateSkuException(normalizedSku);
         }
 
@@ -68,10 +73,14 @@ public class ProductServiceImpl implements ProductService {
         }
 
         product.setCategory(category);
+
         product.setSku(normalizedSku);
+
         product.setActive(true);
 
         Product saved = repository.save(product);
+
+        metrics.productCreated();
 
         return mapper.toResponse(saved);
     }
@@ -81,9 +90,12 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProduct(Long id) {
 
         Product product = repository.findByIdAndActiveTrue(id)
-                .orElseThrow(() ->
-                        new ProductNotFoundException(id)
-                );
+                .orElseThrow(() -> {
+                    metrics.productNotFound();
+                    return new ProductNotFoundException(id);
+                });
+
+        metrics.productViewed();
 
         return mapper.toResponse(product);
     }
@@ -122,8 +134,10 @@ public class ProductServiceImpl implements ProductService {
                                          UpdateProductRequest request) {
 
         Product existing = repository.findById(id)
-                .orElseThrow(() ->
-                        new ProductNotFoundException(id)
+                .orElseThrow(() -> {
+                            metrics.productNotFound();
+                            return new ProductNotFoundException(id);
+                        }
                 );
 
         Category category = categoryRepository
@@ -159,5 +173,7 @@ public class ProductServiceImpl implements ProductService {
         product.setActive(false);
 
         repository.save(product);
+
+        metrics.productDeactivated();
     }
 }
