@@ -68,4 +68,11 @@ public class OrderController {
 
         return ResponseEntity.ok(service.updateOrder(id, request));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {
+
+        return ResponseEntity.ok(service.cancelOrder(id));
+    }
 }

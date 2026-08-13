@@ -9,7 +9,9 @@ import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
+import com.example.order_service.exception.OrderAlreadyCancelledException;
 import com.example.order_service.exception.OrderNotFoundException;
+import com.example.order_service.exception.ProductNotAvailableException;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.repository.OrderRepository;
 import com.example.order_service.service.OrderService;
@@ -188,9 +190,8 @@ public class OrderServiceImpl implements OrderService {
             if (product == null ||
                     Boolean.FALSE.equals(product.getActive())) {
 
-                throw new IllegalStateException(
-                        "Product is not available: "
-                                + requestItem.getProductId()
+                throw new ProductNotAvailableException(
+                        requestItem.getProductId()
                 );
             }
 
@@ -220,6 +221,26 @@ public class OrderServiceImpl implements OrderService {
         existingOrder.setTotalAmount(totalAmount);
 
         Order savedOrder = repository.save(existingOrder);
+
+        return mapper.toResponse(savedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse cancelOrder(Long id) {
+
+        Order order = repository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(id)
+                );
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderAlreadyCancelledException(id);
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+
+        Order savedOrder = repository.save(order);
 
         return mapper.toResponse(savedOrder);
     }

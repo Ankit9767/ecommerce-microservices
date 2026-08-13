@@ -25,7 +25,35 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "Order Not Found",
                 ex.getMessage(),
-                request.getRequestURI(),
+                request,
+                null
+        );
+    }
+
+    @ExceptionHandler(ProductNotAvailableException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotAvailable(
+            ProductNotAvailableException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Product Not Available",
+                ex.getMessage(),
+                request,
+                null
+        );
+    }
+
+    @ExceptionHandler(OrderAlreadyCancelledException.class)
+    public ResponseEntity<ErrorResponse> handleOrderAlreadyCancelled(
+            OrderAlreadyCancelledException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Order Already Cancelled",
+                ex.getMessage(),
+                request,
                 null
         );
     }
@@ -41,14 +69,15 @@ public class GlobalExceptionHandler {
                 .map(fieldError ->
                         fieldError.getField()
                                 + ": "
-                                + fieldError.getDefaultMessage())
+                                + fieldError.getDefaultMessage()
+                )
                 .toList();
 
         return buildError(
                 HttpStatus.BAD_REQUEST,
                 "Validation Failed",
                 "Request validation failed",
-                request.getRequestURI(),
+                request,
                 errors
         );
     }
@@ -62,7 +91,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.FORBIDDEN,
                 "Forbidden",
                 "You are not authorized to access this resource.",
-                request.getRequestURI(),
+                request,
                 null
         );
     }
@@ -76,7 +105,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.FORBIDDEN,
                 "Forbidden",
                 "Access denied.",
-                request.getRequestURI(),
+                request,
                 null
         );
     }
@@ -90,7 +119,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
                 "An unexpected error occurred.",
-                request.getRequestURI(),
+                request,
                 null
         );
     }
@@ -99,7 +128,7 @@ public class GlobalExceptionHandler {
             HttpStatus status,
             String error,
             String message,
-            String path,
+            HttpServletRequest request,
             List<String> details) {
 
         ErrorResponse response = new ErrorResponse(
@@ -107,7 +136,7 @@ public class GlobalExceptionHandler {
                 status.value(),
                 error,
                 message,
-                path,
+                request.getRequestURI(),
                 details
         );
 
