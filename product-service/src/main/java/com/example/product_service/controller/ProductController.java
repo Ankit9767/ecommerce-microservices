@@ -5,6 +5,8 @@ import com.example.product_service.dto.ProductResponse;
 import com.example.product_service.dto.UpdateProductRequest;
 import com.example.product_service.service.ProductService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,10 +26,10 @@ public class ProductController {
 
     @GetMapping
     @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
-    public ResponseEntity<List<ProductResponse>> getAllProducts() {
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(Pageable pageable) {
 
         return ResponseEntity.ok(
-                service.getAllProducts()
+                service.getAllProducts(pageable)
         );
     }
 
