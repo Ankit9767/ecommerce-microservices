@@ -12,4 +12,8 @@ public final class JwtConstants {
     public static final String ACCESS = "ACCESS";
 
     public static final String REFRESH = "REFRESH";
+
+    public static final String USER_ID = "userId";
+
+    public static final String SESSION_ID = "sessionId";
 }

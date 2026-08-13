@@ -1,8 +1,6 @@
 package com.example.api_gateway.service;
 
-import com.ecommerce.common.security.JwtConstants;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import com.ecommerce.common.security.JwtClaimsExtractor;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,75 +17,48 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    private SecretKey signingKey;
+    private JwtClaimsExtractor claimsExtractor;
 
     @PostConstruct
     public void init() {
 
-        signingKey = Keys.hmacShaKeyFor(
+        SecretKey signingKey = Keys.hmacShaKeyFor(
                 secret.getBytes(StandardCharsets.UTF_8)
         );
-    }
 
-    public Long extractUserId(String token) {
-
-        Claims claims = Jwts
-                .parser()
-                .verifyWith(signingKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        Object userId = claims.get("userId");
-
-        if (userId == null) {
-            return null;
-        }
-
-        return ((Number) userId).longValue();
-    }
-
-    public Claims extractAllClaims(String token) {
-
-        return Jwts.parser()
-                .verifyWith(signingKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        claimsExtractor = new JwtClaimsExtractor(signingKey);
     }
 
     public String extractUsername(String token) {
 
-        return extractAllClaims(token)
-                .getSubject();
+        return claimsExtractor.extractUsername(token);
+    }
+
+    public Long extractUserId(String token) {
+
+        return claimsExtractor.extractUserId(token);
     }
 
     public List<String> extractRoles(String token) {
 
-        return extractAllClaims(token)
-                .get(JwtConstants.ROLE, List.class);
+        return claimsExtractor.extractRoles(token);
     }
 
     public Date extractExpiration(String token) {
 
-        return extractAllClaims(token)
-                .getExpiration();
+        return claimsExtractor.extractExpiration(token);
     }
 
     public boolean isTokenExpired(String token) {
 
-        return extractExpiration(token)
-                .before(new Date());
+        return claimsExtractor.isTokenExpired(token);
     }
 
     public boolean isTokenValid(String token) {
 
         try {
-
-            return !isTokenExpired(token);
-
+            return !claimsExtractor.isTokenExpired(token);
         } catch (Exception ex) {
-
             return false;
         }
     }
