@@ -37,12 +37,8 @@ public class CreateProductRequest {
     )
     private BigDecimal price;
 
-    @NotBlank(message = "Category is required")
-    @Size(
-            max = 100,
-            message = "Category must not exceed 100 characters"
-    )
-    private String category;
+    @NotNull(message = "Category is required")
+    private Long categoryId;
 
     @NotBlank(message = "SKU is required")
     @Size(

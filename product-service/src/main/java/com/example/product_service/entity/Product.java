@@ -31,8 +31,12 @@ public class Product extends BaseEntity {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
-    @Column(nullable = false, length = 100)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false
+    )
+    private Category category;
 
     @Column(nullable = false, unique = true, length = 100)
     private String sku;
