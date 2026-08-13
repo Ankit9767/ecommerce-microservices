@@ -51,7 +51,8 @@ public class Product extends BaseEntity {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", price=" + price +
-                ", category='" + category + '\'' +
+                ", category=" +
+                (category != null ? category.getName() : null) +
                 ", sku='" + sku + '\'' +
                 ", active=" + active +
                 '}';

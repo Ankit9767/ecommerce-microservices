@@ -20,6 +20,8 @@ public class ProductResponse {
 
     private BigDecimal price;
 
+    private Long categoryId;
+
     private String category;
 
     private String sku;
