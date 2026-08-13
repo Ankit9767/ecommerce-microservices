@@ -31,12 +31,18 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse createProduct(CreateProductRequest request) {
 
-        if (repository.existsBySku(request.getSku())) {
-            throw new DuplicateSkuException(request.getSku());
+        String normalizedSku =
+                request.getSku()
+                        .trim()
+                        .toUpperCase();
+
+        if (repository.existsBySku(normalizedSku)) {
+            throw new DuplicateSkuException(normalizedSku);
         }
 
         Product product = mapper.toEntity(request);
 
+        product.setSku(normalizedSku);
         product.setActive(true);
 
         Product saved = repository.save(product);
