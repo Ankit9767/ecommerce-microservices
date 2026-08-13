@@ -56,6 +56,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         String username = jwtService.extractUsername(token);
 
+        Long userId = jwtService.extractUserId(token);
+
         List<String> roles = jwtService.extractRoles(token);
 
         ServerWebExchange modifiedExchange =
@@ -72,6 +74,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                                             );
 
                                             headers.remove(
+                                                    "X-Authenticated-User-Id"
+                                            );
+
+                                            headers.remove(
                                                     "X-User-Roles"
                                             );
 
@@ -80,6 +86,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                                             headers.set(
                                                     "X-Authenticated-User",
                                                     username
+                                            );
+
+                                            headers.set(
+                                                    "X-Authenticated-User-Id",
+                                                    String.valueOf(userId)
                                             );
 
                                             headers.set(

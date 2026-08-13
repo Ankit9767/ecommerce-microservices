@@ -3,6 +3,8 @@ package com.example.order_service.service.impl;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ProductResponse;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.security.CurrentUser;
+import com.ecommerce.common.security.RoleSecurity;
 import com.example.order_service.client.ProductClient;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
@@ -18,6 +20,8 @@ import com.example.order_service.service.OrderService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,29 +39,37 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper mapper;
 
+    private final RoleSecurity roleSecurity;
+
+    private final CurrentUser currentUser;
+
     public OrderServiceImpl(
             OrderRepository repository,
             ProductClient productClient,
             MeterRegistry meterRegistry,
-            OrderMapper mapper
+            OrderMapper mapper, RoleSecurity roleSecurity, CurrentUser currentUser
     ) {
         this.repository = repository;
         this.productClient = productClient;
         this.meterRegistry = meterRegistry;
         this.mapper = mapper;
+        this.roleSecurity = roleSecurity;
+        this.currentUser = currentUser;
     }
 
     @Override
     @Transactional
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request,
+                                     Authentication authentication) {
 
-        Timer.Sample sample =
-                Timer.start(meterRegistry);
+        Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
 
+            Long customerId = currentUser.getUserId(authentication);
+
             Order order = Order.builder()
-                    .customerId(request.getCustomerId())
+                    .customerId(customerId)
                     .status(OrderStatus.PENDING_PAYMENT)
                     .totalAmount(BigDecimal.ZERO)
                     .build();
@@ -98,9 +110,7 @@ public class OrderServiceImpl implements OrderService {
                                 .productName(product.getName())
                                 .sku(product.getSku())
                                 .unitPrice(unitPrice)
-                                .quantity(
-                                        requestItem.getQuantity()
-                                )
+                                .quantity(requestItem.getQuantity())
                                 .lineTotal(lineTotal)
                                 .build();
 
@@ -134,12 +144,26 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponse getOrder(Long id) {
+    public OrderResponse getOrder(Long id,
+                                  Authentication authentication) {
 
-        Order order = repository.findById(id)
+        Order order = repository
+                .findById(id)
                 .orElseThrow(() ->
                         new OrderNotFoundException(id)
                 );
+
+        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+            return mapper.toResponse(order);
+        }
+
+        Long currentUserId = currentUser.getUserId(authentication);
+
+        if (!order.getCustomerId().equals(currentUserId)) {
+            throw new AccessDeniedException(
+                    "You are not authorized to access this order"
+            );
+        }
 
         return mapper.toResponse(order);
     }
@@ -156,10 +180,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getOrdersByCustomer(
-            Long customerId) {
+    public List<OrderResponse> getOrdersByCustomer(Long customerId) {
 
-        return repository.findByCustomerId(customerId)
+        return repository
+                .findByCustomerId(customerId)
                 .stream()
                 .map(mapper::toResponse)
                 .toList();

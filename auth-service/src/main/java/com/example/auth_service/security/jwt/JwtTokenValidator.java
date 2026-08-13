@@ -104,4 +104,22 @@ public class JwtTokenValidator {
                 )
         );
     }
+
+    public Long extractUserId(String token) {
+
+        Claims claims = Jwts
+                .parser()
+                .verifyWith(keyProvider.getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Object userId = claims.get("userId");
+
+        if (userId == null) {
+            return null;
+        }
+
+        return ((Number) userId).longValue();
+    }
 }

@@ -33,6 +33,11 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                         GatewaySecurityHeaders.AUTHENTICATED_USER
                 );
 
+        String userIdHeader =
+                request.getHeader(
+                        GatewaySecurityHeaders.AUTHENTICATED_USER_ID
+                );
+
         String rolesHeader =
                 request.getHeader(
                         GatewaySecurityHeaders.USER_ROLES
@@ -40,10 +45,25 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
         if (username == null ||
                 username.isBlank() ||
+                userIdHeader == null ||
+                userIdHeader.isBlank() ||
                 rolesHeader == null ||
                 rolesHeader.isBlank()) {
 
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+            return;
+        }
+
+        Long userId;
+
+        try {
+            userId = Long.valueOf(userIdHeader);
+        } catch (NumberFormatException ex) {
+
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
 
             return;
         }
@@ -63,9 +83,14 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        GatewayUserPrincipal principal = new GatewayUserPrincipal(
+                        userId,
+                        username
+                );
+
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        username,
+                        principal,
                         null,
                         authorities
                 );

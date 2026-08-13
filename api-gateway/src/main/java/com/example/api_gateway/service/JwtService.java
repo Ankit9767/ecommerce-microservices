@@ -29,6 +29,24 @@ public class JwtService {
         );
     }
 
+    public Long extractUserId(String token) {
+
+        Claims claims = Jwts
+                .parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Object userId = claims.get("userId");
+
+        if (userId == null) {
+            return null;
+        }
+
+        return ((Number) userId).longValue();
+    }
+
     public Claims extractAllClaims(String token) {
 
         return Jwts.parser()

@@ -1,6 +1,7 @@
 package com.example.auth_service.security.jwt;
 
 import com.ecommerce.common.security.JwtConstants;
+import com.example.auth_service.security.CustomUserDetails;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,13 @@ public class JwtTokenGenerator {
                         .map(GrantedAuthority::getAuthority)
                         .toList();
 
+        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .claims(claims)
                 .claim("sessionId", sessionId)
+                .claim("userId", customUserDetails.getUser().getId())
                 .claim(JwtConstants.ROLE, roles)
                 .claim(JwtConstants.TOKEN_TYPE, JwtTokenType.ACCESS.name())
                 .issuedAt(new Date())
