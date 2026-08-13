@@ -2,12 +2,16 @@ package com.example.order_service.service;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.example.order_service.dto.CreateOrderRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 public interface OrderService {
 
-    @Transactional
-    OrderResponse createOrder(CreateOrderRequest request) throws JsonProcessingException;
+    OrderResponse createOrder(CreateOrderRequest request);
 
+    OrderResponse getOrder(Long id);
+
+    List<OrderResponse> getAllOrders();
+
+    List<OrderResponse> getOrdersByCustomer(Long customerId);
 }

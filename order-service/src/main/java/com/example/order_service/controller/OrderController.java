@@ -4,30 +4,55 @@ import com.ecommerce.common.dto.OrderResponse;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.service.OrderService;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderService service;
-    private final OrderMapper mapper;
 
-    public OrderController(OrderService service, OrderMapper mapper) {
+    public OrderController(OrderService service) {
         this.service = service;
-        this.mapper = mapper;
     }
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-            @RequestBody CreateOrderRequest request) throws JsonProcessingException {
+            @Valid @RequestBody CreateOrderRequest request) {
 
         OrderResponse response = service.createOrder(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+
+        return ResponseEntity.ok(
+                service.getAllOrders()
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrder(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(service.getOrder(id));
+    }
+
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(
+            @PathVariable Long customerId) {
+
+        return ResponseEntity.ok(
+                service.getOrdersByCustomer(customerId)
+        );
     }
 }

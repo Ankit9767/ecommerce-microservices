@@ -8,6 +8,7 @@ import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
+import com.example.order_service.exception.OrderNotFoundException;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.repository.OrderRepository;
 import io.micrometer.core.instrument.Counter;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -124,5 +126,38 @@ public class OrderServiceImpl implements OrderService {
                             .register(meterRegistry)
             );
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(Long id) {
+
+        Order order = repository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(id)
+                );
+
+        return mapper.toResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrders() {
+
+        return repository.findAll()
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByCustomer(
+            Long customerId) {
+
+        return repository.findByCustomerId(customerId)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 }
