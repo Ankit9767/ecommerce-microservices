@@ -20,10 +20,9 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository repository;
     private final ProductMapper mapper;
 
-    public ProductServiceImpl(
-            ProductRepository repository,
-            ProductMapper mapper
-    ) {
+    public ProductServiceImpl(ProductRepository repository,
+                              ProductMapper mapper) {
+
         this.repository = repository;
         this.mapper = mapper;
     }
@@ -46,9 +45,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
 
-        Product product = repository.findById(id)
+        Product product = repository.findByIdAndActiveTrue(id)
                 .orElseThrow(() ->
                         new ProductNotFoundException(id)
                 );
@@ -57,9 +57,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
 
-        return repository.findAll()
+        return repository.findByActiveTrue()
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
