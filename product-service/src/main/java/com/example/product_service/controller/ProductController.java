@@ -36,9 +36,6 @@ public class ProductController {
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Long id) {
 
-        System.out.println("========== PRODUCT CONTROLLER HIT ==========");
-        System.out.println("Product ID = " + id);
-
         return ResponseEntity.ok(
                 service.getProduct(id)
         );
