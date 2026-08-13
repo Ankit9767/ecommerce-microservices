@@ -68,10 +68,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponse updateProduct(
-            Long id,
-            UpdateProductRequest request
-    ) {
+    public ProductResponse updateProduct(Long id,
+                                         UpdateProductRequest request) {
 
         Product existing = repository.findById(id)
                 .orElseThrow(() ->
