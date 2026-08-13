@@ -67,7 +67,7 @@ public class ProductController {
     @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
 
-        service.deleteProduct(id);
+        service.deactivateProduct(id);
 
         return ResponseEntity.noContent().build();
     }

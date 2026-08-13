@@ -85,12 +85,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void deleteProduct(Long id) {
+    public void deactivateProduct(Long id) {
 
-        if (!repository.existsById(id)) {
-            throw new ProductNotFoundException(id);
-        }
+        Product product = repository.findById(id)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(id)
+                );
 
-        repository.deleteById(id);
+        product.setActive(false);
+
+        repository.save(product);
     }
 }
