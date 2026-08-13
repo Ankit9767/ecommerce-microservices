@@ -1,7 +1,7 @@
 package com.example.product_service.controller;
 
+import com.ecommerce.common.dto.ProductResponse;
 import com.example.product_service.dto.CreateProductRequest;
-import com.example.product_service.dto.ProductResponse;
 import com.example.product_service.dto.UpdateProductRequest;
 import com.example.product_service.service.ProductService;
 import jakarta.validation.Valid;
@@ -11,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")

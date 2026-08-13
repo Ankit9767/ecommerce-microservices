@@ -1,19 +1,34 @@
 package com.ecommerce.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public record ProductResponse(
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductResponse {
 
-        Long id,
+    private Long id;
 
-        String name,
+    private String name;
 
-        BigDecimal price,
+    private String description;
 
-        Integer stock
+    private BigDecimal price;
 
-) {
+    private Long categoryId;
+
+    private String category;
+
+    private String sku;
+
+    private Boolean active;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }

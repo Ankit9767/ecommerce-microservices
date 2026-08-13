@@ -1,7 +1,7 @@
 package com.example.product_service.mapper;
 
+import com.ecommerce.common.dto.ProductResponse;
 import com.example.product_service.dto.CreateProductRequest;
-import com.example.product_service.dto.ProductResponse;
 import com.example.product_service.dto.UpdateProductRequest;
 import com.example.product_service.entity.Product;
 import org.mapstruct.Mapper;

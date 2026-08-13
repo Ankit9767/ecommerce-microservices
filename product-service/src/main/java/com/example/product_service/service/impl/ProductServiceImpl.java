@@ -1,7 +1,7 @@
 package com.example.product_service.service.impl;
 
+import com.ecommerce.common.dto.ProductResponse;
 import com.example.product_service.dto.CreateProductRequest;
-import com.example.product_service.dto.ProductResponse;
 import com.example.product_service.dto.UpdateProductRequest;
 import com.example.product_service.entity.Category;
 import com.example.product_service.entity.Product;
@@ -19,8 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class ProductServiceImpl implements ProductService {
