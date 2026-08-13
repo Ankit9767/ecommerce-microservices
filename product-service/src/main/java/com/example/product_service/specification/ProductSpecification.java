@@ -42,7 +42,10 @@ public final class ProductSpecification {
 
         return (root, query, cb) ->
                 cb.equal(
-                        cb.lower(root.get("category")),
+                        cb.lower(
+                                root.get("category")
+                                        .get("name")
+                        ),
                         category.trim().toLowerCase()
                 );
     }
