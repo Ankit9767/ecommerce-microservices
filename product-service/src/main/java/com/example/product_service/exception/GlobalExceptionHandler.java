@@ -21,18 +21,41 @@ public class GlobalExceptionHandler {
             ProductNotFoundException ex,
             HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
+        return buildError(
+                HttpStatus.NOT_FOUND,
                 "Product Not Found",
                 ex.getMessage(),
                 request.getRequestURI(),
                 null
         );
+    }
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryNotFound(
+            CategoryNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                "Category Not Found",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(DuplicateSkuException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateSku(
+            DuplicateSkuException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -44,21 +67,18 @@ public class GlobalExceptionHandler {
                 .getFieldErrors()
                 .stream()
                 .map(fieldError ->
-                        fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                        fieldError.getField()
+                                + ": "
+                                + fieldError.getDefaultMessage())
                 .toList();
 
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
+        return buildError(
+                HttpStatus.BAD_REQUEST,
                 "Validation Failed",
                 "Request validation failed",
                 request.getRequestURI(),
                 errors
         );
-
-        return ResponseEntity
-                .badRequest()
-                .body(error);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
@@ -66,18 +86,13 @@ public class GlobalExceptionHandler {
             AuthorizationDeniedException ex,
             HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.FORBIDDEN.value(),
+        return buildError(
+                HttpStatus.FORBIDDEN,
                 "Forbidden",
                 "You are not authorized to access this resource.",
                 request.getRequestURI(),
                 null
         );
-
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(error);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -85,18 +100,13 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.FORBIDDEN.value(),
+        return buildError(
+                HttpStatus.FORBIDDEN,
                 "Forbidden",
                 "Access denied.",
                 request.getRequestURI(),
                 null
         );
-
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(error);
     }
 
     @ExceptionHandler(Exception.class)
@@ -104,36 +114,33 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
-                ex.getMessage(),
+                "An unexpected error occurred.",
                 request.getRequestURI(),
                 null
         );
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error);
     }
 
-    @ExceptionHandler(DuplicateSkuException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateSku(
-            DuplicateSkuException ex,
-            HttpServletRequest request) {
+    private ResponseEntity<ErrorResponse> buildError(
+            HttpStatus status,
+            String error,
+            String message,
+            String path,
+            List<String> details) {
 
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
+                status.value(),
+                error,
+                message,
+                path,
+                details
         );
 
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+                .status(status)
+                .body(response);
     }
 }

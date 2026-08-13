@@ -17,7 +17,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
-    show-sql: true
+    show-sql: false
 
 
 eureka:
@@ -42,7 +42,7 @@ management:
 
   endpoint:
     health:
-      show-details: always
+      show-details: never
 
     prometheus:
       enabled: true
