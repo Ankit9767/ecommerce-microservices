@@ -4,8 +4,13 @@ public enum PaymentStatus {
 
     PENDING,
 
+    PROCESSING,
+
     SUCCESS,
 
-    FAILED
+    FAILED,
 
+    CANCELLED,
+
+    REFUNDED
 }
