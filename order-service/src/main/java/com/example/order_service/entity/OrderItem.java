@@ -1,6 +1,8 @@
 package com.example.order_service.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -62,7 +64,8 @@ public class OrderItem {
     )
     private BigDecimal unitPrice;
 
-    @Column(nullable = false)
+    @NotNull
+    @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
 
     @Column(

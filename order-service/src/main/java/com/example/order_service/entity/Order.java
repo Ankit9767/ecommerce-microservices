@@ -25,6 +25,10 @@ import java.util.List;
                 @Index(
                         name = "idx_order_status",
                         columnList = "status"
+                ),
+                @Index(
+                        name = "idx_order_customer_status",
+                        columnList = "customer_id,status"
                 )
         }
 )
