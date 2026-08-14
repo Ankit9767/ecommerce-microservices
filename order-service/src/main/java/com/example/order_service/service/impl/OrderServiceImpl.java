@@ -25,6 +25,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -65,6 +68,8 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request,
                                      Authentication authentication) {
+
+        validateNoDuplicateProducts(request.getItems());
 
         Long customerId = currentUser.getUserId(authentication);
 
@@ -205,18 +210,18 @@ public class OrderServiceImpl implements OrderService {
                             return new OrderNotFoundException(id);
                         });
 
-        if (existingOrder.getStatus() !=
-                OrderStatus.PENDING_PAYMENT) {
+        if (existingOrder.getStatus() != OrderStatus.PENDING_PAYMENT) {
 
             throw new OrderNotEditableException(id);
         }
+
+        validateNoDuplicateProducts(request.getItems());
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         existingOrder.getItems().clear();
 
-        for (CreateOrderItemRequest requestItem :
-                request.getItems()) {
+        for (CreateOrderItemRequest requestItem : request.getItems()) {
 
             ProductResponse product =
                     productClient.getProduct(
@@ -364,5 +369,19 @@ public class OrderServiceImpl implements OrderService {
         orderMetrics.orderViewed();
 
         return result;
+    }
+
+    private void validateNoDuplicateProducts(List<CreateOrderItemRequest> items) {
+
+        Set<Long> productIds = new HashSet<>();
+
+        for (CreateOrderItemRequest item : items) {
+
+            if (!productIds.add(item.getProductId())) {
+                throw new DuplicateOrderProductException(
+                        item.getProductId()
+                );
+            }
+        }
     }
 }
