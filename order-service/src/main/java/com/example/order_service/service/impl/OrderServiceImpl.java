@@ -13,21 +13,18 @@ import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
 import com.example.order_service.exception.*;
 import com.example.order_service.mapper.OrderMapper;
+import com.example.order_service.metrics.OrderMetrics;
 import com.example.order_service.repository.OrderRepository;
 import com.example.order_service.service.OrderService;
 import com.example.order_service.service.OrderStatusLifecycle;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -35,8 +32,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository repository;
 
     private final ProductClient productClient;
-
-    private final MeterRegistry meterRegistry;
 
     private final OrderMapper mapper;
 
@@ -46,19 +41,24 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderStatusLifecycle statusLifecycle;
 
+    private final OrderMetrics orderMetrics;
+
     public OrderServiceImpl(
             OrderRepository repository,
             ProductClient productClient,
-            MeterRegistry meterRegistry,
-            OrderMapper mapper, RoleSecurity roleSecurity, CurrentUser currentUser, OrderStatusLifecycle statusLifecycle
+            OrderMapper mapper,
+            RoleSecurity roleSecurity,
+            CurrentUser currentUser,
+            OrderStatusLifecycle statusLifecycle,
+            OrderMetrics orderMetrics
     ) {
         this.repository = repository;
         this.productClient = productClient;
-        this.meterRegistry = meterRegistry;
         this.mapper = mapper;
         this.roleSecurity = roleSecurity;
         this.currentUser = currentUser;
         this.statusLifecycle = statusLifecycle;
+        this.orderMetrics = orderMetrics;
     }
 
     @Override
@@ -66,149 +66,15 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createOrder(CreateOrderRequest request,
                                      Authentication authentication) {
 
-        Timer.Sample sample = Timer.start(meterRegistry);
+        Long customerId = currentUser.getUserId(authentication);
 
-        try {
-
-            Long customerId = currentUser.getUserId(authentication);
-
-            Order order = Order.builder()
-                    .customerId(customerId)
-                    .status(OrderStatus.PENDING_PAYMENT)
-                    .totalAmount(BigDecimal.ZERO)
-                    .build();
-
-            BigDecimal totalAmount =
-                    BigDecimal.ZERO;
-
-            for (CreateOrderItemRequest requestItem :
-                    request.getItems()) {
-
-                ProductResponse product =
-                        productClient.getProduct(
-                                requestItem.getProductId()
-                        );
-
-                if (product == null ||
-                        Boolean.FALSE.equals(product.getActive())) {
-
-                    throw new IllegalStateException(
-                            "Product is not available: "
-                                    + requestItem.getProductId()
-                    );
-                }
-
-                BigDecimal unitPrice =
-                        product.getPrice();
-
-                BigDecimal lineTotal =
-                        unitPrice.multiply(
-                                BigDecimal.valueOf(
-                                        requestItem.getQuantity()
-                                )
-                        );
-
-                OrderItem orderItem =
-                        OrderItem.builder()
-                                .productId(product.getId())
-                                .productName(product.getName())
-                                .sku(product.getSku())
-                                .unitPrice(unitPrice)
-                                .quantity(requestItem.getQuantity())
-                                .lineTotal(lineTotal)
-                                .build();
-
-                order.addItem(orderItem);
-
-                totalAmount =
-                        totalAmount.add(lineTotal);
-            }
-
-            order.setTotalAmount(totalAmount);
-
-            Order savedOrder =
-                    repository.save(order);
-
-            Counter.builder("orders.created.total")
-                    .description("Total orders created")
-                    .register(meterRegistry)
-                    .increment();
-
-            return mapper.toResponse(savedOrder);
-
-        } finally {
-
-            sample.stop(
-                    Timer.builder("order.processing.time")
-                            .description("Order creation time")
-                            .register(meterRegistry)
-            );
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public OrderResponse getOrder(Long id,
-                                  Authentication authentication) {
-
-        Order order = repository
-                .findById(id)
-                .orElseThrow(() ->
-                        new OrderNotFoundException(id)
-                );
-
-        if (roleSecurity.hasRole(authentication, "ADMIN")) {
-            return mapper.toResponse(order);
-        }
-
-        Long currentUserId = currentUser.getUserId(authentication);
-
-        if (!order.getCustomerId().equals(currentUserId)) {
-            throw new AccessDeniedException(
-                    "You are not authorized to access this order"
-            );
-        }
-
-        return mapper.toResponse(order);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderResponse> getAllOrders(Pageable pageable) {
-
-        return repository
-                .findAll(pageable)
-                .map(mapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrdersByCustomer(Long customerId,
-                                                   Pageable pageable) {
-
-        return repository
-                .findByCustomerId(customerId, pageable)
-                .map(mapper::toResponse);
-    }
-
-    @Override
-    @Transactional
-    public OrderResponse updateOrder(Long id,
-                                     UpdateOrderRequest request) {
-
-        Order existingOrder = repository.findById(id)
-                .orElseThrow(() ->
-                        new OrderNotFoundException(id)
-                );
-
-        if (existingOrder.getStatus() != OrderStatus.PENDING_PAYMENT) {
-            throw new OrderNotEditableException(id);
-        }
+        Order order = Order.builder()
+                .customerId(customerId)
+                .status(OrderStatus.PENDING_PAYMENT)
+                .totalAmount(BigDecimal.ZERO)
+                .build();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
-
-        // Remove existing items.
-        existingOrder.getItems().clear();
 
         for (CreateOrderItemRequest requestItem : request.getItems()) {
 
@@ -219,6 +85,8 @@ public class OrderServiceImpl implements OrderService {
 
             if (product == null ||
                     Boolean.FALSE.equals(product.getActive())) {
+
+                orderMetrics.productNotAvailable();
 
                 throw new ProductNotAvailableException(
                         requestItem.getProductId()
@@ -234,14 +102,155 @@ public class OrderServiceImpl implements OrderService {
                             )
                     );
 
-            OrderItem orderItem = OrderItem.builder()
-                    .productId(product.getId())
-                    .productName(product.getName())
-                    .sku(product.getSku())
-                    .unitPrice(unitPrice)
-                    .quantity(requestItem.getQuantity())
-                    .lineTotal(lineTotal)
-                    .build();
+            OrderItem orderItem =
+                    OrderItem.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .sku(product.getSku())
+                            .unitPrice(unitPrice)
+                            .quantity(requestItem.getQuantity())
+                            .lineTotal(lineTotal)
+                            .build();
+
+            order.addItem(orderItem);
+
+            totalAmount = totalAmount.add(lineTotal);
+        }
+
+        order.setTotalAmount(totalAmount);
+
+        Order savedOrder = repository.save(order);
+
+        orderMetrics.orderCreated();
+
+        return mapper.toResponse(savedOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(Long id,
+                                  Authentication authentication) {
+
+        Order order = repository
+                .findById(id)
+                .orElseThrow(() -> {
+                    orderMetrics.orderNotFound();
+
+                    return new OrderNotFoundException(id);
+                });
+
+        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            orderMetrics.orderViewed();
+
+            return mapper.toResponse(order);
+        }
+
+        Long currentUserId = currentUser.getUserId(authentication);
+
+        if (!order.getCustomerId().equals(currentUserId)) {
+
+            throw new AccessDeniedException(
+                    "You are not authorized to access this order"
+            );
+        }
+
+        orderMetrics.orderViewed();
+
+        return mapper.toResponse(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+
+        Page<OrderResponse> result =
+                repository
+                        .findAll(pageable)
+                        .map(mapper::toResponse);
+
+        orderMetrics.orderViewed();
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrdersByCustomer(Long customerId,
+                                                   Pageable pageable) {
+
+        Page<OrderResponse> result =
+                repository
+                        .findByCustomerId(
+                                customerId,
+                                pageable
+                        )
+                        .map(mapper::toResponse);
+
+        orderMetrics.orderViewed();
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse updateOrder(Long id,
+                                     UpdateOrderRequest request) {
+
+        Order existingOrder =
+                repository.findById(id)
+                        .orElseThrow(() -> {
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(id);
+                        });
+
+        if (existingOrder.getStatus() !=
+                OrderStatus.PENDING_PAYMENT) {
+
+            throw new OrderNotEditableException(id);
+        }
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        existingOrder.getItems().clear();
+
+        for (CreateOrderItemRequest requestItem :
+                request.getItems()) {
+
+            ProductResponse product =
+                    productClient.getProduct(
+                            requestItem.getProductId()
+                    );
+
+            if (product == null ||
+                    Boolean.FALSE.equals(product.getActive())) {
+
+                orderMetrics.productNotAvailable();
+
+                throw new ProductNotAvailableException(
+                        requestItem.getProductId()
+                );
+            }
+
+            BigDecimal unitPrice = product.getPrice();
+
+            BigDecimal lineTotal =
+                    unitPrice.multiply(
+                            BigDecimal.valueOf(
+                                    requestItem.getQuantity()
+                            )
+                    );
+
+            OrderItem orderItem =
+                    OrderItem.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .sku(product.getSku())
+                            .unitPrice(unitPrice)
+                            .quantity(requestItem.getQuantity())
+                            .lineTotal(lineTotal)
+                            .build();
 
             existingOrder.addItem(orderItem);
 
@@ -252,6 +261,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = repository.save(existingOrder);
 
+        orderMetrics.orderUpdated();
+
         return mapper.toResponse(savedOrder);
     }
 
@@ -260,16 +271,20 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse cancelOrder(Long id,
                                      Authentication authentication) {
 
-        Order order = repository.findById(id)
-                .orElseThrow(() ->
-                        new OrderNotFoundException(id)
-                );
+        Order order =
+                repository.findById(id)
+                        .orElseThrow(() -> {
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(id);
+                        });
 
         if (!roleSecurity.hasRole(authentication, "ADMIN")) {
 
             Long currentUserId = currentUser.getUserId(authentication);
 
-            if (!order.getCustomerId().equals(currentUserId)) {
+            if (!order.getCustomerId()
+                    .equals(currentUserId)) {
 
                 throw new AccessDeniedException(
                         "You are not authorized to cancel this order"
@@ -282,22 +297,28 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderAlreadyCancelledException(id);
         }
 
-        transitionStatus(order, OrderStatus.CANCELLED);
+        transitionStatus(
+                order,
+                OrderStatus.CANCELLED
+        );
 
         Order savedOrder = repository.save(order);
+
+        orderMetrics.orderCancelled();
 
         return mapper.toResponse(savedOrder);
     }
 
-    private void transitionStatus(
-            Order order,
-            OrderStatus targetStatus) {
+    private void transitionStatus(Order order,
+                                  OrderStatus targetStatus) {
 
         OrderStatus currentStatus = order.getStatus();
 
         if (!statusLifecycle.canTransition(
                 currentStatus,
                 targetStatus)) {
+
+            orderMetrics.invalidStatusTransition();
 
             throw new InvalidOrderStatusTransitionException(
                     currentStatus,
@@ -314,21 +335,34 @@ public class OrderServiceImpl implements OrderService {
                                                  Authentication authentication,
                                                  Pageable pageable) {
 
-        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+        Page<OrderResponse> result;
 
-            return repository
-                    .findByStatus(status, pageable)
+        if (roleSecurity.hasRole(
+                authentication,
+                "ADMIN")) {
+
+            result = repository
+                    .findByStatus(
+                            status,
+                            pageable
+                    )
+                    .map(mapper::toResponse);
+
+        } else {
+
+            Long currentUserId = currentUser.getUserId(authentication);
+
+            result = repository
+                    .findByCustomerIdAndStatus(
+                            currentUserId,
+                            status,
+                            pageable
+                    )
                     .map(mapper::toResponse);
         }
 
-        Long currentUserId = currentUser.getUserId(authentication);
+        orderMetrics.orderViewed();
 
-        return repository
-                .findByCustomerIdAndStatus(
-                        currentUserId,
-                        status,
-                        pageable
-                )
-                .map(mapper::toResponse);
+        return result;
     }
 }
