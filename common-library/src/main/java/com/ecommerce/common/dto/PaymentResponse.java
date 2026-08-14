@@ -1,26 +1,34 @@
 package com.ecommerce.common.dto;
 
-import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
-import lombok.Builder;
-import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-@Data
-@Builder
-public class PaymentResponse {
+public record PaymentResponse(
 
-    private Long paymentId;
+        Long id,
 
-    private Long orderId;
+        Long orderId,
 
-    private BigDecimal amount;
+        Long customerId,
 
-    private PaymentMethod paymentMethod;
+        BigDecimal amount,
 
-    private PaymentStatus status;
+        String currency,
 
-    private String transactionId;
+        PaymentStatus status,
 
+        String paymentMethod,
+
+        String provider,
+
+        String providerReference,
+
+        String failureReason,
+
+        LocalDateTime createdAt,
+
+        LocalDateTime updatedAt
+) {
 }
