@@ -74,9 +74,12 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
-    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id,
+                                                     Authentication authentication) {
 
-        return ResponseEntity.ok(service.cancelOrder(id));
+        return ResponseEntity.ok(
+                service.cancelOrder(id, authentication)
+        );
     }
 }

@@ -11,12 +11,11 @@ import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
-import com.example.order_service.exception.OrderAlreadyCancelledException;
-import com.example.order_service.exception.OrderNotFoundException;
-import com.example.order_service.exception.ProductNotAvailableException;
+import com.example.order_service.exception.*;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.repository.OrderRepository;
 import com.example.order_service.service.OrderService;
+import com.example.order_service.service.OrderStatusLifecycle;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -43,11 +42,13 @@ public class OrderServiceImpl implements OrderService {
 
     private final CurrentUser currentUser;
 
+    private final OrderStatusLifecycle statusLifecycle;
+
     public OrderServiceImpl(
             OrderRepository repository,
             ProductClient productClient,
             MeterRegistry meterRegistry,
-            OrderMapper mapper, RoleSecurity roleSecurity, CurrentUser currentUser
+            OrderMapper mapper, RoleSecurity roleSecurity, CurrentUser currentUser, OrderStatusLifecycle statusLifecycle
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
         this.mapper = mapper;
         this.roleSecurity = roleSecurity;
         this.currentUser = currentUser;
+        this.statusLifecycle = statusLifecycle;
     }
 
     @Override
@@ -199,6 +201,10 @@ public class OrderServiceImpl implements OrderService {
                         new OrderNotFoundException(id)
                 );
 
+        if (existingOrder.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new OrderNotEditableException(id);
+        }
+
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         // Remove existing items.
@@ -251,21 +257,54 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse cancelOrder(Long id) {
+    public OrderResponse cancelOrder(Long id,
+                                     Authentication authentication) {
 
         Order order = repository.findById(id)
                 .orElseThrow(() ->
                         new OrderNotFoundException(id)
                 );
 
+        if (!roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            Long currentUserId = currentUser.getUserId(authentication);
+
+            if (!order.getCustomerId().equals(currentUserId)) {
+
+                throw new AccessDeniedException(
+                        "You are not authorized to cancel this order"
+                );
+            }
+        }
+
         if (order.getStatus() == OrderStatus.CANCELLED) {
+
             throw new OrderAlreadyCancelledException(id);
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
+        transitionStatus(order, OrderStatus.CANCELLED);
 
         Order savedOrder = repository.save(order);
 
         return mapper.toResponse(savedOrder);
+    }
+
+    private void transitionStatus(
+            Order order,
+            OrderStatus targetStatus) {
+
+        OrderStatus currentStatus = order.getStatus();
+
+        if (!statusLifecycle.canTransition(
+                currentStatus,
+                targetStatus)) {
+
+            throw new InvalidOrderStatusTransitionException(
+                    currentStatus,
+                    targetStatus
+            );
+        }
+
+        order.setStatus(targetStatus);
     }
 }

@@ -19,5 +19,5 @@ public interface OrderService {
 
     OrderResponse updateOrder(Long id, UpdateOrderRequest request);
 
-    OrderResponse cancelOrder(Long id);
+    OrderResponse cancelOrder(Long id, Authentication authentication);
 }
