@@ -2,15 +2,16 @@ package com.example.order_service.repository;
 
 import com.ecommerce.common.enums.OrderStatus;
 import com.example.order_service.entity.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByCustomerId(Long customerId);
+    Page<Order> findByCustomerId(Long customerId, Pageable pageable);
 
-    List<Order> findByStatus(OrderStatus status);
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
-    List<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status);
+    Page<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status,
+                                          Pageable pageable);
 }

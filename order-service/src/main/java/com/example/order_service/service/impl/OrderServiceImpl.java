@@ -19,6 +19,8 @@ import com.example.order_service.service.OrderStatusLifecycle;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -172,23 +174,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrders() {
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
 
-        return repository.findAll()
-                .stream()
-                .map(mapper::toResponse)
-                .toList();
+        return repository
+                .findAll(pageable)
+                .map(mapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getOrdersByCustomer(Long customerId) {
+    public Page<OrderResponse> getOrdersByCustomer(Long customerId,
+                                                   Pageable pageable) {
 
         return repository
-                .findByCustomerId(customerId)
-                .stream()
-                .map(mapper::toResponse)
-                .toList();
+                .findByCustomerId(customerId, pageable)
+                .map(mapper::toResponse);
     }
 
     @Override
@@ -306,5 +306,29 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(targetStatus);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getOrdersByStatus(OrderStatus status,
+                                                 Authentication authentication,
+                                                 Pageable pageable) {
+
+        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            return repository
+                    .findByStatus(status, pageable)
+                    .map(mapper::toResponse);
+        }
+
+        Long currentUserId = currentUser.getUserId(authentication);
+
+        return repository
+                .findByCustomerIdAndStatus(
+                        currentUserId,
+                        status,
+                        pageable
+                )
+                .map(mapper::toResponse);
     }
 }

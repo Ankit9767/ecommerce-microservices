@@ -1,11 +1,14 @@
 package com.example.order_service.controller;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.CurrentUser;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.service.OrderService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,9 +44,11 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+    public ResponseEntity<Page<OrderResponse>> getAllOrders(Pageable pageable) {
 
-        return ResponseEntity.ok(service.getAllOrders());
+        return ResponseEntity.ok(
+                service.getAllOrders(pageable)
+        );
     }
 
     @GetMapping("/{id}")
@@ -51,16 +56,20 @@ public class OrderController {
     public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id,
                                                   Authentication authentication) {
 
-        return ResponseEntity.ok(service.getOrder(id, authentication));
+        return ResponseEntity.ok(
+                service.getOrder(id, authentication)
+        );
     }
 
     @GetMapping("/my")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN', 'CUSTOMER')")
-    public ResponseEntity<List<OrderResponse>> getMyOrders(Authentication authentication) {
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    public ResponseEntity<Page<OrderResponse>> getMyOrders(Authentication authentication,
+                                                           Pageable pageable) {
 
         return ResponseEntity.ok(
                 service.getOrdersByCustomer(
-                        currentUser.getUserId(authentication)
+                        currentUser.getUserId(authentication),
+                        pageable
                 )
         );
     }
@@ -80,6 +89,21 @@ public class OrderController {
 
         return ResponseEntity.ok(
                 service.cancelOrder(id, authentication)
+        );
+    }
+
+    @GetMapping("/status/{status}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    public ResponseEntity<Page<OrderResponse>> getOrdersByStatus(@PathVariable OrderStatus status,
+                                                                 Authentication authentication,
+                                                                 Pageable pageable) {
+
+        return ResponseEntity.ok(
+                service.getOrdersByStatus(
+                        status,
+                        authentication,
+                        pageable
+                )
         );
     }
 }

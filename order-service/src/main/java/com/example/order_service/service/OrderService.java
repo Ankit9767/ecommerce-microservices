@@ -1,8 +1,11 @@
 package com.example.order_service.service;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.enums.OrderStatus;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
@@ -13,9 +16,11 @@ public interface OrderService {
 
     OrderResponse getOrder(Long id, Authentication authentication);
 
-    List<OrderResponse> getAllOrders();
+    Page<OrderResponse> getAllOrders(Pageable pageable);
 
-    List<OrderResponse> getOrdersByCustomer(Long customerId);
+    Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable);
+
+    Page<OrderResponse> getOrdersByStatus(OrderStatus status, Authentication authentication, Pageable pageable);
 
     OrderResponse updateOrder(Long id, UpdateOrderRequest request);
 
