@@ -1,19 +1,11 @@
-//package com.example.payment_service.service;
-//
-//import com.ecommerce.common.dto.PaymentRequest;
-//import com.ecommerce.common.dto.PaymentResponse;
-//import com.ecommerce.common.events.OrderCreatedEvent;
-//import com.fasterxml.jackson.core.JsonProcessingException;
-//
-//import java.util.List;
-//
-//public interface PaymentService {
-//
-//    PaymentResponse processPayment(PaymentRequest request) throws JsonProcessingException;
-//
-//    PaymentResponse getPaymentById(Long id);
-//
-//    List<PaymentResponse> getAllPayments();
-//
-//    void processOrderEvent(OrderCreatedEvent event) throws JsonProcessingException;
-//}
+package com.example.payment_service.service;
+
+import com.ecommerce.common.dto.PaymentResponse;
+import com.example.payment_service.dto.CreatePaymentRequest;
+import org.springframework.security.core.Authentication;
+
+public interface PaymentService {
+
+    PaymentResponse createPayment(CreatePaymentRequest request,
+                                  Authentication authentication);
+}
