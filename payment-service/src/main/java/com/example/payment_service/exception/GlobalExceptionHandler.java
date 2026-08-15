@@ -194,6 +194,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(PaymentProviderMismatchException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentProviderMismatch(
+            PaymentProviderMismatchException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Payment Provider Mismatch",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildError(
             HttpStatus status,
             String error,
