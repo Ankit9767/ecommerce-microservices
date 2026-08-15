@@ -2,6 +2,7 @@ package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
+import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
@@ -56,6 +57,10 @@ public class PaymentServiceImpl implements PaymentService {
          */
         if (!order.getCustomerId().equals(currentUserId)) {
             throw new PaymentOrderAccessDeniedException(order.getId());
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new PaymentAlreadyCancelledException(order.getId());
         }
 
         /*
