@@ -8,6 +8,7 @@ import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.DuplicatePaymentException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
+import com.example.payment_service.service.PaymentProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,9 @@ public class PaymentPersistenceService {
     private final PaymentRepository paymentRepository;
 
     private final PaymentMapper paymentMapper;
+
+    private final PaymentProvider paymentProvider;
+
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request,
@@ -38,7 +42,7 @@ public class PaymentPersistenceService {
                 .amount(order.getTotalAmount())
                 .currency(request.currency())
                 .paymentMethod(request.paymentMethod())
-                .provider("MOCK")
+                .provider(paymentProvider.getProviderName())
                 .status(PaymentStatus.PENDING)
                 .build();
 
