@@ -10,7 +10,6 @@ import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
-import com.example.payment_service.service.PaymentPersistenceService;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.security.CurrentUser;

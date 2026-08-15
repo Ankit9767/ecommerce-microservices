@@ -67,6 +67,7 @@ public class Payment extends BaseEntity {
 
     @Column(
             name = "provider",
+            nullable = false,
             length = 50
     )
     private String provider;

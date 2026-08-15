@@ -1,4 +1,4 @@
-package com.example.payment_service.service;
+package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
@@ -38,6 +38,7 @@ public class PaymentPersistenceService {
                 .amount(order.getTotalAmount())
                 .currency(request.currency())
                 .paymentMethod(request.paymentMethod())
+                .provider("MOCK")
                 .status(PaymentStatus.PENDING)
                 .build();
 
