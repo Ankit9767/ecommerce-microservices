@@ -6,7 +6,10 @@ import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.entity.Payment;
+import com.example.payment_service.exception.DuplicatePaymentException;
+import com.example.payment_service.exception.OrderNotFoundException;
 import com.example.payment_service.exception.PaymentNotFoundException;
+import com.example.payment_service.exception.PaymentOrderAccessDeniedException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentService;
@@ -44,9 +47,7 @@ public class PaymentServiceImpl implements PaymentService {
         OrderResponse order = orderClient.getOrder(request.orderId());
 
         if (order == null) {
-            throw new IllegalStateException(
-                    "Order not found: " + request.orderId()
-            );
+            throw new OrderNotFoundException(request.orderId());
         }
 
         /*
@@ -54,10 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
          * for their own order.
          */
         if (!order.getCustomerId().equals(currentUserId)) {
-
-            throw new AccessDeniedException(
-                    "You are not authorized to pay for this order"
-            );
+            throw new PaymentOrderAccessDeniedException(order.getId());
         }
 
         /*
@@ -65,11 +63,7 @@ public class PaymentServiceImpl implements PaymentService {
          * for the same order.
          */
         if (paymentRepository.existsByOrderId(request.orderId())) {
-
-            throw new IllegalStateException(
-                    "Payment already exists for order: "
-                            + request.orderId()
-            );
+            throw new DuplicatePaymentException(request.orderId());
         }
 
         /*
@@ -100,11 +94,7 @@ public class PaymentServiceImpl implements PaymentService {
                                 new PaymentNotFoundException(id)
                         );
 
-        if (roleSecurity.hasRole(
-                authentication,
-                "ADMIN"
-        )) {
-
+        if (roleSecurity.hasRole(authentication, "ADMIN")) {
             return paymentMapper.toResponse(payment);
         }
 

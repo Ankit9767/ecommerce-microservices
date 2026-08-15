@@ -30,6 +30,91 @@ public class GlobalExceptionHandler {
         );
     }
 
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(
+            OrderNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                "Order Not Found",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(DuplicatePaymentException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicatePayment(
+            DuplicatePaymentException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Duplicate Payment",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(PaymentAlreadyCancelledException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentAlreadyCancelled(
+            PaymentAlreadyCancelledException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Payment Already Cancelled",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(PaymentAlreadyCompletedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentAlreadyCompleted(
+            PaymentAlreadyCompletedException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Payment Already Completed",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(PaymentNotPayableException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotPayable(
+            PaymentNotPayableException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Payment Not Payable",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(PaymentOrderAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentOrderAccessDenied(
+            PaymentOrderAccessDeniedException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                "Forbidden",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex,
