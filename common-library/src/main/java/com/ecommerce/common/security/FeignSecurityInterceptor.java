@@ -49,6 +49,12 @@ public class FeignSecurityInterceptor implements RequestInterceptor {
         copyHeader(
                 request,
                 template,
+                GatewaySecurityHeaders.AUTHENTICATED_USER_ID
+        );
+
+        copyHeader(
+                request,
+                template,
                 GatewaySecurityHeaders.USER_ROLES
         );
 

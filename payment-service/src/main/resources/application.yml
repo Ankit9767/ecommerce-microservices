@@ -92,6 +92,10 @@ management:
       endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
+security:
+  gateway:
+    enabled: true
+
 
 logging:
   pattern:

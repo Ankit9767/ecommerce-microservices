@@ -32,7 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final CurrentUser currentUser;
 
-    private final RoleSecurity roleSecurity ;
+    private final RoleSecurity roleSecurity;
 
     @Override
     @Transactional
