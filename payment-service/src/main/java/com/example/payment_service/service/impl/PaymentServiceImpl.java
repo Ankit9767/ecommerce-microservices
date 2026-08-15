@@ -10,6 +10,7 @@ import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
+import com.example.payment_service.service.PaymentPersistenceService;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.security.CurrentUser;
@@ -38,8 +39,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentStatusLifecycle statusLifecycle;
 
+    private final PaymentPersistenceService paymentPersistenceService;
+
     @Override
-    @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request,
                                          Authentication authentication) {
 
@@ -48,45 +50,24 @@ public class PaymentServiceImpl implements PaymentService {
         OrderResponse order = orderClient.getOrder(request.orderId());
 
         if (order == null) {
-            throw new OrderNotFoundException(request.orderId());
+            throw new OrderNotFoundException(
+                    request.orderId()
+            );
         }
 
-        /*
-         * Customer can only create a payment
-         * for their own order.
-         */
         if (!order.getCustomerId().equals(currentUserId)) {
-            throw new PaymentOrderAccessDeniedException(order.getId());
+            throw new PaymentOrderAccessDeniedException(
+                    order.getId()
+            );
         }
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
-            throw new PaymentAlreadyCancelledException(order.getId());
+            throw new PaymentAlreadyCancelledException(
+                    order.getId()
+            );
         }
 
-        /*
-         * Prevent duplicate payment records
-         * for the same order.
-         */
-        if (paymentRepository.existsByOrderId(request.orderId())) {
-            throw new DuplicatePaymentException(request.orderId());
-        }
-
-        /*
-         * The amount comes from the order,
-         * not from the client request.
-         */
-        Payment payment = Payment.builder()
-                .orderId(order.getId())
-                .customerId(order.getCustomerId())
-                .amount(order.getTotalAmount())
-                .currency(request.currency())
-                .paymentMethod(request.paymentMethod())
-                .status(PaymentStatus.PENDING)
-                .build();
-
-        Payment savedPayment = paymentRepository.save(payment);
-
-        return paymentMapper.toResponse(savedPayment);
+        return paymentPersistenceService.createPayment(request, order);
     }
 
     @Override
