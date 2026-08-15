@@ -21,4 +21,7 @@ public interface PaymentService {
     Page<PaymentResponse> getPaymentsByStatus(PaymentStatus status, Pageable pageable);
 
     Page<PaymentResponse> getAllPayments(Pageable pageable);
+
+    PaymentResponse updatePaymentStatus(Long paymentId,
+                                               PaymentStatus targetStatus);
 }

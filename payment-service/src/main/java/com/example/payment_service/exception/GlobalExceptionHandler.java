@@ -180,6 +180,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidPaymentStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPaymentStatusTransition(
+            InvalidPaymentStatusTransitionException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Invalid Payment Status Transition",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildError(
             HttpStatus status,
             String error,

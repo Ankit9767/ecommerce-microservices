@@ -6,15 +6,13 @@ import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.entity.Payment;
-import com.example.payment_service.exception.DuplicatePaymentException;
-import com.example.payment_service.exception.OrderNotFoundException;
-import com.example.payment_service.exception.PaymentNotFoundException;
-import com.example.payment_service.exception.PaymentOrderAccessDeniedException;
+import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.security.CurrentUser;
+import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +34,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final CurrentUser currentUser;
 
     private final RoleSecurity roleSecurity;
+
+    private final PaymentStatusLifecycle statusLifecycle;
 
     @Override
     @Transactional
@@ -145,5 +145,39 @@ public class PaymentServiceImpl implements PaymentService {
                         pageable
                 )
                 .map(paymentMapper::toResponse);
+    }
+
+    @Transactional
+    public PaymentResponse updatePaymentStatus(Long paymentId,
+                                               PaymentStatus targetStatus) {
+
+        Payment payment =
+                paymentRepository.findById(paymentId)
+                        .orElseThrow(() ->
+                                new PaymentNotFoundException(paymentId)
+                        );
+
+        transitionStatus(payment, targetStatus);
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        return paymentMapper.toResponse(savedPayment);
+    }
+
+    private void transitionStatus(Payment payment,
+                                  PaymentStatus targetStatus) {
+
+        PaymentStatus currentStatus = payment.getStatus();
+
+        if (!statusLifecycle.canTransition(currentStatus,
+                targetStatus)) {
+
+            throw new InvalidPaymentStatusTransitionException(
+                    currentStatus,
+                    targetStatus
+            );
+        }
+
+        payment.setStatus(targetStatus);
     }
 }
