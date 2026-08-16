@@ -1,5 +1,6 @@
 package com.ecommerce.common.dto;
 
+import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ public record PaymentResponse(
 
         PaymentStatus status,
 
-        String paymentMethod,
+        PaymentMethod paymentMethod,
 
         String provider,
 

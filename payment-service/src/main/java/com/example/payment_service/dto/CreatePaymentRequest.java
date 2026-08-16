@@ -1,7 +1,9 @@
 package com.example.payment_service.dto;
 
+import com.ecommerce.common.enums.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 public record CreatePaymentRequest(
 
@@ -9,9 +11,13 @@ public record CreatePaymentRequest(
         Long orderId,
 
         @NotBlank(message = "Currency is required")
+        @Pattern(
+                regexp = "^[A-Z]{3}$",
+                message = "Currency must be a valid 3-letter ISO code"
+        )
         String currency,
 
-        @NotBlank(message = "Payment method is required")
-        String paymentMethod
+        @NotNull(message = "Payment method is required")
+        PaymentMethod paymentMethod
 ) {
 }

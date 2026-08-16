@@ -1,11 +1,17 @@
 server:
-  port: ${SERVER_PORT:8086}
+  port: ${SERVER_PORT}
   shutdown: graceful
 
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:payment-service}
+    name: ${SPRING_APPLICATION_NAME}
+
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
@@ -18,13 +24,13 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     show-sql: true
 
 
   kafka:
 
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -66,7 +72,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE}
 
 
   endpoint:
@@ -84,12 +90,12 @@ management:
 
   tracing:
     sampling:
-      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
 
 
   zipkin:
     tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
 
 
 security:

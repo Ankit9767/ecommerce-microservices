@@ -1,5 +1,7 @@
 package com.example.payment_service.dto.provider;
 
+import com.ecommerce.common.enums.PaymentMethod;
+
 import java.math.BigDecimal;
 
 public record PaymentProviderRequest(
@@ -7,6 +9,6 @@ public record PaymentProviderRequest(
         Long orderId,
         BigDecimal amount,
         String currency,
-        String paymentMethod
+        PaymentMethod paymentMethod
 ) {
 }

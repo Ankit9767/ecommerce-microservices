@@ -1,6 +1,7 @@
 package com.example.payment_service.entity;
 
 import com.ecommerce.common.entity.BaseEntity;
+import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,11 +60,13 @@ public class Payment extends BaseEntity {
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
     @Column(
             name = "payment_method",
-            length = 50
+            nullable = false,
+            length = 30
     )
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
 
     @Column(
             name = "provider",
