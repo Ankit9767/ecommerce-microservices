@@ -52,13 +52,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         OrderResponse order = orderClient.getOrder(request.orderId());
 
-        if (order == null) {
-            paymentMetrics.paymentNotFound();
-            throw new OrderNotFoundException(
-                    request.orderId()
-            );
-        }
-
         if (!order.getCustomerId().equals(currentUserId)) {
             paymentMetrics.orderAccessDenied();
             throw new PaymentOrderAccessDeniedException(

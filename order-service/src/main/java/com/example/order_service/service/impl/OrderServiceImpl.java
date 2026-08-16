@@ -88,8 +88,7 @@ public class OrderServiceImpl implements OrderService {
                             requestItem.getProductId()
                     );
 
-            if (product == null ||
-                    Boolean.FALSE.equals(product.getActive())) {
+            if (Boolean.FALSE.equals(product.getActive())) {
 
                 orderMetrics.productNotAvailable();
 
@@ -228,8 +227,7 @@ public class OrderServiceImpl implements OrderService {
                             requestItem.getProductId()
                     );
 
-            if (product == null ||
-                    Boolean.FALSE.equals(product.getActive())) {
+            if (Boolean.FALSE.equals(product.getActive())) {
 
                 orderMetrics.productNotAvailable();
 
