@@ -9,6 +9,7 @@ import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
+import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
@@ -41,6 +42,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentPersistenceService paymentPersistenceService;
 
+    private final PaymentMetrics paymentMetrics;
+
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request,
                                          Authentication authentication) {
@@ -50,12 +53,14 @@ public class PaymentServiceImpl implements PaymentService {
         OrderResponse order = orderClient.getOrder(request.orderId());
 
         if (order == null) {
+            paymentMetrics.paymentNotFound();
             throw new OrderNotFoundException(
                     request.orderId()
             );
         }
 
         if (!order.getCustomerId().equals(currentUserId)) {
+            paymentMetrics.orderAccessDenied();
             throw new PaymentOrderAccessDeniedException(
                     order.getId()
             );
@@ -76,9 +81,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment =
                 paymentRepository.findById(id)
-                        .orElseThrow(() ->
-                                new PaymentNotFoundException(id)
-                        );
+                        .orElseThrow(() -> {
+                            paymentMetrics.paymentNotFound();
+                            return new PaymentNotFoundException(id);
+                        });
 
         if (roleSecurity.hasRole(authentication, "ADMIN")) {
             return paymentMapper.toResponse(payment);
@@ -86,13 +92,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         Long currentUserId = currentUser.getUserId(authentication);
 
-        if (!payment.getCustomerId()
-                .equals(currentUserId)) {
+        if (!payment.getCustomerId().equals(currentUserId)) {
 
             throw new AccessDeniedException(
                     "You are not authorized to access this payment"
             );
         }
+
+        paymentMetrics.paymentViewed();
 
         return paymentMapper.toResponse(payment);
     }
@@ -139,9 +146,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment =
                 paymentRepository.findById(paymentId)
-                        .orElseThrow(() ->
-                                new PaymentNotFoundException(paymentId)
-                        );
+                        .orElseThrow(() -> {
+                            paymentMetrics.paymentNotFound();
+                            return new PaymentNotFoundException(paymentId);
+                        });
 
         transitionStatus(payment, targetStatus);
 
@@ -153,6 +161,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         } catch (ObjectOptimisticLockingFailureException ex) {
 
+            paymentMetrics.concurrentModification();
             throw new PaymentConcurrentModificationException(
                     paymentId
             );
@@ -167,6 +176,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (!statusLifecycle.canTransition(currentStatus,
                 targetStatus)) {
 
+            paymentMetrics.invalidStatusTransition();
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus
@@ -174,5 +184,18 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         payment.setStatus(targetStatus);
+
+        if (targetStatus == PaymentStatus.SUCCESS) {
+
+            paymentMetrics.paymentSucceeded();
+
+        } else if (targetStatus == PaymentStatus.FAILED) {
+
+            paymentMetrics.paymentFailed();
+
+        } else if (targetStatus == PaymentStatus.CANCELLED) {
+
+            paymentMetrics.paymentCancelled();
+        }
     }
 }

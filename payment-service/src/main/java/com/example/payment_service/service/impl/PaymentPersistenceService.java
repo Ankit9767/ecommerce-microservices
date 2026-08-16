@@ -11,6 +11,7 @@ import com.example.payment_service.exception.DuplicatePaymentException;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
 import com.example.payment_service.exception.PaymentConcurrencyException;
 import com.example.payment_service.mapper.PaymentMapper;
+import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentStatusLifecycle;
@@ -31,12 +32,15 @@ public class PaymentPersistenceService {
 
     private final PaymentStatusLifecycle statusLifecycle;
 
+    private final PaymentMetrics paymentMetrics;
+
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request,
                                          OrderResponse order) {
 
         if (paymentRepository.existsByOrderId(request.orderId())) {
+            paymentMetrics.duplicatePayment();
             throw new DuplicatePaymentException(
                     request.orderId()
             );
@@ -79,9 +83,12 @@ public class PaymentPersistenceService {
 
             Payment finalPayment = paymentRepository.save(savedPayment);
 
+            paymentMetrics.paymentCreated();
+
             return paymentMapper.toResponse(finalPayment);
 
         } catch (DataIntegrityViolationException ex) {
+            paymentMetrics.duplicatePayment();
             throw new PaymentConcurrencyException(
                     request.orderId()
             );
@@ -101,6 +108,7 @@ public class PaymentPersistenceService {
                 currentStatus,
                 targetStatus)) {
 
+            paymentMetrics.invalidStatusTransition();
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus
@@ -108,5 +116,18 @@ public class PaymentPersistenceService {
         }
 
         payment.setStatus(targetStatus);
+
+        if (targetStatus == PaymentStatus.SUCCESS) {
+
+            paymentMetrics.paymentSucceeded();
+
+        } else if (targetStatus == PaymentStatus.FAILED) {
+
+            paymentMetrics.paymentFailed();
+
+        } else if (targetStatus == PaymentStatus.CANCELLED) {
+
+            paymentMetrics.paymentCancelled();
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.example.payment_service.exception.PaymentConcurrentModificationExcept
 import com.example.payment_service.exception.PaymentNotFoundException;
 import com.example.payment_service.exception.PaymentProviderMismatchException;
 import com.example.payment_service.mapper.PaymentMapper;
+import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import com.example.payment_service.service.PaymentWebhookService;
@@ -27,20 +28,26 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
     private final PaymentStatusLifecycle statusLifecycle;
 
+    private final PaymentMetrics paymentMetrics;
+
     @Override
     @Transactional
     public PaymentResponse processWebhook(PaymentWebhookRequest request) {
+
+        paymentMetrics.webhookReceived();
 
         Payment payment =
                 paymentRepository
                         .findByProviderReference(
                                 request.providerReference()
                         )
-                        .orElseThrow(() ->
-                                new PaymentNotFoundException(
-                                        request.providerReference()
-                                )
-                        );
+                        .orElseThrow(() -> {
+                            paymentMetrics.webhookFailed();
+
+                            return new PaymentNotFoundException(
+                                    request.providerReference()
+                            );
+                        });
 
         /*
          * Make sure the webhook belongs to
@@ -49,6 +56,7 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
         if (!payment.getProvider()
                 .equalsIgnoreCase(request.provider())) {
 
+            paymentMetrics.webhookFailed();
             throw new PaymentProviderMismatchException(
                     payment.getProvider(),
                     request.provider()
@@ -71,6 +79,8 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                 currentStatus,
                 targetStatus)) {
 
+            paymentMetrics.webhookFailed();
+            paymentMetrics.invalidStatusTransition();
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus
@@ -91,6 +101,8 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
         } catch (ObjectOptimisticLockingFailureException ex) {
 
+            paymentMetrics.webhookFailed();
+            paymentMetrics.concurrentModification();
             throw new PaymentConcurrentModificationException(
                     payment.getId()
             );
