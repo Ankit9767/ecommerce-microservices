@@ -5,6 +5,7 @@ import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.dto.webhook.PaymentWebhookRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
+import com.example.payment_service.exception.PaymentConcurrentModificationException;
 import com.example.payment_service.exception.PaymentNotFoundException;
 import com.example.payment_service.exception.PaymentProviderMismatchException;
 import com.example.payment_service.mapper.PaymentMapper;
@@ -12,6 +13,7 @@ import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import com.example.payment_service.service.PaymentWebhookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,12 +80,20 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
         payment.setStatus(targetStatus);
 
         if (request.failureReason() != null) {
-
             payment.setFailureReason(request.failureReason());
         }
 
-        Payment savedPayment = paymentRepository.save(payment);
+        try {
 
-        return paymentMapper.toResponse(savedPayment);
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
+
+            return paymentMapper.toResponse(savedPayment);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            throw new PaymentConcurrentModificationException(
+                    payment.getId()
+            );
+        }
     }
 }

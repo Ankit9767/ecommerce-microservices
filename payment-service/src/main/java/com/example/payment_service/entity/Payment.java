@@ -84,4 +84,9 @@ public class Payment extends BaseEntity {
             length = 500
     )
     private String failureReason;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 }

@@ -9,11 +9,13 @@ import com.example.payment_service.dto.provider.PaymentProviderRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.DuplicatePaymentException;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
+import com.example.payment_service.exception.PaymentConcurrencyException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,33 +52,40 @@ public class PaymentPersistenceService {
                 .status(PaymentStatus.PENDING)
                 .build();
 
-        Payment savedPayment = paymentRepository.save(payment);
+        try {
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
-        PaymentProviderRequest providerRequest =
-                new PaymentProviderRequest(
-                        savedPayment.getId(),
-                        savedPayment.getOrderId(),
-                        savedPayment.getAmount(),
-                        savedPayment.getCurrency(),
-                        savedPayment.getPaymentMethod()
+            PaymentProviderRequest providerRequest =
+                    new PaymentProviderRequest(
+                            savedPayment.getId(),
+                            savedPayment.getOrderId(),
+                            savedPayment.getAmount(),
+                            savedPayment.getCurrency(),
+                            savedPayment.getPaymentMethod()
+                    );
+
+            PaymentProviderResponse providerResponse =
+                    paymentProvider.createPayment(providerRequest);
+
+            savedPayment.setProviderReference(providerResponse.providerReference());
+
+            transitionStatus(savedPayment, providerResponse.status());
+
+            if (providerResponse.failureReason() != null) {
+                savedPayment.setFailureReason(
+                        providerResponse.failureReason()
                 );
+            }
 
-        PaymentProviderResponse providerResponse =
-                paymentProvider.createPayment(providerRequest);
+            Payment finalPayment = paymentRepository.save(savedPayment);
 
-        savedPayment.setProviderReference(providerResponse.providerReference());
+            return paymentMapper.toResponse(finalPayment);
 
-        transitionStatus(savedPayment, providerResponse.status());
-
-        if (providerResponse.failureReason() != null) {
-            savedPayment.setFailureReason(
-                    providerResponse.failureReason()
+        } catch (DataIntegrityViolationException ex) {
+            throw new PaymentConcurrencyException(
+                    request.orderId()
             );
         }
-
-        Payment finalPayment = paymentRepository.save(savedPayment);
-
-        return paymentMapper.toResponse(finalPayment);
     }
 
     private void transitionStatus(Payment payment,

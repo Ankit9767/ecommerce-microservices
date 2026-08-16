@@ -208,6 +208,34 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(PaymentConcurrencyException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentConcurrency(
+            PaymentConcurrencyException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Payment Creation Conflict",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(PaymentConcurrentModificationException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentConcurrentModification(
+            PaymentConcurrentModificationException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Payment Concurrent Modification",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildError(
             HttpStatus status,
             String error,

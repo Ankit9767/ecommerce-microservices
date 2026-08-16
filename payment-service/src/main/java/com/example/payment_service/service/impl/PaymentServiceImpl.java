@@ -10,7 +10,6 @@ import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.repository.PaymentRepository;
-import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.security.CurrentUser;
@@ -18,6 +17,7 @@ import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -145,9 +145,18 @@ public class PaymentServiceImpl implements PaymentService {
 
         transitionStatus(payment, targetStatus);
 
-        Payment savedPayment = paymentRepository.save(payment);
+        try {
 
-        return paymentMapper.toResponse(savedPayment);
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
+
+            return paymentMapper.toResponse(savedPayment);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            throw new PaymentConcurrentModificationException(
+                    paymentId
+            );
+        }
     }
 
     private void transitionStatus(Payment payment,
