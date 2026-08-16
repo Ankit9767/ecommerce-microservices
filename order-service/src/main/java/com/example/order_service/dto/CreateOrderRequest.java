@@ -20,6 +20,4 @@ public class CreateOrderRequest {
     @Size(max = 50, message = "Order cannot contain more than 50 items")
     private List<@Valid CreateOrderItemRequest> items;
 
-    @NotNull(message = "Payment method is required")
-    private PaymentMethod paymentMethod;
 }
