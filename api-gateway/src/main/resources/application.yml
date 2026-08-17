@@ -122,6 +122,29 @@ spring:
                   - 503
                   - 504
 
+
+        - id: inventory-service
+          uri: lb://INVENTORY-SERVICE
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
+                key-resolver: "#{@ipKeyResolver}"
+
+            - name: CircuitBreaker
+              args:
+                name: inventoryServiceCircuitBreaker
+                fallbackUri: forward:/fallback/inventory
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
+
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:

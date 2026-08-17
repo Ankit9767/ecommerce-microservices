@@ -195,6 +195,29 @@ cart:
       memory: "1Gi"
 
 
+
+# ===========================
+# Inventory Service
+# ===========================
+
+inventory:
+  image:
+    repository: ecommerce-microservices-inventory-service
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicas: 3
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+
 # ===========================
 # Redis
 # ===========================
