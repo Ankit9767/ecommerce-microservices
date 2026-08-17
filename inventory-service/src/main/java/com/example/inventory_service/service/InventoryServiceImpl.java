@@ -4,6 +4,8 @@ import com.ecommerce.common.dto.InventoryResponse;
 import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.example.inventory_service.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
+import com.example.inventory_service.exception.InventoryAlreadyExistsException;
+import com.example.inventory_service.exception.InventoryNotFoundException;
 import com.example.inventory_service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

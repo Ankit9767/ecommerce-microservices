@@ -1,6 +1,8 @@
 package com.example.inventory_service.entity;
 
 import com.ecommerce.common.entity.BaseEntity;
+import com.example.inventory_service.exception.InsufficientInventoryException;
+import com.example.inventory_service.exception.InvalidInventoryOperationException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -65,9 +67,11 @@ public class Inventory extends BaseEntity {
         validatePositiveAmount(amount);
 
         if (amount > getAvailableQuantity()) {
-            throw new IllegalStateException(
-                    "Insufficient available inventory for product: "
-                            + productId
+
+            throw new InsufficientInventoryException(
+                    productId,
+                    amount,
+                    getAvailableQuantity()
             );
         }
 
@@ -78,9 +82,11 @@ public class Inventory extends BaseEntity {
         validatePositiveAmount(amount);
 
         if (amount > getAvailableQuantity()) {
-            throw new IllegalStateException(
-                    "Insufficient available inventory for product: "
-                            + productId
+
+            throw new InsufficientInventoryException(
+                    productId,
+                    amount,
+                    getAvailableQuantity()
             );
         }
 
@@ -91,8 +97,12 @@ public class Inventory extends BaseEntity {
         validatePositiveAmount(amount);
 
         if (amount > reservedQuantity) {
-            throw new IllegalStateException(
-                    "Cannot release more stock than currently reserved"
+
+            throw new InvalidInventoryOperationException(
+                    "Cannot release "
+                            + amount
+                            + " units. Reserved quantity is only "
+                            + reservedQuantity
             );
         }
 
@@ -103,8 +113,12 @@ public class Inventory extends BaseEntity {
         validatePositiveAmount(amount);
 
         if (amount > reservedQuantity) {
-            throw new IllegalStateException(
-                    "Cannot confirm more stock than currently reserved"
+
+            throw new InvalidInventoryOperationException(
+                    "Cannot confirm "
+                            + amount
+                            + " units. Reserved quantity is only "
+                            + reservedQuantity
             );
         }
 
@@ -114,7 +128,8 @@ public class Inventory extends BaseEntity {
 
     private void validatePositiveAmount(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException(
+
+            throw new InvalidInventoryOperationException(
                     "Inventory quantity must be greater than zero"
             );
         }
