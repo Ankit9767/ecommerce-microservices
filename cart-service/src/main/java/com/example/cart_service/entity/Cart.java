@@ -10,12 +10,6 @@ import java.util.List;
 @Entity
 @Table(
         name = "carts",
-        indexes = {
-                @Index(
-                        name = "idx_cart_customer_id",
-                        columnList = "customer_id"
-                )
-        },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_cart_customer",
@@ -32,10 +26,13 @@ public class Cart extends BaseEntity {
 
     @Column(
             name = "customer_id",
-            nullable = false,
-            unique = true
+            nullable = false
     )
     private Long customerId;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @OneToMany(
             mappedBy = "cart",
@@ -44,10 +41,6 @@ public class Cart extends BaseEntity {
     )
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
-
-    @Version
-    @Column(nullable = false)
-    private Long version;
 
     public void addItem(CartItem item) {
         items.add(item);
