@@ -3,7 +3,7 @@ package com.example.cart_service.service.impl;
 import com.ecommerce.common.dto.CartResponse;
 import com.ecommerce.common.dto.ProductResponse;
 import com.ecommerce.common.security.CurrentUser;
-import com.example.cart_service.client.ProductClient;
+import com.example.cart_service.client.ProductServiceClient;
 import com.example.cart_service.dto.AddCartItemRequest;
 import com.example.cart_service.dto.UpdateCartItemRequest;
 import com.example.cart_service.entity.Cart;
@@ -28,7 +28,7 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
 
-    private final ProductClient productClient;
+    private final ProductServiceClient productServiceClient;
 
     private final CurrentUser currentUser;
 
@@ -57,9 +57,9 @@ public class CartServiceImpl implements CartService {
 
         Long customerId = currentUser.getUserId(authentication);
 
-        ProductResponse product = productClient.getProduct(request.productId());
+        ProductResponse product = productServiceClient.getProduct(request.productId());
 
-        if (Boolean.FALSE.equals(product.getActive())) {
+        if (product == null || Boolean.FALSE.equals(product.getActive())) {
 
             throw new ProductNotAvailableException(
                     request.productId()
@@ -138,9 +138,9 @@ public class CartServiceImpl implements CartService {
         /*
          * Verify that the product is still active.
          */
-        ProductResponse product = productClient.getProduct(productId);
+        ProductResponse product = productServiceClient.getProduct(productId);
 
-        if (Boolean.FALSE.equals(product.getActive())) {
+        if (product == null || Boolean.FALSE.equals(product.getActive())) {
 
             throw new ProductNotAvailableException(productId);
         }

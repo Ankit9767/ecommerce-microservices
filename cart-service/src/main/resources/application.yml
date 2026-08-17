@@ -2,9 +2,7 @@ server:
   port: ${SERVER_PORT}
   shutdown: graceful
 
-
 spring:
-
   application:
     name: ${SPRING_APPLICATION_NAME}
 
@@ -34,7 +32,6 @@ spring:
 
 
 eureka:
-
   instance:
     prefer-ip-address: true
 
@@ -47,14 +44,12 @@ eureka:
 
 
 management:
-
   endpoints:
     web:
       exposure:
         include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics}
 
   endpoint:
-
     health:
       show-details: always
 
@@ -62,12 +57,10 @@ management:
       enabled: true
 
   metrics:
-
     tags:
       application: ${spring.application.name}
 
   tracing:
-
     sampling:
       probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
 
@@ -77,16 +70,12 @@ management:
 
 
 logging:
-
   pattern:
     level: "%5p [${spring.application.name:},trace=%X{traceId:-},span=%X{spanId:-}]"
 
   level:
-
     root: INFO
-
     com.example.cart_service: DEBUG
-
     org.springframework.cloud.openfeign: DEBUG
 
 
@@ -97,3 +86,21 @@ security:
 pagination:
   default-page-size: 20
   max-page-size: 100
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        registerHealthIndicator: true
+
+        slidingWindowSize: 10
+
+        minimumNumberOfCalls: 5
+
+        failureRateThreshold: 50
+
+        waitDurationInOpenState: 20s
+
+        permittedNumberOfCallsInHalfOpenState: 3
+
+        automaticTransitionFromOpenToHalfOpenEnabled: true
