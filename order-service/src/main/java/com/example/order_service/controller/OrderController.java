@@ -106,4 +106,15 @@ public class OrderController {
                 )
         );
     }
+
+    @PostMapping("/from-cart")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    public ResponseEntity<OrderResponse> createOrderFromCart(Authentication authentication) {
+
+        OrderResponse response = service.createOrderFromCart(authentication);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
 }

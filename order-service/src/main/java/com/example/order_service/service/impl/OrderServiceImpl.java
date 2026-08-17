@@ -1,10 +1,13 @@
 package com.example.order_service.service.impl;
 
+import com.ecommerce.common.dto.CartItemResponse;
+import com.ecommerce.common.dto.CartResponse;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ProductResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.CurrentUser;
 import com.ecommerce.common.security.RoleSecurity;
+import com.example.order_service.client.CartClient;
 import com.example.order_service.client.ProductClient;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
@@ -46,6 +49,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderMetrics orderMetrics;
 
+    private final CartClient cartClient;
+
     public OrderServiceImpl(
             OrderRepository repository,
             ProductClient productClient,
@@ -53,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
             RoleSecurity roleSecurity,
             CurrentUser currentUser,
             OrderStatusLifecycle statusLifecycle,
-            OrderMetrics orderMetrics
+            OrderMetrics orderMetrics, CartClient cartClient
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -62,6 +67,7 @@ public class OrderServiceImpl implements OrderService {
         this.currentUser = currentUser;
         this.statusLifecycle = statusLifecycle;
         this.orderMetrics = orderMetrics;
+        this.cartClient = cartClient;
     }
 
     @Override
@@ -381,5 +387,77 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse createOrderFromCart(Authentication authentication) {
+
+        Long customerId = currentUser.getUserId(authentication);
+
+        CartResponse cart = cartClient.getCart();
+
+        if (cart == null || cart.items() == null || cart.items().isEmpty()) {
+            throw new EmptyCartException();
+        }
+
+        Order order = Order.builder()
+                .customerId(customerId)
+                .status(OrderStatus.PENDING_PAYMENT)
+                .totalAmount(BigDecimal.ZERO)
+                .build();
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (CartItemResponse cartItem : cart.items()) {
+
+            ProductResponse product = productClient.getProduct(cartItem.productId());
+
+            if (product == null || Boolean.FALSE.equals(product.getActive())) {
+
+                orderMetrics.productNotAvailable();
+
+                throw new ProductNotAvailableException(
+                        cartItem.productId()
+                );
+            }
+
+            BigDecimal unitPrice = product.getPrice();
+
+            BigDecimal lineTotal =
+                    unitPrice.multiply(
+                            BigDecimal.valueOf(
+                                    cartItem.quantity()
+                            )
+                    );
+
+            OrderItem orderItem =
+                    OrderItem.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .sku(product.getSku())
+                            .unitPrice(unitPrice)
+                            .quantity(cartItem.quantity())
+                            .lineTotal(lineTotal)
+                            .build();
+
+            order.addItem(orderItem);
+
+            totalAmount = totalAmount.add(lineTotal);
+        }
+
+        order.setTotalAmount(totalAmount);
+
+        Order savedOrder = repository.save(order);
+
+        /*
+         * Clear the cart only after
+         * the order has been persisted successfully.
+         */
+        cartClient.clearCart();
+
+        orderMetrics.orderCreated();
+
+        return mapper.toResponse(savedOrder);
     }
 }

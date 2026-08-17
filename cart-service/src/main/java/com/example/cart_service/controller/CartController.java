@@ -21,7 +21,7 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<CartResponse> getCart(Authentication authentication) {
 
         return ResponseEntity.ok(
