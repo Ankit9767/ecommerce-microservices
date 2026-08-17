@@ -13,6 +13,7 @@ import com.example.cart_service.exception.CartItemNotFoundException;
 import com.example.cart_service.exception.CartNotFoundException;
 import com.example.cart_service.exception.ProductNotAvailableException;
 import com.example.cart_service.mapper.CartMapper;
+import com.example.cart_service.metrics.CartMetrics;
 import com.example.cart_service.repository.CartRepository;
 import com.example.cart_service.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class CartServiceImpl implements CartService {
 
     private final CartMapper cartMapper;
 
+    private final CartMetrics cartMetrics;
+
     @Override
     @Transactional(readOnly = true)
     public CartResponse getCart(Authentication authentication) {
@@ -50,6 +53,8 @@ public class CartServiceImpl implements CartService {
                                         .build()
                         );
 
+        cartMetrics.cartViewed();
+
         return cartMapper.toResponse(cart);
     }
 
@@ -62,6 +67,8 @@ public class CartServiceImpl implements CartService {
         ProductResponse product = productServiceClient.getProduct(request.productId());
 
         if (product == null || Boolean.FALSE.equals(product.getActive())) {
+
+            cartMetrics.productUnavailable();
 
             throw new ProductNotAvailableException(
                     request.productId()
@@ -110,9 +117,13 @@ public class CartServiceImpl implements CartService {
 
             Cart savedCart = cartRepository.saveAndFlush(cart);
 
+            cartMetrics.itemAdded();
+
             return cartMapper.toResponse(savedCart);
 
         } catch (ObjectOptimisticLockingFailureException ex) {
+
+            cartMetrics.concurrentModification();
 
             throw new CartConcurrentModificationException(
                     customerId
@@ -130,9 +141,11 @@ public class CartServiceImpl implements CartService {
 
         Cart cart =
                 cartRepository.findByCustomerId(customerId)
-                        .orElseThrow(() ->
-                                new CartNotFoundException(customerId)
-                        );
+                        .orElseThrow(() -> {
+                            cartMetrics.cartNotFound();
+
+                            return new CartNotFoundException(customerId);
+                        });
 
         CartItem item =
                 cart.getItems()
@@ -142,9 +155,11 @@ public class CartServiceImpl implements CartService {
                                         .equals(productId)
                         )
                         .findFirst()
-                        .orElseThrow(() ->
-                                new CartItemNotFoundException(productId)
-                        );
+                        .orElseThrow(() -> {
+                            cartMetrics.itemNotFound();
+
+                            return new CartItemNotFoundException(productId);
+                        });
 
         /*
          * Verify that the product is still active.
@@ -152,6 +167,8 @@ public class CartServiceImpl implements CartService {
         ProductResponse product = productServiceClient.getProduct(productId);
 
         if (product == null || Boolean.FALSE.equals(product.getActive())) {
+
+            cartMetrics.productUnavailable();
 
             throw new ProductNotAvailableException(productId);
         }
@@ -168,9 +185,13 @@ public class CartServiceImpl implements CartService {
 
             Cart savedCart = cartRepository.saveAndFlush(cart);
 
+            cartMetrics.itemUpdated();
+
             return cartMapper.toResponse(savedCart);
 
         } catch (ObjectOptimisticLockingFailureException ex) {
+
+            cartMetrics.concurrentModification();
 
             throw new CartConcurrentModificationException(
                     customerId
@@ -187,9 +208,11 @@ public class CartServiceImpl implements CartService {
                 currentUser.getUserId(authentication);
         Cart cart =
                 cartRepository.findByCustomerId(customerId)
-                        .orElseThrow(() ->
-                                new CartNotFoundException(customerId)
-                        );
+                        .orElseThrow(() -> {
+                            cartMetrics.cartNotFound();
+
+                            return new CartNotFoundException(customerId);
+                        });
 
         CartItem item =
                 cart.getItems()
@@ -199,9 +222,11 @@ public class CartServiceImpl implements CartService {
                                         .equals(productId)
                         )
                         .findFirst()
-                        .orElseThrow(() ->
-                                new CartItemNotFoundException(productId)
-                        );
+                        .orElseThrow(() -> {
+                            cartMetrics.itemNotFound();
+
+                            return new CartItemNotFoundException(productId);
+                        });
 
         cart.removeItem(item);
 
@@ -209,9 +234,13 @@ public class CartServiceImpl implements CartService {
 
             Cart savedCart = cartRepository.saveAndFlush(cart);
 
+            cartMetrics.itemRemoved();
+
             return cartMapper.toResponse(savedCart);
 
         } catch (ObjectOptimisticLockingFailureException ex) {
+
+            cartMetrics.concurrentModification();
 
             throw new CartConcurrentModificationException(
                     customerId
