@@ -204,3 +204,7 @@ jwt:
 
 cors:
   allowed-origin: ${SECURITY_CORS_ALLOWED_ORIGINS}
+
+pagination:
+  default-page-size: 20
+  max-page-size: 100

@@ -152,3 +152,7 @@ logging:
 security:
   gateway:
     enabled: true
+
+pagination:
+  default-page-size: 20
+  max-page-size: 100

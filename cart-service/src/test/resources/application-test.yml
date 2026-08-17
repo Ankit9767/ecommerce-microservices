@@ -55,3 +55,8 @@ management:
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
+
+
+pagination:
+  default-page-size: 20
+  max-page-size: 100
