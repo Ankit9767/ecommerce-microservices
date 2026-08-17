@@ -123,6 +123,21 @@ public class GlobalExceptionHandler {
         );
     }
 
+
+    @ExceptionHandler(CartConcurrentModificationException.class)
+    public ResponseEntity<ErrorResponse> handleCartConcurrentModification(
+            CartConcurrentModificationException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildError(
             HttpStatus status,
             String error,

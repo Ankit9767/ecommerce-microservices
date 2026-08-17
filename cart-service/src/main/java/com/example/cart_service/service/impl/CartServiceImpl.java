@@ -8,6 +8,7 @@ import com.example.cart_service.dto.AddCartItemRequest;
 import com.example.cart_service.dto.UpdateCartItemRequest;
 import com.example.cart_service.entity.Cart;
 import com.example.cart_service.entity.CartItem;
+import com.example.cart_service.exception.CartConcurrentModificationException;
 import com.example.cart_service.exception.CartItemNotFoundException;
 import com.example.cart_service.exception.CartNotFoundException;
 import com.example.cart_service.exception.ProductNotAvailableException;
@@ -17,6 +18,7 @@ import com.example.cart_service.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,9 +106,18 @@ public class CartServiceImpl implements CartService {
             cart.addItem(item);
         }
 
-        Cart savedCart = cartRepository.save(cart);
+        try {
 
-        return cartMapper.toResponse(savedCart);
+            Cart savedCart = cartRepository.saveAndFlush(cart);
+
+            return cartMapper.toResponse(savedCart);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            throw new CartConcurrentModificationException(
+                    customerId
+            );
+        }
     }
 
     @Override
@@ -153,9 +164,18 @@ public class CartServiceImpl implements CartService {
          */
         item.setQuantity(request.quantity());
 
-        Cart savedCart = cartRepository.save(cart);
+        try {
 
-        return cartMapper.toResponse(savedCart);
+            Cart savedCart = cartRepository.saveAndFlush(cart);
+
+            return cartMapper.toResponse(savedCart);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            throw new CartConcurrentModificationException(
+                    customerId
+            );
+        }
     }
 
     @Override
@@ -185,9 +205,18 @@ public class CartServiceImpl implements CartService {
 
         cart.removeItem(item);
 
-        Cart savedCart = cartRepository.save(cart);
+        try {
 
-        return cartMapper.toResponse(savedCart);
+            Cart savedCart = cartRepository.saveAndFlush(cart);
+
+            return cartMapper.toResponse(savedCart);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            throw new CartConcurrentModificationException(
+                    customerId
+            );
+        }
     }
 
     @Override

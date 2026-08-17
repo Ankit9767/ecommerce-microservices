@@ -45,6 +45,10 @@ public class Cart extends BaseEntity {
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public void addItem(CartItem item) {
         items.add(item);
         item.setCart(this);
