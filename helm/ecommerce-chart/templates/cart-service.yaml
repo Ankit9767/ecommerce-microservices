@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: cart-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: cart-service
+
+  template:
+
+    metadata:
+      labels:
+        app: cart-service
+
+    spec:
+
+      terminationGracePeriodSeconds: 40
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      affinity:
+
+        podAntiAffinity:
+
+          preferredDuringSchedulingIgnoredDuringExecution:
+
+            - weight: 100
+
+              podAffinityTerm:
+
+                topologyKey: kubernetes.io/hostname
+
+                labelSelector:
+
+                  matchExpressions:
+
+                    - key: app
+
+                      operator: In
+
+                      values:
+
+                        - cart-service
+
+      serviceAccountName: cart-service
+
+      containers:
+
+        - name: cart-service
+
+          image: "{{ .Values.cart.image.repository }}:{{ .Values.cart.image.tag }}"
+
+          imagePullPolicy: {{ .Values.cart.image.pullPolicy }}
+
+          lifecycle:
+
+            preStop:
+
+              exec:
+
+                command:
+
+                  - sh
+                  - -c
+                  - sleep 15
+
+          ports:
+
+            - containerPort: 8084
+
+          envFrom:
+
+            - configMapRef:
+                name: cart-service-config
+
+            - secretRef:
+                name: cart-service-secret
+
+          resources:
+
+            requests:
+              cpu: {{ .Values.cart.resources.requests.cpu | quote }}
+              memory: {{ .Values.cart.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.cart.resources.limits.cpu | quote }}
+              memory: {{ .Values.cart.resources.limits.memory | quote }}
+
+          readinessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8084
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8084
+
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8084
+
+            failureThreshold: 30
+            periodSeconds: 10

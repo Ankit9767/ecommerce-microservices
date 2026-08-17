@@ -1,0 +1,89 @@
+server:
+  port: ${SERVER_PORT}
+  shutdown: graceful
+
+
+spring:
+
+  application:
+    name: ${SPRING_APPLICATION_NAME}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+
+eureka:
+
+  instance:
+    prefer-ip-address: true
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+
+
+management:
+
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,prometheus,circuitbreakers,circuitbreakerevents,metrics}
+
+  endpoint:
+
+    health:
+      show-details: always
+
+    prometheus:
+      enabled: true
+
+  metrics:
+
+    tags:
+      application: ${spring.application.name}
+
+  tracing:
+
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY}
+
+    zipkin:
+      tracing:
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}
+
+
+logging:
+
+  pattern:
+    level: "%5p [${spring.application.name:},trace=%X{traceId:-},span=%X{spanId:-}]"
+
+  level:
+
+    root: INFO
+
+    com.example.cart_service: DEBUG
+
+    org.springframework.cloud.openfeign: DEBUG
+
+
+security:
+  gateway:
+    enabled: true

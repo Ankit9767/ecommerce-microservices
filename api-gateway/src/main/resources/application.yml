@@ -58,6 +58,28 @@ spring:
                   - 503
                   - 504
 
+
+        - id: cart-service
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
+                key-resolver: "#{@ipKeyResolver}"
+
+            - name: CircuitBreaker
+              args:
+                name: cartServiceCircuitBreaker
+                fallbackUri: forward:/fallback/cart
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
         - id: product-service
           uri: lb://PRODUCT-SERVICE
           predicates:
