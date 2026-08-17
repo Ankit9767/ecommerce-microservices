@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: inventory-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: inventory-service
+
+  template:
+
+    metadata:
+      labels:
+        app: inventory-service
+
+    spec:
+
+      terminationGracePeriodSeconds: 40
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      affinity:
+
+        podAntiAffinity:
+
+          preferredDuringSchedulingIgnoredDuringExecution:
+
+            - weight: 100
+
+              podAffinityTerm:
+
+                topologyKey: kubernetes.io/hostname
+
+                labelSelector:
+
+                  matchExpressions:
+
+                    - key: app
+
+                      operator: In
+
+                      values:
+
+                        - inventory-service
+
+      serviceAccountName: inventory-service
+
+      containers:
+
+        - name: inventory-service
+
+          image: "{{ .Values.inventory.image.repository }}:{{ .Values.inventory.image.tag }}"
+
+          imagePullPolicy: {{ .Values.inventory.image.pullPolicy }}
+
+          lifecycle:
+
+            preStop:
+
+              exec:
+
+                command:
+
+                  - sh
+                  - -c
+                  - sleep 15
+
+          ports:
+
+            - containerPort: 8083
+
+          envFrom:
+
+            - configMapRef:
+                name: inventory-service-config
+
+            - secretRef:
+                name: inventory-service-secret
+
+          resources:
+
+            requests:
+              cpu: {{ .Values.inventory.resources.requests.cpu | quote }}
+              memory: {{ .Values.inventory.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.inventory.resources.limits.cpu | quote }}
+              memory: {{ .Values.inventory.resources.limits.memory | quote }}
+
+          readinessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8083
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8083
+
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8083
+
+            failureThreshold: 30
+            periodSeconds: 10
