@@ -52,6 +52,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final CartClient cartClient;
 
+    private final OrderPersistenceService orderPersistenceService;
+
     public OrderServiceImpl(
             OrderRepository repository,
             ProductClient productClient,
@@ -59,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
             RoleSecurity roleSecurity,
             CurrentUser currentUser,
             OrderStatusLifecycle statusLifecycle,
-            OrderMetrics orderMetrics, CartClient cartClient
+            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -69,10 +71,10 @@ public class OrderServiceImpl implements OrderService {
         this.statusLifecycle = statusLifecycle;
         this.orderMetrics = orderMetrics;
         this.cartClient = cartClient;
+        this.orderPersistenceService = orderPersistenceService;
     }
 
     @Override
-    @Transactional
     public OrderResponse createOrder(CreateOrderRequest request,
                                      Authentication authentication) {
 
@@ -140,11 +142,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        Order savedOrder = repository.save(order);
-
-        orderMetrics.orderCreated();
-
-        return mapper.toResponse(savedOrder);
+        return orderPersistenceService.createOrder(order);
     }
 
     @Override
@@ -214,7 +212,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public OrderResponse updateOrder(Long id,
                                      UpdateOrderRequest request) {
 
@@ -289,11 +286,7 @@ public class OrderServiceImpl implements OrderService {
 
         existingOrder.setTotalAmount(totalAmount);
 
-        Order savedOrder = repository.save(existingOrder);
-
-        orderMetrics.orderUpdated();
-
-        return mapper.toResponse(savedOrder);
+        return orderPersistenceService.updateOrder(existingOrder);
     }
 
     @Override
@@ -411,7 +404,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
     public OrderResponse createOrderFromCart(Authentication authentication) {
 
         Long customerId = currentUser.getUserId(authentication);
@@ -441,9 +433,22 @@ public class OrderServiceImpl implements OrderService {
 
         for (CartItemResponse cartItem : cart.items()) {
 
-            ProductResponse product = productClient.getProduct(cartItem.productId());
+            ProductResponse product;
 
-            if (product == null || Boolean.FALSE.equals(product.getActive())) {
+            try {
+
+                product = productClient.getProduct(cartItem.productId());
+
+            } catch (RemoteResourceNotFoundException ex) {
+
+                orderMetrics.productNotAvailable();
+
+                throw new ProductNotAvailableException(
+                        cartItem.productId()
+                );
+            }
+
+            if (Boolean.FALSE.equals(product.getActive())) {
 
                 orderMetrics.productNotAvailable();
 
@@ -478,16 +483,21 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        Order savedOrder = repository.save(order);
+        // ---------------------------------------------
+        // TRANSACTION
+        // Save order and COMMIT
+        // ---------------------------------------------
 
-        /*
-         * Clear the cart only after
-         * the order has been persisted successfully.
-         */
+        OrderResponse savedOrder =
+                orderPersistenceService.createOrderFromCart(order);
+
+        // ---------------------------------------------
+        // NO DATABASE TRANSACTION
+        // Remote cart service call
+        // ---------------------------------------------
+
         cartClient.clearCart();
 
-        orderMetrics.orderCreated();
-
-        return mapper.toResponse(savedOrder);
+        return savedOrder;
     }
 }
