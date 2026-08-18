@@ -1,17 +1,20 @@
 package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
+import com.example.payment_service.dto.provider.PaymentProviderRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
+import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentService;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.security.CurrentUser;
@@ -45,6 +48,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentMetrics paymentMetrics;
 
+    private final PaymentProvider paymentProvider;
+
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request,
                                          Authentication authentication) {
@@ -65,19 +70,62 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (!order.getCustomerId().equals(currentUserId)) {
+
             paymentMetrics.orderAccessDenied();
+
             throw new PaymentOrderAccessDeniedException(
                     order.getId()
             );
         }
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
+
             throw new PaymentAlreadyCancelledException(
                     order.getId()
             );
         }
 
-        return paymentPersistenceService.createPayment(request, order);
+
+        // --------------------------------------------------
+        // TRANSACTION #1
+        // Create PENDING payment and COMMIT
+        // --------------------------------------------------
+
+        PaymentResponse pendingPayment =
+                paymentPersistenceService.createPendingPayment(
+                        request,
+                        order,
+                        paymentProvider.getProviderName()
+                );
+
+
+        // --------------------------------------------------
+        // NO DATABASE TRANSACTION HERE
+        // External provider call
+        // --------------------------------------------------
+
+        PaymentProviderRequest providerRequest =
+                new PaymentProviderRequest(
+                        pendingPayment.id(),
+                        pendingPayment.orderId(),
+                        pendingPayment.amount(),
+                        pendingPayment.currency(),
+                        pendingPayment.paymentMethod()
+                );
+
+        PaymentProviderResponse providerResponse =
+                paymentProvider.createPayment(providerRequest);
+
+
+        // --------------------------------------------------
+        // TRANSACTION #2
+        // Save provider response and COMMIT
+        // --------------------------------------------------
+
+        return paymentPersistenceService.completePayment(
+                pendingPayment.id(),
+                providerResponse
+        );
     }
 
     @Override

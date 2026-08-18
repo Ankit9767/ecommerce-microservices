@@ -5,15 +5,14 @@ import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.dto.CreatePaymentRequest;
-import com.example.payment_service.dto.provider.PaymentProviderRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.DuplicatePaymentException;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
 import com.example.payment_service.exception.PaymentConcurrencyException;
+import com.example.payment_service.exception.PaymentNotFoundException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
-import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,19 +27,25 @@ public class PaymentPersistenceService {
 
     private final PaymentMapper paymentMapper;
 
-    private final PaymentProvider paymentProvider;
-
     private final PaymentStatusLifecycle statusLifecycle;
 
     private final PaymentMetrics paymentMetrics;
 
 
+    /**
+     * Transaction #1
+     *
+     * Creates the payment in PENDING state and commits it.
+     */
     @Transactional
-    public PaymentResponse createPayment(CreatePaymentRequest request,
-                                         OrderResponse order) {
+    public PaymentResponse createPendingPayment(CreatePaymentRequest request,
+                                                OrderResponse order,
+                                                String providerName) {
 
         if (paymentRepository.existsByOrderId(request.orderId())) {
+
             paymentMetrics.duplicatePayment();
+
             throw new DuplicatePaymentException(
                     request.orderId()
             );
@@ -52,48 +57,64 @@ public class PaymentPersistenceService {
                 .amount(order.getTotalAmount())
                 .currency(request.currency())
                 .paymentMethod(request.paymentMethod())
-                .provider(paymentProvider.getProviderName())
+                .provider(providerName)
                 .status(PaymentStatus.PENDING)
                 .build();
 
         try {
+
             Payment savedPayment = paymentRepository.saveAndFlush(payment);
-
-            PaymentProviderRequest providerRequest =
-                    new PaymentProviderRequest(
-                            savedPayment.getId(),
-                            savedPayment.getOrderId(),
-                            savedPayment.getAmount(),
-                            savedPayment.getCurrency(),
-                            savedPayment.getPaymentMethod()
-                    );
-
-            PaymentProviderResponse providerResponse =
-                    paymentProvider.createPayment(providerRequest);
-
-            savedPayment.setProviderReference(providerResponse.providerReference());
-
-            transitionStatus(savedPayment, providerResponse.status());
-
-            if (providerResponse.failureReason() != null) {
-                savedPayment.setFailureReason(
-                        providerResponse.failureReason()
-                );
-            }
-
-            Payment finalPayment = paymentRepository.save(savedPayment);
 
             paymentMetrics.paymentCreated();
 
-            return paymentMapper.toResponse(finalPayment);
+            return paymentMapper.toResponse(savedPayment);
 
         } catch (DataIntegrityViolationException ex) {
+
             paymentMetrics.duplicatePayment();
+
             throw new PaymentConcurrencyException(
                     request.orderId()
             );
         }
     }
+
+
+    /**
+     * Transaction #2
+     *
+     * Updates the payment after the external provider
+     * has responded.
+     */
+    @Transactional
+    public PaymentResponse completePayment(Long paymentId,
+                                           PaymentProviderResponse providerResponse) {
+
+        Payment payment =
+                paymentRepository.findById(paymentId)
+                        .orElseThrow(() ->
+                                new PaymentNotFoundException(
+                                        paymentId
+                                )
+                        );
+
+        payment.setProviderReference(
+                providerResponse.providerReference()
+        );
+
+        transitionStatus(payment, providerResponse.status());
+
+        if (providerResponse.failureReason() != null) {
+            payment.setFailureReason(
+                    providerResponse.failureReason()
+            );
+        }
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        return paymentMapper.toResponse(savedPayment);
+    }
+
 
     private void transitionStatus(Payment payment,
                                   PaymentStatus targetStatus) {
@@ -109,6 +130,7 @@ public class PaymentPersistenceService {
                 targetStatus)) {
 
             paymentMetrics.invalidStatusTransition();
+
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus
