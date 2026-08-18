@@ -5,6 +5,7 @@ import com.ecommerce.common.dto.CartResponse;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ProductResponse;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.CurrentUser;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.order_service.client.CartClient;
@@ -89,10 +90,20 @@ public class OrderServiceImpl implements OrderService {
 
         for (CreateOrderItemRequest requestItem : request.getItems()) {
 
-            ProductResponse product =
-                    productClient.getProduct(
-                            requestItem.getProductId()
-                    );
+            ProductResponse product;
+
+            try {
+
+                product = productClient.getProduct(requestItem.getProductId());
+
+            } catch (RemoteResourceNotFoundException ex) {
+
+                orderMetrics.productNotAvailable();
+
+                throw new ProductNotAvailableException(
+                        requestItem.getProductId()
+                );
+            }
 
             if (Boolean.FALSE.equals(product.getActive())) {
 
@@ -228,10 +239,20 @@ public class OrderServiceImpl implements OrderService {
 
         for (CreateOrderItemRequest requestItem : request.getItems()) {
 
-            ProductResponse product =
-                    productClient.getProduct(
-                            requestItem.getProductId()
-                    );
+            ProductResponse product;
+
+            try {
+
+                product = productClient.getProduct(requestItem.getProductId());
+
+            } catch (RemoteResourceNotFoundException ex) {
+
+                orderMetrics.productNotAvailable();
+
+                throw new ProductNotAvailableException(
+                        requestItem.getProductId()
+                );
+            }
 
             if (Boolean.FALSE.equals(product.getActive())) {
 
@@ -395,7 +416,16 @@ public class OrderServiceImpl implements OrderService {
 
         Long customerId = currentUser.getUserId(authentication);
 
-        CartResponse cart = cartClient.getCart();
+        CartResponse cart;
+
+        try {
+
+            cart = cartClient.getCart();
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            throw new EmptyCartException();
+        }
 
         if (cart == null || cart.items() == null || cart.items().isEmpty()) {
             throw new EmptyCartException();

@@ -2,6 +2,7 @@ package com.example.cart_service.service.impl;
 
 import com.ecommerce.common.dto.CartResponse;
 import com.ecommerce.common.dto.ProductResponse;
+import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.CurrentUser;
 import com.example.cart_service.client.ProductServiceClient;
 import com.example.cart_service.dto.AddCartItemRequest;
@@ -64,9 +65,22 @@ public class CartServiceImpl implements CartService {
 
         Long customerId = currentUser.getUserId(authentication);
 
-        ProductResponse product = productServiceClient.getProduct(request.productId());
+        ProductResponse product;
 
-        if (product == null || Boolean.FALSE.equals(product.getActive())) {
+        try {
+
+            product = productServiceClient.getProduct(request.productId());
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            cartMetrics.productUnavailable();
+
+            throw new ProductNotAvailableException(
+                    request.productId()
+            );
+        }
+
+        if (Boolean.FALSE.equals(product.getActive())) {
 
             cartMetrics.productUnavailable();
 
@@ -164,9 +178,22 @@ public class CartServiceImpl implements CartService {
         /*
          * Verify that the product is still active.
          */
-        ProductResponse product = productServiceClient.getProduct(productId);
+        ProductResponse product;
 
-        if (product == null || Boolean.FALSE.equals(product.getActive())) {
+        try {
+
+            product = productServiceClient.getProduct(productId);
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            cartMetrics.productUnavailable();
+
+            throw new ProductNotAvailableException(
+                    productId
+            );
+        }
+
+        if (Boolean.FALSE.equals(product.getActive())) {
 
             cartMetrics.productUnavailable();
 

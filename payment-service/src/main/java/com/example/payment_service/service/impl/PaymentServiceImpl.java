@@ -3,6 +3,7 @@ package com.example.payment_service.service.impl;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
@@ -50,7 +51,18 @@ public class PaymentServiceImpl implements PaymentService {
 
         Long currentUserId = currentUser.getUserId(authentication);
 
-        OrderResponse order = orderClient.getOrder(request.orderId());
+        OrderResponse order;
+
+        try {
+
+            order = orderClient.getOrder(request.orderId());
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            throw new OrderNotFoundException(
+                    request.orderId()
+            );
+        }
 
         if (!order.getCustomerId().equals(currentUserId)) {
             paymentMetrics.orderAccessDenied();
