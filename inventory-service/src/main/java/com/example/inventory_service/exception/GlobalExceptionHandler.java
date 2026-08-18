@@ -44,6 +44,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InventoryConcurrentModificationException.class)
+    public ResponseEntity<ErrorResponse> handleInventoryConcurrentModification(
+            InventoryConcurrentModificationException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                "Inventory Concurrent Modification",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(InventoryAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleInventoryAlreadyExists(
             InventoryAlreadyExistsException ex,

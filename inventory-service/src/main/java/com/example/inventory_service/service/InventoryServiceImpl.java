@@ -8,11 +8,14 @@ import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.example.inventory_service.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
 import com.example.inventory_service.exception.InventoryAlreadyExistsException;
+import com.example.inventory_service.exception.InventoryConcurrentModificationException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
 import com.example.inventory_service.exception.ProductNotAvailableException;
 import com.example.inventory_service.metrics.InventoryMetrics;
 import com.example.inventory_service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,9 +57,7 @@ public class InventoryServiceImpl implements InventoryService {
             );
         }
 
-        if (inventoryRepository.existsByProductId(
-                request.productId()
-        )) {
+        if (inventoryRepository.existsByProductId(request.productId())) {
 
             inventoryMetrics.inventoryAlreadyExists();
 
@@ -71,11 +72,22 @@ public class InventoryServiceImpl implements InventoryService {
                 .reservedQuantity(0)
                 .build();
 
-        Inventory saved = inventoryRepository.save(inventory);
+        try {
 
-        inventoryMetrics.inventoryCreated();
+            Inventory saved = inventoryRepository.saveAndFlush(inventory);
 
-        return toResponse(saved);
+            inventoryMetrics.inventoryCreated();
+
+            return toResponse(saved);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            inventoryMetrics.inventoryAlreadyExists();
+
+            throw new InventoryAlreadyExistsException(
+                    request.productId()
+            );
+        }
     }
 
     @Override
@@ -98,7 +110,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.increaseStock(request.quantity());
 
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory saved =
+                saveInventory(
+                        inventory,
+                        productId
+                );
 
         inventoryMetrics.stockIncreased();
 
@@ -114,7 +130,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.decreaseStock(request.quantity());
 
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory saved =
+                saveInventory(
+                        inventory,
+                        productId
+                );
 
         inventoryMetrics.stockDecreased();
 
@@ -130,7 +150,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.reserveStock(request.quantity());
 
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory saved =
+                saveInventory(
+                        inventory,
+                        productId
+                );
 
         inventoryMetrics.stockReserved();
 
@@ -145,7 +169,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.releaseStock(request.quantity());
 
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory saved =
+                saveInventory(
+                        inventory,
+                        productId
+                );
 
         inventoryMetrics.stockReleased();
 
@@ -161,7 +189,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.confirmReservation(request.quantity());
 
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory saved =
+                saveInventory(
+                        inventory,
+                        productId
+                );
 
         inventoryMetrics.reservationConfirmed();
 
@@ -189,5 +221,22 @@ public class InventoryServiceImpl implements InventoryService {
                 inventory.getReservedQuantity(),
                 inventory.getAvailableQuantity()
         );
+    }
+
+    private Inventory saveInventory(Inventory inventory,
+                                    Long productId) {
+
+        try {
+
+            return inventoryRepository.saveAndFlush(inventory);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            inventoryMetrics.concurrentModification();
+
+            throw new InventoryConcurrentModificationException(
+                    productId
+            );
+        }
     }
 }
