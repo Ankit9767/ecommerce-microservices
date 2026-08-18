@@ -1,4 +1,4 @@
-package com.example.inventory_service.service;
+package com.example.inventory_service.service.impl;
 
 import com.ecommerce.common.dto.InventoryResponse;
 import com.ecommerce.common.dto.ProductResponse;
@@ -8,14 +8,13 @@ import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.example.inventory_service.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
 import com.example.inventory_service.exception.InventoryAlreadyExistsException;
-import com.example.inventory_service.exception.InventoryConcurrentModificationException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
 import com.example.inventory_service.exception.ProductNotAvailableException;
+import com.example.inventory_service.mapper.InventoryMapper;
 import com.example.inventory_service.metrics.InventoryMetrics;
 import com.example.inventory_service.repository.InventoryRepository;
+import com.example.inventory_service.service.InventoryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +27,10 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryMetrics inventoryMetrics;
 
     private final ProductClient productClient;
+
+    private final InventoryPersistenceService inventoryPersistenceService;
+
+    private final InventoryMapper inventoryMapper;
 
     @Override
     @Transactional
@@ -72,22 +75,15 @@ public class InventoryServiceImpl implements InventoryService {
                 .reservedQuantity(0)
                 .build();
 
-        try {
+        InventoryResponse response =
+                inventoryPersistenceService.create(
+                        inventory,
+                        request.productId()
+                );
 
-            Inventory saved = inventoryRepository.saveAndFlush(inventory);
+        inventoryMetrics.inventoryCreated();
 
-            inventoryMetrics.inventoryCreated();
-
-            return toResponse(saved);
-
-        } catch (DataIntegrityViolationException ex) {
-
-            inventoryMetrics.inventoryAlreadyExists();
-
-            throw new InventoryAlreadyExistsException(
-                    request.productId()
-            );
-        }
+        return response;
     }
 
     @Override
@@ -98,7 +94,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.inventoryViewed();
 
-        return toResponse(inventory);
+        return inventoryMapper.toResponse(inventory);
     }
 
     @Override
@@ -110,15 +106,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.increaseStock(request.quantity());
 
-        Inventory saved =
-                saveInventory(
+        InventoryResponse response =
+                inventoryPersistenceService.save(
                         inventory,
                         productId
                 );
 
         inventoryMetrics.stockIncreased();
 
-        return toResponse(saved);
+        return response;
     }
 
     @Override
@@ -130,15 +126,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.decreaseStock(request.quantity());
 
-        Inventory saved =
-                saveInventory(
+        InventoryResponse response =
+                inventoryPersistenceService.save(
                         inventory,
                         productId
                 );
 
         inventoryMetrics.stockDecreased();
 
-        return toResponse(saved);
+        return response;
     }
 
     @Override
@@ -150,15 +146,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.reserveStock(request.quantity());
 
-        Inventory saved =
-                saveInventory(
+        InventoryResponse response =
+                inventoryPersistenceService.save(
                         inventory,
                         productId
                 );
 
         inventoryMetrics.stockReserved();
 
-        return toResponse(saved);
+        return response;
     }
 
     @Override
@@ -169,15 +165,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.releaseStock(request.quantity());
 
-        Inventory saved =
-                saveInventory(
+        InventoryResponse response =
+                inventoryPersistenceService.save(
                         inventory,
                         productId
                 );
 
         inventoryMetrics.stockReleased();
 
-        return toResponse(saved);
+        return response;
     }
 
     @Override
@@ -189,15 +185,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventory.confirmReservation(request.quantity());
 
-        Inventory saved =
-                saveInventory(
+        InventoryResponse response =
+                inventoryPersistenceService.save(
                         inventory,
                         productId
                 );
 
         inventoryMetrics.reservationConfirmed();
 
-        return toResponse(saved);
+        return response;
     }
 
     private Inventory getInventoryOrThrow(Long productId) {
@@ -210,33 +206,5 @@ public class InventoryServiceImpl implements InventoryService {
 
                     return new InventoryNotFoundException(productId);
                 });
-    }
-
-    private InventoryResponse toResponse(Inventory inventory) {
-
-        return new InventoryResponse(
-                inventory.getId(),
-                inventory.getProductId(),
-                inventory.getQuantity(),
-                inventory.getReservedQuantity(),
-                inventory.getAvailableQuantity()
-        );
-    }
-
-    private Inventory saveInventory(Inventory inventory,
-                                    Long productId) {
-
-        try {
-
-            return inventoryRepository.saveAndFlush(inventory);
-
-        } catch (ObjectOptimisticLockingFailureException ex) {
-
-            inventoryMetrics.concurrentModification();
-
-            throw new InventoryConcurrentModificationException(
-                    productId
-            );
-        }
     }
 }
