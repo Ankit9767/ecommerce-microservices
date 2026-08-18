@@ -30,6 +30,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ProductNotAvailableException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotAvailable(
+            ProductNotAvailableException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Product Not Available",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(InventoryAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleInventoryAlreadyExists(
             InventoryAlreadyExistsException ex,

@@ -31,6 +31,8 @@ public class InventoryMetrics {
 
     private final Counter concurrentModification;
 
+    private final Counter productNotAvailable;
+
     public InventoryMetrics(
             MeterRegistry meterRegistry
     ) {
@@ -94,6 +96,13 @@ public class InventoryMetrics {
                 Counter.builder("inventory.concurrent_modification")
                         .description("Number of concurrent inventory modifications")
                         .register(meterRegistry);
+
+        productNotAvailable =
+                Counter.builder("inventory.product_not_available")
+                        .description(
+                                "Number of inventory creation attempts for unavailable products"
+                        )
+                        .register(meterRegistry);
     }
 
     public void inventoryCreated() {
@@ -142,5 +151,9 @@ public class InventoryMetrics {
 
     public void concurrentModification() {
         concurrentModification.increment();
+    }
+
+    public void productNotAvailable() {
+        productNotAvailable.increment();
     }
 }

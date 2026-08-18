@@ -1,11 +1,15 @@
 package com.example.inventory_service.service;
 
 import com.ecommerce.common.dto.InventoryResponse;
+import com.ecommerce.common.dto.ProductResponse;
+import com.ecommerce.common.exception.RemoteResourceNotFoundException;
+import com.example.inventory_service.client.ProductClient;
 import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.example.inventory_service.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
 import com.example.inventory_service.exception.InventoryAlreadyExistsException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
+import com.example.inventory_service.exception.ProductNotAvailableException;
 import com.example.inventory_service.metrics.InventoryMetrics;
 import com.example.inventory_service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +24,39 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryMetrics inventoryMetrics;
 
+    private final ProductClient productClient;
+
     @Override
     @Transactional
     public InventoryResponse createInventory(CreateInventoryRequest request) {
 
-        if (inventoryRepository.existsByProductId(request.productId())) {
+        ProductResponse product;
+
+        try {
+
+            product = productClient.getProduct(request.productId());
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            inventoryMetrics.productNotAvailable();
+
+            throw new ProductNotAvailableException(
+                    request.productId()
+            );
+        }
+
+        if (product == null || Boolean.FALSE.equals(product.getActive())) {
+
+            inventoryMetrics.productNotAvailable();
+
+            throw new ProductNotAvailableException(
+                    request.productId()
+            );
+        }
+
+        if (inventoryRepository.existsByProductId(
+                request.productId()
+        )) {
 
             inventoryMetrics.inventoryAlreadyExists();
 
@@ -34,7 +66,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         Inventory inventory = Inventory.builder()
-                .productId(request.productId())
+                .productId(product.getId())
                 .quantity(request.quantity())
                 .reservedQuantity(0)
                 .build();
