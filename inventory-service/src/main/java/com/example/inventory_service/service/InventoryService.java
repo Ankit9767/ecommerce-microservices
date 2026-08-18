@@ -2,7 +2,7 @@ package com.example.inventory_service.service;
 
 import com.ecommerce.common.dto.InventoryResponse;
 import com.example.inventory_service.dto.CreateInventoryRequest;
-import com.example.inventory_service.dto.InventoryQuantityRequest;
+import com.ecommerce.common.dto.InventoryQuantityRequest;
 
 public interface InventoryService {
 

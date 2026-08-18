@@ -5,7 +5,7 @@ import com.ecommerce.common.dto.ProductResponse;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.example.inventory_service.client.ProductClient;
 import com.example.inventory_service.dto.CreateInventoryRequest;
-import com.example.inventory_service.dto.InventoryQuantityRequest;
+import com.ecommerce.common.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
 import com.example.inventory_service.exception.InventoryAlreadyExistsException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
