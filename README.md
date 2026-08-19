@@ -1,53 +1,32 @@
 # E-Commerce Microservices Project
 
-A Spring Boot microservices e-commerce platform using the **Transactional Outbox Pattern** with Kafka for reliable async communication between services.
+A Spring Boot microservices e-commerce platform. Orders, payments, cart, and inventory are delivered as independently deployable services registered with Eureka and fronted by a reactive API gateway. Inter-service calls are synchronous over HTTP (OpenFeign) with Resilience4j circuit breakers; the **Transactional Outbox Pattern with Kafka** is implemented but currently **disabled** in code (see [Messaging & the Outbox](#messaging--the-outbox-pattern)).
 
 ## Architecture Overview
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Product    │     │    Order     │     │   Payment    │
-│   Service    │     │   Service    │     │   Service    │
-│   (Port 8089)│     │   (Port 8088)│     │   (Port 8086)│
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                    │                    │
-       └────────────────────┼────────────────────┘
-                            │
-                     ┌──────▼───────┐
-                     │  Eureka      │
-                     │  Discovery   │
-                     │  (Port 8761) │
-                     └──────┬───────┘
-                            │
-                     ┌──────▼───────┐
-                     │  API Gateway │
-                     │  (Port 8087) │
-                     └──────────────┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Auth      │    │   Product   │    │    Order    │    │   Payment   │    │  Inventory  │
+│  (Port 8090)│    │ (Port 8089) │    │ (Port 8088) │    │ (Port 8086) │    │  (Port 8083) │
+└──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+       │                  │                  │                  │                  │
+       └──────────────────┴──────────┬───────┴──────────────────┴──────────────────┘
+                                     │
+                              ┌──────▼───────┐
+                              │  Eureka      │
+                              │  Discovery   │
+                              │  (Port 8761) │
+                              └──────┬───────┘
+                                     │
+                              ┌──────▼───────┐
+                              │  API Gateway │
+                              │  (Port 8087) │
+                              └──────────────┘
 ```
 
-### Event Flow (Transactional Outbox Pattern)
+All external traffic enters through the API Gateway — `http://localhost:8087` locally, or `http://ecommerce.local` via the Kubernetes ingress. The gateway terminates JWT auth, rate-limits, and applies circuit breakers with fallbacks, then load-balances to downstream services via Eureka (`lb://SERVICE-NAME`). Auth endpoints go directly to the gateway too, so a single entry point serves the whole platform.
 
-```
-POST /api/orders → Order Service → Saves Order + Outbox Event (DB)
-                                        │
-                              OutboxPublisher (every 5s)
-                                        │
-                               Kafka: "order-created"
-                                        │
-                              OrderCreatedConsumer (Payment)
-                                        │
-                              → Creates Payment + Outbox Event (DB)
-                                        │
-                              PaymentOutboxScheduler (every 5s)
-                                        │
-                               Kafka: "payment-completed"
-                                        │
-                              PaymentCompletedConsumer (Order)
-                                        │
-                              → Updates Order Status → CONFIRMED
-```
-
----
+> **Cart service** is also part of the system (routes through the gateway at `/api/cart/**`); its port is set via `${SERVER_PORT}` and IntelliJ `run` config.
 
 ## Technology Stack
 
@@ -56,14 +35,14 @@ POST /api/orders → Order Service → Saves Order + Outbox Event (DB)
 | Java | 21 |
 | Spring Boot | 3.3.12 |
 | Spring Cloud | 2023.0.3 |
-| Apache Kafka | 3.8.0 |
-| MySQL | 8.x |
+| Spring Cloud Gateway | 2023.0.3 (WebFlux-based) |
+| Apache Kafka | 3.8.0 (client) |
+| MySQL | 8.4 |
 | Maven | 3.8+ |
 | Hibernate (JPA) | 6.5.3 |
-| Resilience4j | Latest |
+| Resilience4j | Latest (Feign `@CircuitBreaker`/`@Retry`) |
 | OpenFeign | Latest |
-
----
+| JJWT | 0.12.6 |
 
 ## Prerequisites
 
@@ -74,524 +53,318 @@ POST /api/orders → Order Service → Saves Order + Outbox Event (DB)
 | MySQL | 8.x | `mysql --version` |
 | Docker | Latest | `docker --version` |
 
----
+## Service Registry & Databases
 
-## Startup Commands (Order Matters!)
+### Eureka Server
+Runs on `http://localhost:8761` by default (`application.yml` does not externalize this). The other services register with it and cache the registry (see per-service `application.yml`: Eureka config via `${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}`).
 
-### Step 1: Start Kafka (Docker Container)
-
-```bash
-# Navigate to Docker compose directory
-cd "D:\MicroServices Project\Docker\Kafka"
-
-# Start Kafka in detached mode
-docker compose up -d
-
-# Verify Kafka is running
-docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
-# Expected: kafka, port 9092, Up/Healthy
-```
-
-### Step 2: Verify MySQL is Running
+### Databases
+JPA creates all tables automatically via `ddl-auto`. Bogus placeholder databases are declared in `docker/mysql/init.sql` (`product_db`, `order_db`, `payment_db`, `auth_db`); the cart and inventory databases are **not** created by the init script — create them manually when running those services locally:
 
 ```bash
-# Check MySQL connection
-mysql -h 127.0.0.1 -u root -proot123 -e "SHOW DATABASES;"
-
-# Expected databases should include (created automatically by JPA):
-# - order_db
-# - payment_db
-# - product_db
-
-# If databases don't exist yet, create them manually:
 mysql -h 127.0.0.1 -u root -proot123 -e "
+  CREATE DATABASE IF NOT EXISTS product_db;
   CREATE DATABASE IF NOT EXISTS order_db;
   CREATE DATABASE IF NOT EXISTS payment_db;
-  CREATE DATABASE IF NOT EXISTS product_db;
+  CREATE DATABASE IF NOT EXISTS auth_db;
+  CREATE DATABASE IF NOT EXISTS cart_db;
+  CREATE DATABASE IF NOT EXISTS inventory_db;
 "
 ```
 
-### Step 3: Build the Project
+## Startup Commands (Order Matters!)
+
+All config is env-var driven; each service's `application.yml` references `${SERVER_PORT}`, `${SPRING_DATASOURCE_URL}`, `${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}`, `${JWT_SECRET}`, `${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT}`, etc. The values are supplied by `docker-compose.yml` (see below) or IntelliJ run configs. `docker compose up` starts MySQL, Zookeeper, Kafka, Eureka, and the five main services on one network.
+
+### Step 1: Start MySQL + Kafka (Docker)
+
+```bash
+# Run the Docker stack (or just mysql + zookeeper + kafka)
+docker compose up -d mysql zookeeper kafka
+
+# Verify
+docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Status}}"
+mysql -h 127.0.0.1 -u root -proot123 -e "SHOW DATABASES;"
+```
+
+### Step 2: Build the Project
 
 ```bash
 cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
 
-# Clean install all modules (this also compiles common-library required by other services)
+# Installs common-library first, then builds every module. Other modules won't compile without it.
 mvn clean install -DskipTests
 ```
 
-### Step 4: Start Eureka Server (Service Registry)
+### Step 3: Start Services (each in its own terminal)
+
+Eureka first, then the rest:
 
 ```bash
-# Open Terminal 1
-cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
-
-# Using Maven (with logging to file):
-mvn spring-boot:run -pl eureka-server > eureka-server.log 2>&1
-
-# OR using the packaged JAR:
-java -jar eureka-server/target/eureka-server-0.0.1-SNAPSHOT.jar
-
-# Verify: http://localhost:8761/ (Eureka Dashboard)
+mvn spring-boot:run -pl eureka-server        # → http://localhost:8761
+mvn spring-boot:run -pl auth-service         # → 8090
+mvn spring-boot:run -pl product-service      # → 8089
+mvn spring-boot:run -pl payment-service      # → 8086
+mvn spring-boot:run -pl order-service        # → 8088
+mvn spring-boot:run -pl inventory-service    # → inventory (needs inventory_db)
+# mvn spring-boot:run -pl cart-service       # → cart (needs cart_db)
+mvn spring-boot:run -pl api-gateway          # → 8087 (last — needs Eureka registry populated)
 ```
 
-### Step 5: Start Product Service
+> When run directly with `mvn spring-boot:run`, Zookeeper and Kafka must already be running (from Docker). Without env vars set, the service will fail to start. Prefer the Docker/IntelliJ path.
+
+### Verify All Services
 
 ```bash
-# Open Terminal 2
-cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
-
-mvn spring-boot:run -pl product-service > product-service.log 2>&1
-
-# OR using JAR:
-java -jar product-service/target/product-service-0.0.1-SNAPSHOT.jar
-```
-
-### Step 6: Start Payment Service
-
-```bash
-# Open Terminal 3
-cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
-
-mvn spring-boot:run -pl payment-service > payment-service.log 2>&1
-
-# OR using JAR:
-java -jar payment-service/target/payment-service-0.0.1-SNAPSHOT.jar
-```
-
-### Step 7: Start Order Service
-
-```bash
-# Open Terminal 4
-cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
-
-mvn spring-boot:run -pl order-service > order-service.log 2>&1
-
-# OR using JAR:
-java -jar order-service/target/order-service-0.0.1-SNAPSHOT.jar
-```
-
-### Step 8: Start API Gateway
-
-```bash
-# Open Terminal 5
-cd "D:\MicroServices Project\ecommerce-microservices-project\ecommerce-microservices"
-
-mvn spring-boot:run -pl api-gateway > api-gateway.log 2>&1
-
-# OR using JAR:
-java -jar api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
-```
-
-### Verify All Services Are Running
-
-```bash
-# Check Java processes
-jps -l
-# Expected:
-# - com.example.eureka_server.EurekaServerApplication
-# - com.example.product_service.ProductServiceApplication
-# - com.example.order_service.OrderServiceApplication
-# - com.example.payment_service.PaymentServiceApplication
-# - com.example.api_gateway.ApiGatewayApplication
-
-# Check ports
-netstat -ano | findstr "8761 8089 8088 8086 8087"
-# 8761 - Eureka
-# 8089 - Product Service
-# 8088 - Order Service
-# 8086 - Payment Service
-# 8087 - API Gateway
-
-# Health check endpoints:
-curl http://localhost:8761/       # Eureka Dashboard (browser)
+jps -l                                   # Java processes
+localhost:8761                            # Eureka dashboard (registered instances)
+curl http://localhost:8087/actuator/health
 curl http://localhost:8088/actuator/health
 curl http://localhost:8086/actuator/health
 curl http://localhost:8089/actuator/health
-curl http://localhost:8087/actuator/health
 ```
 
----
+### Access via Ingress (`ecommerce.local`)
+
+In Kubernetes, an nginx ingress routes the host **`http://ecommerce.local`** to the API Gateway (`:8087`). Point it at your cluster (`hosts`/`/etc/hosts` → the ingress controller's external IP) and hit the same paths above through it:
+
+```bash
+curl http://ecommerce.local/api/products
+curl http://ecommerce.local/api/orders
+```
+
+The ingress definition lives in `helm/ecommerce-chart/templates/gateway-ingress.yaml` (Helm) and `kubernetes/ingress/gateway-ingress.yaml` (Kustomize).
 
 ## API Endpoints
 
-### 1️⃣ Product Service (`http://localhost:8089`)
+All business endpoints are reached through the **API Gateway**. Locally use `http://localhost:8087`; through the ingress use `http://ecommerce.local` — both route to the same gateway routes below. Every request except `/api/auth/**`, `/actuator/**`, and `/eureka/**` requires a valid bearer JWT (see [Authentication](#authentication--authorization)).
 
-| Method | Endpoint | Description | Request Body | Response |
-|--------|----------|-------------|--------------|----------|
-| `GET` | `/api/products` | Get all products | — | `List<ProductResponse>` |
-| `GET` | `/api/products/{id}` | Get product by ID | — | `ProductResponse` |
-| `POST` | `/api/products` | Create a new product | `CreateProductRequest` | `ProductResponse` (201) |
-| `PUT` | `/api/products/{id}` | Update a product | `Product` | `Product` |
-| `DELETE` | `/api/products/{id}` | Delete a product | — | 204 No Content |
+### 1️⃣ Auth Service (`http://localhost:8090`, routed at `/api/auth/**`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/api/auth/register` | Register a user | Public |
+| `POST` | `/api/auth/login` | Login — returns `accessToken`, `refreshToken`, and user info | Public |
+| `POST` | `/api/auth/refresh` | Rotate refresh token | Public |
+| `POST` | `/api/auth/logout` | Invalidate current session | Authenticated |
+| `GET` | `/api/auth/sessions` | List my sessions | Authenticated |
+| `DELETE` | `/api/auth/sessions/{id}` | Revoke one session | Authenticated |
+| `DELETE` | `/api/auth/sessions` | Revoke all my sessions | Authenticated |
+| `POST` | `/api/auth/forgot-password` | Request a password reset | Public |
+| `POST` | `/api/auth/reset-password` | Perform password reset with token | Public |
+| `GET` | `/api/roles` / `/api/roles/{roleId}` | List roles / one role | Authenticated |
+| `GET` | `/api/roles/{roleId}/permissions` | Permissions of a role | Authenticated |
+| `POST` | `/api/roles/{roleId}/permissions/{permissionId}` | Assign permission to role | Authenticated |
+| `DELETE` | `/api/roles/{roleId}/permissions/{permissionId}` | Remove permission from role | Authenticated |
+| `GET` | `/api/admin/audit/user/{userId}` | Security audit events by user | Admin |
+| `GET` | `/api/admin/audit/event/{eventType}` | Security audit events by type | Admin |
+
+> The marketing/onboarding sample controllers (`AdminTestController`, `CustomerTestController`, etc.) are development scratch pads, not the real surface.
+
+### 2️⃣ Product Service (`:8089`, routed at `/api/products/**` and `/api/categories/**`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `GET` | `/api/products?search=&category=&page=&size=` | Paginated products, filterable by `search`/`category` | Admin, Customer |
+| `GET` | `/api/products/{id}` | Get one product | Admin, Customer |
+| `POST` | `/api/products` | Create product | Admin |
+| `PUT` | `/api/products/{id}` | Update product | Admin |
+| `DELETE` | `/api/products/{id}` | Deactivate product (soft delete) | Admin |
+| `POST` | `/api/categories` | Create category | Admin |
+| `GET` | `/api/categories` / `/api/categories/{id}` | List / get categories | Admin, Customer |
+| `PUT` | `/api/categories/{id}` | Update category | Admin |
+| `DELETE` | `/api/categories/{id}` | Deactivate category | Admin |
 
 **CreateProductRequest:**
 ```json
-{
-  "name": "iPhone 15",
-  "price": 79999.00,
-  "category": "Electronics"
-}
+{ "name": "iPhone 15", "description": "...", "price": 79999.00, "categoryId": 1, "sku": "APL15" }
 ```
 
-**Product Entity fields:** `id`, `name`, `description`, `price`, `category`, `sku`, `active`
+**Product entity fields:** `id`, `name`, `description`, `price`, `category`, `sku`, `active`
 
-**ProductResponse (from product-service DTO):**
-```json
-{
-  "id": 1,
-  "name": "iPhone 15",
-  "price": 79999.00,
-  "category": "Electronics"
-}
-```
+### 3️⃣ Order Service (`:8088`, routed at `/api/orders/**`)
 
-**Example:**
-```bash
-# Create a product
-curl -X POST http://localhost:8089/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test Product", "price": 100.00, "category": "Electronics"}'
-
-# Get all products
-curl http://localhost:8089/api/products
-```
-
----
-
-### 2️⃣ Order Service (`http://localhost:8088`)
-
-| Method | Endpoint | Description | Request Body | Response |
-|--------|----------|-------------|--------------|----------|
-| `GET` | `/api/orders` | Get all orders | — | `List<OrderResponse>` |
-| `GET` | `/api/orders/{id}` | Get order by ID | — | `OrderResponse` |
-| `POST` | `/api/orders` | Place a new order | `CreateOrderRequest` | `OrderResponse` (201) |
-| `PUT` | `/api/orders/{id}` | Update an order | `Order` | `Order` |
-| `DELETE` | `/api/orders/{id}` | Delete an order | — | 204 No Content |
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/api/orders` | Place an order (body: `items[]`) | Admin, Customer |
+| `GET` | `/api/orders` | All orders (paginated) | Admin |
+| `GET` | `/api/orders/{id}` | Order by id — admin sees any, others only their own | Admin, Customer |
+| `GET` | `/api/orders/my` | My orders (paginated) | Admin, Customer |
+| `PUT` | `/api/orders/{id}` | Update order items (only while `PENDING_PAYMENT`) | Admin |
+| `DELETE` | `/api/orders/{id}` | Cancel order → releases reserved inventory | Admin, Customer |
+| `GET` | `/api/orders/status/{status}` | Orders by status | Admin, Customer |
+| `POST` | `/api/orders/from-cart` | Create order from the caller's cart, then clear cart | Customer |
 
 **CreateOrderRequest:**
 ```json
 {
-  "productId": 1,
-  "customerId": 100,
-  "quantity": 2,
+  "items": [
+    { "productId": 1, "quantity": 2 }
+  ]
+}
+```
+
+**OrderStatus enum:** `PENDING_PAYMENT`, `PAID`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`. Legal transitions are enforced by `OrderStatusLifecycle` (e.g. `PENDING_PAYMENT → PAID | CANCELLED`); invalid transitions throw.
+
+**Important:** Order creation **reserves inventory** synchronously via the inventory service. If any reservation fails, previously reserved items are released and the order is rejected. Cancelling an order releases the reserved stock.
+
+### 4️⃣ Payment Service (`:8086`, routed at `/api/payments/**`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/api/payments` | Create a payment for an order (`orderId`, `currency` ISO 3-letter, `paymentMethod`) | Admin, Customer |
+| `GET` | `/api/payments` | All payments (paginated) | Admin |
+| `GET` | `/api/payments/{id}` | Payment by id — admin sees any, others only their own | Admin, Customer |
+| `GET` | `/api/payments/my` | My payments (paginated) | Admin, Customer |
+| `GET` | `/api/payments/status/{status}` | Payments by status | Admin |
+| `POST` | `/api/payments/webhook` | Provider webhook (idempotent, no auth annotation) | — |
+
+**CreatePaymentRequest:**
+```json
+{
+  "orderId": 1,
+  "currency": "USD",
   "paymentMethod": "CARD"
 }
 ```
 
-**PaymentMethod enum values:** `CARD`, `UPI`, `NET_BANKING`, `WALLET`
+**PaymentStatus enum:** `PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`, `CANCELLED`, `REFUNDED`.
 
-**OrderResponse:**
+Payment creation is transactional-safe: it writes a `PENDING` payment in one transaction, calls the configured provider (`MockPaymentProvider` by default) **outside** the transaction, then completes the payment in a second transaction. Webhooks update payment status via `PaymentStatusLifecycle` with optimistic-lock guards.
+
+### 5️⃣ Inventory Service (`/api/inventory/**`)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/api/inventory` | Create inventory record for a product | Admin |
+| `GET` | `/api/inventory/{productId}` | Get stock | Admin |
+| `POST` | `/api/inventory/{productId}/increase` | Increase stock | Admin |
+| `POST` | `/api/inventory/{productId}/decrease` | Decrease stock | Admin |
+| `POST` | `/api/inventory/{productId}/reserve` | Reserve stock for an order | Admin, Customer |
+| `POST` | `/api/inventory/{productId}/release` | Release reserved stock | Admin, Customer |
+| `POST` | `/api/inventory/{productId}/confirm` | Confirm a reservation (moves reserved → consumed) | Admin, Customer |
+
+**InventoryResponse:**
 ```json
-{
-  "id": 1,
-  "productId": 1,
-  "customerId": 100,
-  "quantity": 2,
-  "totalAmount": 200.00,
-  "status": "PENDING_PAYMENT",
-  "createdAt": "2026-07-18T10:24:14.886823Z"
-}
+{ "id": 1, "productId": 1, "quantity": 100, "reservedQuantity": 2, "availableQuantity": 98 }
 ```
 
-**OrderStatus enum values:** `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `PAYMENT_FAILED`
+Stock rules: `reserve`/`decrease` fail if the requested amount exceeds available stock; `release` cannot exceed `reservedQuantity`; `confirm` moves stock out of reserved into consumed. The entity uses a `@Version` optimistic-lock column to detect concurrent modifications.
 
-**Example:**
-```bash
-# Place an order (triggers outbox → Kafka → Payment → outbox → Kafka → CONFIRMED)
-curl -X POST http://localhost:8088/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{"productId": 1, "customerId": 100, "quantity": 2, "paymentMethod": "CARD"}'
+### 6️⃣ Cart Service (`/api/cart/**`)
 
-# Get all orders
-curl http://localhost:8088/api/orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/cart` | Get my cart |
+| `POST` | `/api/cart/items` | Add an item (`productId`, `quantity`) |
+| `PUT` | `/api/cart/items/{productId}` | Update item quantity |
+| `DELETE` | `/api/cart/items/{productId}` | Remove an item |
+| `DELETE` | `/api/cart` | Clear cart |
+| `GET` | `/api/cart/all` | All carts (paginated) — admin only |
 
-# Get order by ID
-curl http://localhost:8088/api/orders/1
+## Authentication & Authorization
+
+- **Issuer:** `auth-service` issues access + refresh JWTs (JJWT). Secrets and expiry are env-configured (`${JWT_SECRET}`, `${JWT_EXPIRATION}`). Session management, brute-force detection, and security audit events live here. Roles (`ROLE_ADMIN`, `ROLE_CUSTOMER`, `ROLE_SELLER`) are seeded on startup by `DataInitializer`.
+- **Gateway enforcement:** `JwtAuthenticationFilter` (a Spring Cloud Gateway `GlobalFilter`) validates the bearer token on every request except public paths, then **strips any client-supplied identity headers** and **recreates** `X-Authenticated-User`, `X-Authenticated-User-Id`, and `X-User-Roles` from the validated JWT before forwarding. Never trust those headers if they arrive from outside the gateway.
+- **Downstream trust:** each service imports `GatewaySecurityConfiguration` from `common-library` (`security.gateway.enabled=true`). Its `GatewayAuthenticationFilter` rebuilds a Spring `Authentication` from the gateway headers and populates the `SecurityContextHolder`. Callers read identity via `CurrentUser#getUserId` / `getUsername` (casts the principal to `GatewayUserPrincipal`).
+- **Authorization:** `@PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")` on controller methods — the `roleSecurity` bean normalizes `ROLE_` prefixes and matches against the JWT-derived roles.
+- **Feign calls between services** reuse the same headers via `FeignSecurityInterceptor` (used by `FeignSecurityConfiguration`). It forwards the identity headers plus `Authorization` and `X-Request-ID`. Downstream Feign errors are translated by `FeignErrorDecoder` into typed exceptions (`RemoteResourceNotFoundException` for 404, `RemoteServiceUnavailableException` for 5xx, etc.), which business services catch.
+
+## Messaging & The Outbox Pattern
+
+The **Transactional Outbox** with Kafka is implemented **but currently disabled**. The class skeletons exist in both order-service and payment-service (`OutboxPublisher`, `OrderKafkaProducer`, `OrderCreatedConsumer`, `PaymentCompletedProducer`, `PaymentOutboxScheduler`, `OutboxService`/`OutboxServiceImpl`, `PaymentCompletedConsumer`) and the `outbox_events` tables are in the schema, yet the Kafka producers/consumers/schedulers are commented out, and `spring-kafka` is the only live Kafka dependency. The intended flow (see the class comments and `KafkaTopics`):
+
+```
+POST /api/orders → Order Service saves Order + outbox row (ORDER_CREATED)
+                  → OutboxPublisher (every 5s) → Kafka "order-created"
+                  → OrderCreatedConsumer (payment) → creates Payment + outbox row (PAYMENT_COMPLETED)
+                  → PaymentOutboxScheduler (every 5s) → Kafka "payment-completed"
+                  → PaymentCompletedConsumer (order) → transitions order past PENDING_PAYMENT
 ```
 
----
+Because the pipeline is off, **no code path currently moves an order out of `PENDING_PAYMENT`** — payment must be created via the synchronous API + webhook, and the order status must be advanced manually (or by re-enabling the outbox). Kafka topics (`KafkaTopics`): `order-created`, `payment-completed`, `inventory-updated`, `notification-sent`.
 
-### 3️⃣ Payment Service (`http://localhost:8086`)
+## Database Schema (JPA-managed)
 
-| Method | Endpoint | Description | Request Body | Response |
-|--------|----------|-------------|--------------|----------|
-| `POST` | `/payments` | Process a payment | `PaymentRequest` | `PaymentResponse` (201) |
-| `GET` | `/payments/{id}` | Get payment by ID | — | `PaymentResponse` |
-| `GET` | `/payments` | Get all payments | — | `List<PaymentResponse>` |
+Tables are created by Hibernate `ddl-auto`. Notable tables:
 
-**PaymentRequest:**
-```json
-{
-  "orderId": 1,
-  "amount": 200.00,
-  "paymentMethod": "CARD"
-}
-```
+- **order_db:** `orders`, `order_items`, `outbox_events`
+- **payment_db:** `payments`, `outbox_events`
+- **product_db:** `products`, `categories`
+- **auth_db:** `users`, `roles`, `permissions`, `user_sessions`, `password_reset_tokens`, `login_attempts`, `blocked_ips`, `security_audit_events`
+- **inventory_db:** `inventories` (unique per `product_id`, `@Version` optimism lock)
+- **cart_db:** `carts`, `cart_items`
 
-**PaymentResponse:**
-```json
-{
-  "paymentId": 1,
-  "orderId": 1,
-  "amount": 200.00,
-  "paymentMethod": "CARD",
-  "status": "SUCCESS",
-  "transactionId": "TXN-865784CA"
-}
-```
+## Resilience & Reliability
 
-**PaymentStatus enum values:** `PENDING`, `SUCCESS`, `FAILED`
-
-**Example:**
-```bash
-# Process a payment directly
-curl -X POST http://localhost:8086/payments \
-  -H "Content-Type: application/json" \
-  -d '{"orderId": 1, "amount": 200.00, "paymentMethod": "CARD"}'
-
-# Get all payments
-curl http://localhost:8086/payments
-```
-
----
-
-### 4️⃣ API Gateway (`http://localhost:8087`)
-
-The gateway routes requests to services via Eureka load balancing:
-
-| Gateway Path | Target Service |
-|--------------|---------------|
-| `/orders/**` | `lb://ORDER-SERVICE` (→ port 8088) |
-| `/products/**` | `lb://PRODUCT-SERVICE` (→ port 8089) |
-
-> **Note:** There's no `/payments/**` route in the gateway. Access payment endpoints directly at `http://localhost:8086/payments`.
-
-**Example via Gateway:**
-```bash
-# Create product via gateway
-curl -X POST http://localhost:8087/products \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Product", "price": 100.00, "category": "Electronics"}'
-
-# Create order via gateway
-curl -X POST http://localhost:8087/orders \
-  -H "Content-Type: application/json" \
-  -d '{"productId": 1, "customerId": 100, "quantity": 2, "paymentMethod": "CARD"}'
-```
-
----
-
-## Kafka Topics
-
-| Topic Name | Producer | Consumer | Event Class |
-|------------|----------|----------|-------------|
-| `order-created` | Order Service (`OutboxPublisher`) | Payment Service (`OrderCreatedConsumer`) | `OrderCreatedEvent` |
-| `payment-completed` | Payment Service (`PaymentOutboxScheduler`) | Order Service (`PaymentCompletedConsumer`) | `PaymentCompletedEvent` |
-
-### Event Payloads
-
-**OrderCreatedEvent:**
-```
-{
-  "orderId": 1,
-  "customerId": 100,
-  "productId": 1,
-  "quantity": 2,
-  "amount": 200.00,
-  "paymentMethod": "CARD"
-}
-```
-
-**PaymentCompletedEvent:**
-```
-{
-  "paymentId": 1,
-  "orderId": 1,
-  "amount": 200.00,
-  "paymentMethod": "CARD",
-  "paymentStatus": "SUCCESS",
-  "transactionId": "TXN-865784CA"
-}
-```
-
----
-
-## Database Schema
-
-### `order_db` — Order Service
-
-**Table: `orders`**
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | BIGINT (PK) | Auto-increment |
-| `product_id` | BIGINT | |
-| `customer_id` | BIGINT | |
-| `quantity` | INT | |
-| `total_amount` | DECIMAL(10,2) | |
-| `status` | VARCHAR(255) | Enum: PENDING_PAYMENT, CONFIRMED, CANCELLED, PAYMENT_FAILED |
-| `created_at` | DATETIME | Auto-set |
-| `updated_at` | DATETIME | Auto-updated |
-
-**Table: `outbox_events`**
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | BIGINT (PK) | Auto-increment |
-| `event_type` | VARCHAR(255) | `"ORDER_CREATED"` |
-| `aggregate_id` | BIGINT | Order ID |
-| `payload` | TEXT | JSON of `OrderCreatedEvent` |
-| `published` | BOOLEAN | `false` = pending publish |
-| `created_at` | DATETIME | |
-
-### `payment_db` — Payment Service
-
-**Table: `payments`**
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | BIGINT (PK) | Auto-increment |
-| `order_id` | BIGINT | Unique |
-| `amount` | DECIMAL(10,2) | |
-| `payment_method` | VARCHAR(255) | Enum: CARD, UPI, NET_BANKING, WALLET |
-| `status` | VARCHAR(255) | Enum: PENDING, SUCCESS, FAILED |
-| `transaction_id` | VARCHAR(255) | e.g., `TXN-865784CA` |
-| `created_at` | DATETIME | |
-
-**Table: `outbox_events`**
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | BIGINT (PK) | Auto-increment |
-| `event_type` | VARCHAR(255) | `"PAYMENT_COMPLETED"` |
-| `aggregate_id` | BIGINT | Order ID |
-| `payload` | TEXT | JSON of `PaymentCompletedEvent` |
-| `published` | BOOLEAN | `false` = pending publish |
-| `created_at` | DATETIME | |
-
-### `product_db` — Product Service
-
-**Table: `products`**
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | BIGINT (PK) | Auto-increment |
-| `name` | VARCHAR(255) | |
-| `description` | VARCHAR(255) | |
-| `price` | DECIMAL(10,2) | |
-| `category` | VARCHAR(255) | |
-| `sku` | VARCHAR(255) | |
-| `active` | BOOLEAN | |
-
----
+- **Gateway protections:** rate limiting (`RequestRateLimiter`, Redis-backed, keyed by IP) and `CircuitBreaker` with `fallbackUri` per route, plus a 2 MB request-size cap and a global `GlobalGatewayExceptionHandler`.
+- **Feign resilience:** `@CircuitBreaker` on clients (e.g. cart's product lookup via `ProductServiceClient`). Order↔inventory has an explicit **compensation** design (`OrderInventoryHelperService`): reserve per item, and on failure release everything reserved so far; order *update* only reserves the delta and releases what's no longer needed; order *cancel* releases all. The Resilience4j instances configured in order-service's `application.yml` (`paymentService`, `paymentRetry`) are present but not yet attached to a live Feign client.
+- **Transaction discipline:** external/provider calls are deliberately kept **outside** `@Transactional` methods (a named refactor: "separate provider call from transaction") — see `PaymentServiceImpl` (two transactions around the provider call) and the cart/inventory impls.
+- **Concurrency:** optimistic locking (`@Version`) in inventory and payment; `ObjectOptimisticLockingFailureException` mapped to domain exceptions.
 
 ## Monitoring & Management
 
-### Actuator Endpoints (available on each service)
+Actuator is enabled per service (health, metrics, prometheus). Distributed tracing via Micrometer + Zipkin (`management.tracing`, sampling probability from env). Each service logs with `traceId`/`spanId` in its log pattern and tags Prometheus metrics with `application=<service>`.
 
-| Service | Health Endpoint | Port |
-|---------|----------------|------|
-| Order Service | `http://localhost:8088/actuator/health` | 8088 |
-| Payment Service | `http://localhost:8086/actuator/health` | 8086 |
-| Product Service | `http://localhost:8089/actuator/health` | 8089 |
-| API Gateway | `http://localhost:8087/actuator/health` | 8087 |
-| Eureka Server (Dashboard) | `http://localhost:8761/` | 8761 |
-
-### Eureka Dashboard
-Open `http://localhost:8761/` in a browser to see all registered services.
-
----
-
-## Transactional Outbox Pattern — How It Works
-
-### Order Creation (Async Path)
-
-1. **`POST /api/orders`** → `OrderServiceImpl.createOrder()`
-   - Fetches product details via Feign `ProductClient`
-   - Calculates total amount
-   - Saves `Order` with status `PENDING_PAYMENT`
-   - Writes `ORDER_CREATED` event to `order_db.outbox_events` (published = false)
-   - Returns the order response
-
-2. **`OutboxPublisher`** (Runs every 5 seconds)
-   - Queries `outbox_events WHERE published = false`
-   - Deserializes payload → `OrderCreatedEvent`
-   - Publishes to Kafka topic `order-created`
-   - Marks outbox row as `published = true`
-
-3. **`OrderCreatedConsumer`** (Payment Service, group: `payment-group`)
-   - Receives `OrderCreatedEvent` from Kafka
-   - Checks if payment already exists for this order (idempotency guard)
-   - Creates `Payment` record with `status = SUCCESS`
-   - Writes `PAYMENT_COMPLETED` event to `payment_db.outbox_events` (published = false)
-
-4. **`PaymentOutboxScheduler`** (Runs every 5 seconds)
-   - Queries unpaid outbox events
-   - Publishes to Kafka topic `payment-completed`
-   - Marks outbox row as `published = true`
-
-5. **`PaymentCompletedConsumer`** (Order Service, group: `order-group`)
-   - Receives `PaymentCompletedEvent`
-   - Updates order status to `CONFIRMED` (or `PAYMENT_FAILED`)
-
-### Resilience Features
-
-- **Circuit Breaker (`paymentService`)**: 10-window sliding, 50% failure threshold, 20s open-state
-- **Retry (`paymentRetry`)**: 3 attempts, 2s initial wait, exponential backoff
-- **Retryable Kafka Consumer**: 4 attempts, 3s backoff, dead-letter topic (`-dlt`)
-- **Fallback methods**: Graceful degradation if payment service is unavailable
-
----
+| Service | Health Endpoint |
+|---------|-----------------|
+| Eureka | `http://localhost:8761/` (dashboard) |
+| API Gateway | `http://localhost:8087/actuator/health` |
+| Order | `http://localhost:8088/actuator/health` |
+| Product | `http://localhost:8089/actuator/health` |
+| Payment | `http://localhost:8086/actuator/health` |
 
 ## Complete End-to-End Test
 
+> Requires the full stack running (gateway + services + MySQL). Kafka is **not** required because the outbox pipeline is disabled.
+
 ```bash
-# 1. Create a product (if none exists)
-curl -X POST http://localhost:8089/api/products \
+# 0. Login to get a JWT (gateway public path)
+curl -s -X POST http://localhost:8087/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"name": "Test Product", "price": 100.00, "category": "Electronics"}'
+  -d '{"username":"...","password":"..."}'          # → accessToken
+TOKEN="<accessToken>"
 
-# 2. Place an order
-curl -s -X POST http://localhost:8088/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{"productId": 1, "customerId": 100, "quantity": 2, "paymentMethod": "CARD"}'
-# Returns: Order with status PENDING_PAYMENT
+# 1. Create a product (admin)
+curl -s -X POST http://localhost:8087/api/products \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Test Product","price":100.00,"categoryId":1,"sku":"TEST100"}'
 
-# 3. Wait ~10 seconds for outbox schedulers to process
+# 2. Create inventory for it (admin)
+curl -s -X POST http://localhost:8087/api/inventory \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"productId":1,"quantity":100}'
 
-# 4. Verify order is now CONFIRMED
-curl http://localhost:8088/api/orders/1
-# Check: "status": "CONFIRMED"
+# 3. Place an order → inventory is reserved (customer)
+curl -s -X POST http://localhost:8087/api/orders \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"items":[{"productId":1,"quantity":2}]}'
+# → Order with status PENDING_PAYMENT
 
-# 5. Verify payment was created
-curl http://localhost:8086/payments
-# Check: payment with transactionId exists
+# 4. Create a payment for it — provider is called, then status set
+curl -s -X POST http://localhost:8087/api/payments \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"orderId":1,"currency":"USD","paymentMethod":"CARD"}'
+# → Payment status SUCCESS (MockPaymentProvider)
 
-# 6. Check outbox events (all should be published)
-mysql -h 127.0.0.1 -u root -proot123 order_db \
-  -e "SELECT id, event_type, published, created_at FROM outbox_events;"
-mysql -h 127.0.0.1 -u root -proot123 payment_db \
-  -e "SELECT id, event_type, published, created_at FROM outbox_events;"
-# All rows should have published = true
+# 5. Confirm inventory reservation (what 'order confirmed' should do)
+curl -s -X POST http://localhost:8087/api/inventory/1/confirm \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"quantity":2}'
 ```
 
----
+## Deployment / CI
+
+- `docker-compose.yml` builds and runs the stack; the monitoring services (Zipkin, Prometheus, Grafana, Alertmanager) are present but commented out.
+- `Jenkinsfile` (Windows `bat`): compile → test → SonarQube quality gate → package → `docker compose build` → tag/push `ankit9767/<service>:<BUILD_NUMBER>` → Helm deploy (`helm/ecommerce-chart`, namespace `ecommerce`) → kubectl verify.
+- Raw Kubernetes manifests live under `kubernetes/` (services, HPA, monitoring); an nginx `Ingress` (same one Helms deploys) exposes the gateway at `http://ecommerce.local`.
+- Build single images with per-service `Dockerfile`s (see `Docker Build All Services Command.txt`).
+- Build single images with per-service `Dockerfile`s (see `Docker Build All Services Command.txt`).
 
 ## Troubleshooting
 
-### Issue: API returns 500 on order creation
-**Cause:** `PaymentMethod` enum mismatch — only `CARD`, `UPI`, `NET_BANKING`, `WALLET` are valid.
-**Fix:** Use `"CARD"` instead of `"CREDIT_CARD"`.
-
-### Issue: Product Feign call fails with deserialization error
-**Cause:** The `common-library` `ProductResponse` record expects a `stock` field but the product service returns `category`.
-**Fix:** The `@JsonIgnoreProperties(ignoreUnknown = true)` annotation has been added.
-
-### Issue: API Gateway returns 404
-**Cause:** Gateway needs time to register with Eureka and discover services.
-**Fix:** Wait ~30 seconds after starting services, or restart the gateway.
-
-### Issue: Kafka messages not being consumed
-**Cause:** Consumer might be in a different group or topic doesn't exist yet.
-**Fix:** Kafka auto-creates topics on first produce. Check consumer group IDs:
-- order-service: `order-group`
-- payment-service: `payment-group`
-
-### Issue: Services not registering with Eureka
-**Fix:** Ensure Eureka Server is running first before starting other services.
+- **401 / "not authorized" when calling a business endpoint:** attach a valid bearer token from `/api/auth/login`, and hit the **gateway** (`:8087`), not the raw service port — the gateway injects the identity headers downstream services require. The raw service port also works for eureka/public paths only.
+- **API returns 500 on order creation:** ensure the product exists and is `active`, inventory was created for it, and you didn't duplicate a productId within one order (throws `DuplicateOrderProductException`).
+- **Gateway 404s right after startup:** the gateway needs time to discover routes via Eureka. Wait ~30s or restart the gateway.
+- **`RemoteServiceUnavailableException` / circuit breaker trips on inter-service calls:** the downstream service is down (or slow). Check the Feign target service's health and Eureka registration.
+- **`PaymentMethod` enum mismatch:** only `CARD`, `UPI`, `NET_BANKING`, `WALLET` are valid.
