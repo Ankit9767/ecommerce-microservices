@@ -2,13 +2,10 @@ package com.example.order_service.service.impl;
 
 import com.ecommerce.common.dto.*;
 import com.ecommerce.common.enums.OrderStatus;
-import com.ecommerce.common.exception.InventoryReleaseException;
-import com.ecommerce.common.exception.InventoryReservationException;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.CurrentUser;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.order_service.client.CartClient;
-import com.example.order_service.client.InventoryClient;
 import com.example.order_service.client.ProductClient;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
@@ -19,6 +16,7 @@ import com.example.order_service.exception.*;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.metrics.OrderMetrics;
 import com.example.order_service.repository.OrderRepository;
+import com.example.order_service.service.OrderInventoryHelperService;
 import com.example.order_service.service.OrderService;
 import com.example.order_service.service.OrderStatusLifecycle;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,7 +50,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderPersistenceService orderPersistenceService;
 
-    private final InventoryClient inventoryClient;
+    private final OrderInventoryHelperService orderInventoryHelperService;
+
 
     public OrderServiceImpl(
             OrderRepository repository,
@@ -61,7 +60,7 @@ public class OrderServiceImpl implements OrderService {
             RoleSecurity roleSecurity,
             CurrentUser currentUser,
             OrderStatusLifecycle statusLifecycle,
-            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService, InventoryClient inventoryClient
+            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService, OrderInventoryHelperService orderInventoryHelperService
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -72,7 +71,7 @@ public class OrderServiceImpl implements OrderService {
         this.orderMetrics = orderMetrics;
         this.cartClient = cartClient;
         this.orderPersistenceService = orderPersistenceService;
-        this.inventoryClient = inventoryClient;
+        this.orderInventoryHelperService = orderInventoryHelperService;
     }
 
     @Override
@@ -143,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        reserveInventory(order);
+        orderInventoryHelperService.reserveInventory(order);
 
         try {
 
@@ -151,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
 
-            releaseInventory(order.getItems());
+            orderInventoryHelperService.releaseInventory(order.getItems());
 
             throw ex;
         }
@@ -305,8 +304,8 @@ public class OrderServiceImpl implements OrderService {
          * Reserve only the additional inventory required
          * by the updated order.
          */
-        List<InventoryAdjustment> reservations =
-                reserveInventoryForUpdate(
+        List<OrderInventoryHelperService.InventoryAdjustment> reservations =
+                orderInventoryHelperService.reserveInventoryForUpdate(
                         existingItems,
                         newItems
                 );
@@ -332,7 +331,7 @@ public class OrderServiceImpl implements OrderService {
              * Now release inventory that the new order
              * no longer requires.
              */
-            releaseReducedInventory(existingItems, newItems);
+            orderInventoryHelperService.releaseReducedInventory(existingItems, newItems);
 
             return response;
 
@@ -346,7 +345,7 @@ public class OrderServiceImpl implements OrderService {
              *
              * The original reservation remains untouched.
              */
-            releaseInventoryAdjustments(reservations);
+            orderInventoryHelperService.releaseInventoryAdjustments(reservations);
 
             throw ex;
         }
@@ -390,7 +389,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = repository.save(order);
 
-        releaseInventory(order.getItems());
+        orderInventoryHelperService.releaseInventory(order.getItems());
 
         orderMetrics.orderCancelled();
 
@@ -548,7 +547,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        reserveInventory(order);
+        orderInventoryHelperService.reserveInventory(order);
 
         try {
 
@@ -561,218 +560,9 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
 
-            releaseInventory(order.getItems());
+            orderInventoryHelperService.releaseInventory(order.getItems());
 
             throw ex;
         }
-    }
-
-    private void reserveInventory(Order order) {
-
-        List<OrderItem> reservedItems = new java.util.ArrayList<>();
-
-        try {
-
-            for (OrderItem item : order.getItems()) {
-
-                inventoryClient.reserveStock(
-                        item.getProductId(),
-                        new com.ecommerce.common.dto.InventoryQuantityRequest(
-                                item.getQuantity()
-                        )
-                );
-
-                reservedItems.add(item);
-            }
-
-        } catch (RuntimeException ex) {
-
-            orderMetrics.inventoryReservationFailed();
-
-            releaseInventory(reservedItems);
-
-            throw new InventoryReservationException(
-                    "Unable to reserve inventory for order"
-            );
-        }
-    }
-
-    private void releaseInventory(List<OrderItem> items) {
-
-        for (OrderItem item : items) {
-
-            try {
-
-                inventoryClient.releaseStock(
-                        item.getProductId(),
-                        new com.ecommerce.common.dto.InventoryQuantityRequest(
-                                item.getQuantity()
-                        )
-                );
-
-            } catch (RuntimeException ex) {
-
-                orderMetrics.inventoryCompensationFailed();
-            }
-        }
-    }
-
-    private List<InventoryAdjustment> reserveInventoryForUpdate(List<OrderItem> existingItems,
-                                                                List<OrderItem> newItems) {
-
-        Map<Long, Integer> existingQuantities =
-                existingItems.stream()
-                        .collect(
-                                java.util.stream.Collectors.toMap(
-                                        OrderItem::getProductId,
-                                        OrderItem::getQuantity
-                                )
-                        );
-
-        Map<Long, Integer> newQuantities =
-                newItems.stream()
-                        .collect(
-                                java.util.stream.Collectors.toMap(
-                                        OrderItem::getProductId,
-                                        OrderItem::getQuantity
-                                )
-                        );
-
-        List<InventoryAdjustment> reservations = new ArrayList<>();
-
-        try {
-
-            for (Map.Entry<Long, Integer> entry : newQuantities.entrySet()) {
-
-                Long productId = entry.getKey();
-
-                int newQuantity = entry.getValue();
-
-                int oldQuantity =
-                        existingQuantities.getOrDefault(
-                                productId,
-                                0
-                        );
-
-                int additionalQuantity = newQuantity - oldQuantity;
-
-                if (additionalQuantity <= 0) {
-                    continue;
-                }
-
-                inventoryClient.reserveStock(
-                        productId,
-                        new InventoryQuantityRequest(
-                                additionalQuantity
-                        )
-                );
-
-                reservations.add(
-                        new InventoryAdjustment(
-                                productId,
-                                additionalQuantity
-                        )
-                );
-            }
-
-            return reservations;
-
-        } catch (RuntimeException ex) {
-
-            releaseInventoryAdjustments(reservations);
-
-            orderMetrics.inventoryReservationFailed();
-
-            throw new InventoryReservationException(
-                    "Unable to reserve additional inventory for order"
-            );
-        }
-    }
-
-    private void releaseReducedInventory(List<OrderItem> existingItems,
-                                         List<OrderItem> newItems) {
-
-        Map<Long, Integer> existingQuantities =
-                existingItems.stream()
-                        .collect(
-                                java.util.stream.Collectors.toMap(
-                                        OrderItem::getProductId,
-                                        OrderItem::getQuantity
-                                )
-                        );
-
-        Map<Long, Integer> newQuantities =
-                newItems.stream()
-                        .collect(
-                                java.util.stream.Collectors.toMap(
-                                        OrderItem::getProductId,
-                                        OrderItem::getQuantity
-                                )
-                        );
-
-        for (Map.Entry<Long, Integer> entry : existingQuantities.entrySet()) {
-
-            Long productId = entry.getKey();
-
-            int oldQuantity = entry.getValue();
-
-            int newQuantity =
-                    newQuantities.getOrDefault(
-                            productId,
-                            0
-                    );
-
-            int releasedQuantity = oldQuantity - newQuantity;
-
-            if (releasedQuantity <= 0) {
-                continue;
-            }
-
-            try {
-
-                inventoryClient.releaseStock(
-                        productId,
-                        new InventoryQuantityRequest(
-                                releasedQuantity
-                        )
-                );
-
-            } catch (RuntimeException ex) {
-
-                orderMetrics.inventoryCompensationFailed();
-
-                throw new InventoryReleaseException(
-                        productId,
-                        releasedQuantity
-                );
-            }
-        }
-    }
-
-    private void releaseInventoryAdjustments(
-            List<InventoryAdjustment> adjustments) {
-
-        for (InventoryAdjustment adjustment : adjustments) {
-
-            try {
-
-                inventoryClient.releaseStock(
-                        adjustment.productId(),
-                        new InventoryQuantityRequest(
-                                adjustment.quantity()
-                        )
-                );
-
-            } catch (RuntimeException ex) {
-
-                orderMetrics.inventoryCompensationFailed();
-            }
-        }
-    }
-
-    private record InventoryAdjustment(
-            Long productId,
-            Integer quantity
-    ) {
     }
 }
