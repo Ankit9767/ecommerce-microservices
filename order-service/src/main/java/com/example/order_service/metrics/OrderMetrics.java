@@ -21,6 +21,10 @@ public class OrderMetrics {
 
     private final Counter invalidStatusTransition;
 
+    private final Counter inventoryReservationFailed;
+
+    private final Counter inventoryCompensationFailed;
+
     public OrderMetrics(MeterRegistry meterRegistry) {
 
         ordersCreated = Counter.builder("order.created")
@@ -50,6 +54,14 @@ public class OrderMetrics {
         invalidStatusTransition = Counter.builder("order.invalid_status_transition")
                 .description("Number of invalid order status transition attempts")
                 .register(meterRegistry);
+
+        inventoryReservationFailed = Counter.builder("order.inventory_reservation_failed")
+                .description("Number of inventory reservation failures")
+                .register(meterRegistry);
+
+        inventoryCompensationFailed = Counter.builder("order.inventory_compensation_failed")
+                .description("Number of inventory compensation failures")
+                .register(meterRegistry);
     }
 
     public void orderCreated() {
@@ -78,5 +90,13 @@ public class OrderMetrics {
 
     public void invalidStatusTransition() {
         invalidStatusTransition.increment();
+    }
+
+    public void inventoryReservationFailed() {
+        inventoryReservationFailed.increment();
+    }
+
+    public void inventoryCompensationFailed() {
+        inventoryCompensationFailed.increment();
     }
 }

@@ -81,8 +81,36 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
     private String resolveMessage(HttpStatus status) {
 
         return switch (status) {
+
+            case BAD_REQUEST ->
+                    "Invalid request";
+
+            case UNAUTHORIZED ->
+                    "Authentication is required";
+
+            case FORBIDDEN ->
+                    "You do not have permission to access this resource";
+
             case NOT_FOUND ->
                     "Requested resource was not found";
+
+            case METHOD_NOT_ALLOWED ->
+                    "HTTP method is not allowed";
+
+            case REQUEST_TIMEOUT ->
+                    "Request timed out";
+
+            case CONFLICT ->
+                    "Request could not be completed because of a conflict";
+
+            case BAD_GATEWAY ->
+                    "Bad gateway";
+
+            case SERVICE_UNAVAILABLE ->
+                    "Service is currently unavailable";
+
+            case GATEWAY_TIMEOUT ->
+                    "Gateway timeout";
 
             case INTERNAL_SERVER_ERROR ->
                     "An unexpected gateway error occurred";
