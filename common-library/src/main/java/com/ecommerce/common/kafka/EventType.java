@@ -5,16 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 
-/**
- * Discriminator for the events carried on the coarse Kafka topics.
- *
- * <p>{@link #value} is the stable, human-readable on-the-wire identifier
- * (e.g. {@code "order-created"}). {@link JsonValue} keeps the serialized JSON
- * byte-for-byte identical to the old string format, so no data migration or
- * consumer restart ordering is required. {@link JsonCreator} is deliberately
- * lenient: an unknown value maps to {@code null} so a consumer that has not yet
- * learned a newly-added event type skips it instead of failing the batch.</p>
- */
 public enum EventType {
 
     ORDER_CREATED("order-created"),

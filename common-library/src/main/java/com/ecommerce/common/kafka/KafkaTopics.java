@@ -15,8 +15,7 @@ public final class KafkaTopics {
 
     /*
      * Kafka message header that carries the fine-grained event type for
-     * observability. The authoritative discriminator is the {@link EventType}
-     * on the event payload itself.
+     * observability.
      */
     public static final String HEADER_EVENT_TYPE = "X-Event-Type";
 

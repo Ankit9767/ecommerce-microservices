@@ -9,13 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * Publish-only producer for cart life-cycle events.
- *
- * <p>{@link KafkaTopics#NOTIFICATION_SENT} is a coarse analytics/marketing
- * topic - no consumer exists yet in this milestone; the future NOTIFICATION
- * module will own them.</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
