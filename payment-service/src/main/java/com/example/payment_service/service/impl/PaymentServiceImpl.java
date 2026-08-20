@@ -4,6 +4,11 @@ import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.events.OrderEvent;
+import com.ecommerce.common.events.PaymentCompletedEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
@@ -16,18 +21,21 @@ import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentProvider;
 import com.example.payment_service.service.PaymentService;
-import com.ecommerce.common.enums.PaymentStatus;
-import com.ecommerce.common.security.CurrentUser;
 import com.example.payment_service.service.PaymentStatusLifecycle;
+import com.example.payment_service.service.OutboxService;
+import com.ecommerce.common.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
@@ -49,6 +57,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMetrics paymentMetrics;
 
     private final PaymentProvider paymentProvider;
+
+    private final OutboxService outboxService;
 
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request,
@@ -126,6 +136,107 @@ public class PaymentServiceImpl implements PaymentService {
                 pendingPayment.id(),
                 providerResponse
         );
+    }
+
+    @Override
+    public void processOrderEvent(OrderEvent event) {
+
+        /*
+         * Only newly-placed orders drive payment auto-creation. Order
+         * cancellations are handled by order-service and need no payment here.
+         */
+        if (!(event instanceof OrderCreatedEvent)) {
+            log.info("Ignoring non-created order event '{}'", event.getEventType());
+            return;
+        }
+
+        OrderCreatedEvent orderEvent = (OrderCreatedEvent) event;
+
+        if (orderEvent.getCurrency() == null) {
+
+            throw new MissingPaymentDetailsException(
+                    orderEvent.getOrderId(),
+                    "currency"
+            );
+        }
+
+        if (orderEvent.getPaymentMethod() == null) {
+
+            throw new MissingPaymentDetailsException(
+                    orderEvent.getOrderId(),
+                    "paymentMethod"
+            );
+        }
+
+        CreatePaymentRequest request =
+                new CreatePaymentRequest(
+                        orderEvent.getOrderId(),
+                        orderEvent.getCurrency(),
+                        orderEvent.getPaymentMethod()
+                );
+
+        try {
+
+            PaymentResponse response = createPayment(request, internalAuthentication(orderEvent.getCustomerId()));
+
+            if (response.status() == PaymentStatus.SUCCESS) {
+
+                writePaymentOutbox(
+                        EventType.PAYMENT_SUCCESSFUL,
+                        response,
+                        null
+                );
+
+            } else if (response.status() == PaymentStatus.FAILED) {
+
+                writePaymentOutbox(
+                        EventType.PAYMENT_FAILED,
+                        response,
+                        response.failureReason()
+                );
+            }
+
+        } catch (Exception ex) {
+
+            log.error("Failed to auto-create payment for order {}",
+                    event.getOrderId(), ex);
+
+            throw ex;
+        }
+    }
+
+    private Authentication internalAuthentication(Long customerId) {
+
+        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                customerId, null, java.util.Collections.emptyList()
+        );
+    }
+
+    private void writePaymentOutbox(EventType eventType, PaymentResponse payment,
+                                    String failureReason) {
+
+        try {
+
+            PaymentCompletedEvent outboxEvent =
+                    PaymentCompletedEvent.builder()
+                            .eventType(eventType)
+                            .paymentId(payment.id())
+                            .orderId(payment.orderId())
+                            .amount(payment.amount())
+                            .currency(payment.currency())
+                            .paymentMethod(payment.paymentMethod())
+                            .paymentStatus(payment.status())
+                            .transactionId(payment.providerReference())
+                            .failureReason(failureReason)
+                            .build();
+
+            outboxService.savePaymentCompletedEvent(outboxEvent);
+
+        } catch (JsonProcessingException ex) {
+
+            log.error("Failed to write payment-completed event to outbox for payment {}",
+                    payment.id(), ex);
+        }
     }
 
     @Override

@@ -2,11 +2,11 @@ package com.example.payment_service.service;
 
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.OrderEvent;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional;
 
 public interface PaymentService {
 
@@ -24,4 +24,6 @@ public interface PaymentService {
 
     PaymentResponse updatePaymentStatus(Long paymentId,
                                                PaymentStatus targetStatus);
+
+    void processOrderEvent(OrderEvent event);
 }

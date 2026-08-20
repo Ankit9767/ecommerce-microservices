@@ -8,6 +8,11 @@ import com.example.product_service.entity.Product;
 import com.example.product_service.exception.CategoryNotFoundException;
 import com.example.product_service.exception.DuplicateSkuException;
 import com.example.product_service.exception.ProductNotFoundException;
+import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductEvent;
+import com.ecommerce.common.events.ProductUpdatedEvent;
+import com.example.product_service.kafka.ProductEventProducer;
 import com.example.product_service.mapper.ProductMapper;
 import com.example.product_service.metrics.ProductMetrics;
 import com.example.product_service.repository.CategoryRepository;
@@ -20,6 +25,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class ProductServiceImpl implements ProductService {
 
@@ -31,13 +39,17 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductMetrics metrics;
 
+    private final ProductEventProducer productEventProducer;
+
     public ProductServiceImpl(ProductRepository repository, CategoryRepository categoryRepository,
-                              ProductMapper mapper, ProductMetrics metrics) {
+                              ProductMapper mapper, ProductMetrics metrics,
+                              ProductEventProducer productEventProducer) {
 
         this.repository = repository;
         this.categoryRepository = categoryRepository;
         this.mapper = mapper;
         this.metrics = metrics;
+        this.productEventProducer = productEventProducer;
     }
 
     @Override
@@ -80,7 +92,29 @@ public class ProductServiceImpl implements ProductService {
 
         metrics.productCreated();
 
-        return mapper.toResponse(saved);
+        ProductResponse response = mapper.toResponse(saved);
+
+        publishProductEvent(
+                ProductCreatedEvent.of(
+                        response.getId(),
+                        response.getName(),
+                        response.getSku(),
+                        response.getCategory(),
+                        response.getPrice(),
+                        response.getActive()
+                )
+        );
+
+        return response;
+    }
+
+    private void publishProductEvent(ProductEvent event) {
+        try {
+            productEventProducer.publish(event);
+        } catch (Exception ex) {
+            metrics.productEventPublishFailed();
+            log.error("Failed to publish product event '{}'", event.getEventType(), ex);
+        }
     }
 
     @Override
@@ -156,7 +190,20 @@ public class ProductServiceImpl implements ProductService {
 
         existing.setCategory(category);
 
-        return mapper.toResponse(repository.save(existing));
+        ProductResponse response = mapper.toResponse(repository.save(existing));
+
+        publishProductEvent(
+                ProductUpdatedEvent.of(
+                        response.getId(),
+                        response.getName(),
+                        response.getSku(),
+                        response.getCategory(),
+                        response.getPrice(),
+                        response.getActive()
+                )
+        );
+
+        return response;
     }
 
     @Override
@@ -173,5 +220,11 @@ public class ProductServiceImpl implements ProductService {
         repository.save(product);
 
         metrics.productDeactivated();
+
+        publishProductEvent(
+                ProductDeletedEvent.of(
+                        product.getId()
+                )
+        );
     }
 }
