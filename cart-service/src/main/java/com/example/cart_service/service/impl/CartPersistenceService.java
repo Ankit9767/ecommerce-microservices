@@ -6,6 +6,8 @@ import com.example.cart_service.entity.CartItem;
 import com.example.cart_service.exception.CartConcurrentModificationException;
 import com.example.cart_service.exception.CartItemNotFoundException;
 import com.example.cart_service.exception.CartNotFoundException;
+import com.ecommerce.common.events.CartCheckedOutEvent;
+import com.example.cart_service.kafka.CartEventProducer;
 import com.example.cart_service.mapper.CartMapper;
 import com.example.cart_service.metrics.CartMetrics;
 import com.example.cart_service.repository.CartRepository;
@@ -23,6 +25,8 @@ public class CartPersistenceService {
     private final CartMapper cartMapper;
 
     private final CartMetrics cartMetrics;
+
+    private final CartEventProducer cartEventProducer;
 
 
     @Transactional
@@ -173,6 +177,10 @@ public class CartPersistenceService {
         cart.getItems().clear();
 
         Cart savedCart = cartRepository.save(cart);
+
+        cartEventProducer.publish(
+                CartCheckedOutEvent.of(customerId)
+        );
 
         return cartMapper.toResponse(savedCart);
     }
