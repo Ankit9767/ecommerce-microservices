@@ -25,6 +25,8 @@ public class OrderMetrics {
 
     private final Counter inventoryCompensationFailed;
 
+    private final Counter orderPaid;
+
     public OrderMetrics(MeterRegistry meterRegistry) {
 
         ordersCreated = Counter.builder("order.created")
@@ -62,6 +64,10 @@ public class OrderMetrics {
         inventoryCompensationFailed = Counter.builder("order.inventory_compensation_failed")
                 .description("Number of inventory compensation failures")
                 .register(meterRegistry);
+
+        orderPaid = Counter.builder("order.paid")
+                .description("Number of orders moved to PAID")
+                .register(meterRegistry);
     }
 
     public void orderCreated() {
@@ -98,5 +104,9 @@ public class OrderMetrics {
 
     public void inventoryCompensationFailed() {
         inventoryCompensationFailed.increment();
+    }
+
+    public void orderPaid() {
+        orderPaid.increment();
     }
 }

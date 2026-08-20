@@ -1,5 +1,6 @@
 package com.ecommerce.common.dto;
 
+import com.ecommerce.common.enums.Currency;
 import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
 
@@ -16,7 +17,7 @@ public record PaymentResponse(
 
         BigDecimal amount,
 
-        String currency,
+        Currency currency,
 
         PaymentStatus status,
 
