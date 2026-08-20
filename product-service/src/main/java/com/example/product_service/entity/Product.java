@@ -44,6 +44,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "stock_quantity", nullable = false)
+    @Builder.Default
+    private Integer stockQuantity = 0;
+
     @Override
     public String toString() {
         return "Product{" +

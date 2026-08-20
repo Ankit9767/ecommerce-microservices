@@ -1,6 +1,7 @@
 package com.example.payment_service.entity;
 
 import com.ecommerce.common.entity.BaseEntity;
+import com.ecommerce.common.enums.Currency;
 import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -46,11 +47,12 @@ public class Payment extends BaseEntity {
     )
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(
             nullable = false,
             length = 3
     )
-    private String currency;
+    private Currency currency;
 
     @Enumerated(EnumType.STRING)
     @Column(

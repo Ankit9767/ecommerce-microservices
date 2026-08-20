@@ -2,6 +2,8 @@ package com.example.order_service.entity;
 
 import com.ecommerce.common.entity.BaseEntity;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.enums.PaymentMethod;
+import com.ecommerce.common.enums.Currency;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -48,6 +50,14 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private OrderStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 30)
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency", nullable = false, length = 3)
+    private Currency currency;
 
     @Builder.Default
     @OneToMany(
