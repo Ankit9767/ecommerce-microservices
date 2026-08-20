@@ -13,4 +13,11 @@ public final class KafkaTopics {
 
     public static final String NOTIFICATION_SENT = "notification-sent";
 
+    /*
+     * Kafka message header that carries the fine-grained event type for
+     * observability. The authoritative discriminator is the {@link EventType}
+     * on the event payload itself.
+     */
+    public static final String HEADER_EVENT_TYPE = "X-Event-Type";
+
 }
