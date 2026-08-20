@@ -17,6 +17,8 @@ public class ProductMetrics {
 
     private final Counter duplicateSku;
 
+    private final Counter productEventPublishFailed;
+
     public ProductMetrics(MeterRegistry meterRegistry) {
 
         productsCreated = Counter.builder("product.created")
@@ -38,6 +40,10 @@ public class ProductMetrics {
         duplicateSku = Counter.builder("product.duplicate_sku")
                 .description("Number of duplicate SKU attempts")
                 .register(meterRegistry);
+
+        productEventPublishFailed = Counter.builder("product.event_publish_failed")
+                .description("Number of failed product event publishes")
+                .register(meterRegistry);
     }
 
     public void productCreated() {
@@ -58,5 +64,9 @@ public class ProductMetrics {
 
     public void duplicateSku() {
         duplicateSku.increment();
+    }
+
+    public void productEventPublishFailed() {
+        productEventPublishFailed.increment();
     }
 }
