@@ -46,7 +46,7 @@ spring:
 
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.value.default.type: com.ecommerce.common.events.PaymentCompletedEvent
+        spring.json.value.default.type: com.ecommerce.common.events.PaymentEvent
 
 
 
