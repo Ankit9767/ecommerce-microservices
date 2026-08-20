@@ -8,10 +8,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-/**
- * Base contract for product life-cycle events (publish-only this milestone;
- * intended for search / recommendations / analytics).
- */
 @Getter
 @Setter
 @NoArgsConstructor

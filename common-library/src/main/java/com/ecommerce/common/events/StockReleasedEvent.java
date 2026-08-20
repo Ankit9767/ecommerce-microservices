@@ -5,10 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Published on {@code inventory-updated} when previously reserved stock is
- * released.
- */
 @Getter
 @Setter
 @NoArgsConstructor

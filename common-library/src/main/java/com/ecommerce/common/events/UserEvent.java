@@ -5,10 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Base contract for user life-cycle events (publish-only this milestone;
- * intended for notification / analytics).
- */
 @Getter
 @Setter
 @NoArgsConstructor

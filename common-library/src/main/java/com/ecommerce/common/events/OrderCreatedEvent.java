@@ -8,9 +8,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-/**
- * Published on {@code order-created} when an order is placed.
- */
 @Getter
 @Setter
 @NoArgsConstructor

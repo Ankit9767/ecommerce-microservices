@@ -5,10 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Published on {@code inventory-updated} when a reservation cannot be fulfilled
- * because the available stock is insufficient.
- */
 @Getter
 @Setter
 @NoArgsConstructor

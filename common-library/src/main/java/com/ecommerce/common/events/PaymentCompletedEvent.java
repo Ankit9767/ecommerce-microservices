@@ -6,10 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Published on {@code payment-completed} when a payment resolves to a
- * final state.
- */
 @Getter
 @Setter
 @NoArgsConstructor

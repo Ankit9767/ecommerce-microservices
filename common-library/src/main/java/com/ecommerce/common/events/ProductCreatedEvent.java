@@ -8,9 +8,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-/**
- * Published when a product is created (publish-only this milestone).
- */
 @Getter
 @Setter
 @NoArgsConstructor

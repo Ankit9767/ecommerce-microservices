@@ -5,9 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Published on {@code order-created} when an order is cancelled.
- */
 @Getter
 @Setter
 @NoArgsConstructor

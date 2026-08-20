@@ -9,13 +9,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-/**
- * Base contract for events published on the {@code payment-completed} topic.
- *
- * <p>Both the successful and failed variants share this topic; consumers bind
- * the topic once on this base type and dispatch on
- * {@link DomainEvent#getEventType()}.</p>
- */
 @Getter
 @Setter
 @NoArgsConstructor
