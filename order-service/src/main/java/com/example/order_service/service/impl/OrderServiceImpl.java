@@ -2,11 +2,16 @@ package com.example.order_service.service.impl;
 
 import com.ecommerce.common.dto.*;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.events.OrderCancelledEvent;
+import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.events.PaymentEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.CurrentUser;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.order_service.client.CartClient;
 import com.example.order_service.client.ProductClient;
+import com.example.order_service.dto.CreateOrderFromCartRequest;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
@@ -19,6 +24,8 @@ import com.example.order_service.repository.OrderRepository;
 import com.example.order_service.service.OrderInventoryHelperService;
 import com.example.order_service.service.OrderService;
 import com.example.order_service.service.OrderStatusLifecycle;
+import com.example.order_service.service.OutboxService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -29,6 +36,9 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.*;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -52,6 +62,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderInventoryHelperService orderInventoryHelperService;
 
+    private final OutboxService outboxService;
 
     public OrderServiceImpl(
             OrderRepository repository,
@@ -60,7 +71,7 @@ public class OrderServiceImpl implements OrderService {
             RoleSecurity roleSecurity,
             CurrentUser currentUser,
             OrderStatusLifecycle statusLifecycle,
-            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService, OrderInventoryHelperService orderInventoryHelperService
+            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService, OrderInventoryHelperService orderInventoryHelperService, OutboxService outboxService
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -72,6 +83,27 @@ public class OrderServiceImpl implements OrderService {
         this.cartClient = cartClient;
         this.orderPersistenceService = orderPersistenceService;
         this.orderInventoryHelperService = orderInventoryHelperService;
+        this.outboxService = outboxService;
+    }
+
+    private void writeOrderCreatedToOutbox(Order order) throws JsonProcessingException {
+
+        for (OrderItem item : order.getItems()) {
+
+            OrderCreatedEvent event =
+                    OrderCreatedEvent.builder()
+                            .eventType(EventType.ORDER_CREATED)
+                            .orderId(order.getId())
+                            .customerId(order.getCustomerId())
+                            .currency(order.getCurrency())
+                            .productId(item.getProductId())
+                            .quantity(item.getQuantity())
+                            .amount(item.getLineTotal())
+                            .paymentMethod(order.getPaymentMethod())
+                            .build();
+
+            outboxService.saveOrderCreatedEvent(event);
+        }
     }
 
     @Override
@@ -86,6 +118,8 @@ public class OrderServiceImpl implements OrderService {
                 .customerId(customerId)
                 .status(OrderStatus.PENDING_PAYMENT)
                 .totalAmount(BigDecimal.ZERO)
+                .paymentMethod(request.getPaymentMethod())
+                .currency(request.getCurrency())
                 .build();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -146,7 +180,20 @@ public class OrderServiceImpl implements OrderService {
 
         try {
 
-            return orderPersistenceService.createOrder(order);
+            OrderResponse response =
+                    orderPersistenceService.createOrder(order);
+
+            try {
+
+                writeOrderCreatedToOutbox(order);
+
+            } catch (JsonProcessingException ex) {
+
+                log.error("Failed to write order-created event to outbox for order {}",
+                        order.getId(), ex);
+            }
+
+            return response;
 
         } catch (RuntimeException ex) {
 
@@ -391,9 +438,74 @@ public class OrderServiceImpl implements OrderService {
 
         orderInventoryHelperService.releaseInventory(order.getItems());
 
+        try {
+
+            writeOrderCancelledToOutbox(order);
+
+        } catch (JsonProcessingException ex) {
+
+            log.error("Failed to write order-cancelled event to outbox for order {}",
+                    order.getId(), ex);
+        }
+
         orderMetrics.orderCancelled();
 
         return mapper.toResponse(savedOrder);
+    }
+
+    @Override
+    public OrderResponse handlePaymentCompleted(PaymentEvent event) {
+
+        Order order =
+                repository.findById(event.getOrderId())
+                        .orElseThrow(() -> {
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        /*
+         * Idempotent: a duplicate PAYMENT_SUCCESSFUL event (at-least-once
+         * delivery) must not fail the consumer.
+         */
+        if (order.getStatus() == OrderStatus.PAID) {
+
+            orderMetrics.orderViewed();
+
+            return mapper.toResponse(order);
+        }
+
+        transitionStatus(
+                order,
+                OrderStatus.PAID
+        );
+
+        OrderResponse response = orderPersistenceService.updateOrder(order);
+
+        /*
+         * Commit the stock that was reserved at order creation time
+         * (external call - happens outside the DB transaction).
+         */
+        orderInventoryHelperService.confirmReservations(order.getItems());
+
+        orderMetrics.orderPaid();
+
+        return response;
+    }
+
+    private void writeOrderCancelledToOutbox(Order order) throws JsonProcessingException {
+
+        OrderCancelledEvent event =
+                OrderCancelledEvent.builder()
+                        .eventType(EventType.ORDER_CANCELLED)
+                        .orderId(order.getId())
+                        .customerId(order.getCustomerId())
+                        .reason("Order cancelled by user or admin")
+                        .build();
+
+        outboxService.saveOrderCancelledEvent(event);
     }
 
     private void transitionStatus(Order order,
@@ -468,7 +580,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse createOrderFromCart(Authentication authentication) {
+    public OrderResponse createOrderFromCart(CreateOrderFromCartRequest request,
+                                             Authentication authentication) {
 
         Long customerId = currentUser.getUserId(authentication);
 
@@ -491,6 +604,8 @@ public class OrderServiceImpl implements OrderService {
                 .customerId(customerId)
                 .status(OrderStatus.PENDING_PAYMENT)
                 .totalAmount(BigDecimal.ZERO)
+                .paymentMethod(request.paymentMethod())
+                .currency(request.currency())
                 .build();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -553,6 +668,16 @@ public class OrderServiceImpl implements OrderService {
 
             OrderResponse savedOrder =
                     orderPersistenceService.createOrderFromCart(order);
+
+            try {
+
+                writeOrderCreatedToOutbox(order);
+
+            } catch (JsonProcessingException ex) {
+
+                log.error("Failed to write order-created event to outbox for order {}",
+                        order.getId(), ex);
+            }
 
             cartClient.clearCart();
 

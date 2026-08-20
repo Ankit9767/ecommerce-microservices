@@ -1,6 +1,8 @@
 package com.example.order_service.service.impl;
 
+import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.example.order_service.entity.OutboxEvent;
 import com.example.order_service.repository.OutboxRepository;
 import com.example.order_service.service.OutboxService;
@@ -24,15 +26,27 @@ public class OutboxServiceImpl
     public void saveOrderCreatedEvent(OrderCreatedEvent event)
             throws JsonProcessingException {
 
+        save(EventType.ORDER_CREATED, event, event.getOrderId());
+    }
+
+    @Override
+    public void saveOrderCancelledEvent(OrderCancelledEvent event)
+            throws JsonProcessingException {
+
+        save(EventType.ORDER_CANCELLED, event, event.getOrderId());
+    }
+
+    private void save(EventType eventType, Object event, Long aggregateId)
+            throws JsonProcessingException {
+
         OutboxEvent outbox = OutboxEvent.builder()
-                .eventType("ORDER_CREATED")
-                .aggregateId(event.getOrderId())
+                .eventType(eventType.getValue())
+                .aggregateId(aggregateId)
                 .payload(objectMapper.writeValueAsString(event))
                 .published(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         repository.save(outbox);
-
     }
 }

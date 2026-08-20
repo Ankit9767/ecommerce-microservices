@@ -3,6 +3,7 @@ package com.example.order_service.controller;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.CurrentUser;
+import com.example.order_service.dto.CreateOrderFromCartRequest;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.service.OrderService;
@@ -109,9 +110,11 @@ public class OrderController {
 
     @PostMapping("/from-cart")
     @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
-    public ResponseEntity<OrderResponse> createOrderFromCart(Authentication authentication) {
+    public ResponseEntity<OrderResponse> createOrderFromCart(
+            @Valid @RequestBody CreateOrderFromCartRequest request,
+            Authentication authentication) {
 
-        OrderResponse response = service.createOrderFromCart(authentication);
+        OrderResponse response = service.createOrderFromCart(request, authentication);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

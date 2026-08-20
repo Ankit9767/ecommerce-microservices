@@ -1,6 +1,7 @@
 package com.example.order_service.service;
 
 import com.ecommerce.common.dto.InventoryQuantityRequest;
+import com.ecommerce.common.exception.InventoryConfirmException;
 import com.ecommerce.common.exception.InventoryReleaseException;
 import com.ecommerce.common.exception.InventoryReservationException;
 import com.example.order_service.entity.Order;
@@ -222,6 +223,32 @@ public class OrderInventoryHelperService {
                 throw new InventoryReleaseException(
                         productId,
                         releasedQuantity
+                );
+            }
+        }
+    }
+
+    /**
+     * Confirm (commit) the reservations of an order that has been paid.
+     */
+    public void confirmReservations(List<OrderItem> items) {
+
+        for (OrderItem item : items) {
+
+            try {
+
+                inventoryClient.confirmReservation(
+                        item.getProductId(),
+                        new InventoryQuantityRequest(
+                                item.getQuantity()
+                        )
+                );
+
+            } catch (RuntimeException ex) {
+
+                throw new InventoryConfirmException(
+                        item.getProductId(),
+                        item.getQuantity()
                 );
             }
         }
