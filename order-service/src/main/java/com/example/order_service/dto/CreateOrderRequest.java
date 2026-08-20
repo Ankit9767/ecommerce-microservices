@@ -1,6 +1,7 @@
 package com.example.order_service.dto;
 
 import com.ecommerce.common.enums.PaymentMethod;
+import com.ecommerce.common.enums.Currency;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -20,4 +21,9 @@ public class CreateOrderRequest {
     @Size(max = 50, message = "Order cannot contain more than 50 items")
     private List<@Valid CreateOrderItemRequest> items;
 
+    @NotNull(message = "Payment method is required")
+    private PaymentMethod paymentMethod;
+
+    @NotNull(message = "Currency is required")
+    private Currency currency;
 }
