@@ -8,8 +8,10 @@ import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.ecommerce.common.dto.InventoryQuantityRequest;
 import com.example.inventory_service.entity.Inventory;
 import com.example.inventory_service.exception.InventoryAlreadyExistsException;
+import com.example.inventory_service.exception.InsufficientInventoryException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
 import com.example.inventory_service.exception.ProductNotAvailableException;
+import com.example.inventory_service.kafka.StockEventProducer;
 import com.example.inventory_service.mapper.InventoryMapper;
 import com.example.inventory_service.metrics.InventoryMetrics;
 import com.example.inventory_service.repository.InventoryRepository;
@@ -31,6 +33,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryPersistenceService inventoryPersistenceService;
 
     private final InventoryMapper inventoryMapper;
+
+    private final StockEventProducer stockEventProducer;
 
     @Override
     @Transactional
@@ -114,6 +118,8 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockIncreased();
 
+        stockEventProducer.stockUpdated(response);
+
         return response;
     }
 
@@ -134,6 +140,8 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockDecreased();
 
+        stockEventProducer.stockUpdated(response);
+
         return response;
     }
 
@@ -144,7 +152,22 @@ public class InventoryServiceImpl implements InventoryService {
 
         Inventory inventory = getInventoryOrThrow(productId);
 
-        inventory.reserveStock(request.quantity());
+        try {
+
+            inventory.reserveStock(request.quantity());
+
+        } catch (InsufficientInventoryException ex) {
+
+            inventoryMetrics.insufficientInventory();
+
+            stockEventProducer.outOfStock(
+                    productId,
+                    request.quantity(),
+                    inventory.getAvailableQuantity()
+            );
+
+            throw ex;
+        }
 
         InventoryResponse response =
                 inventoryPersistenceService.save(
@@ -153,6 +176,8 @@ public class InventoryServiceImpl implements InventoryService {
                 );
 
         inventoryMetrics.stockReserved();
+
+        stockEventProducer.stockReserved(response);
 
         return response;
     }
@@ -173,6 +198,8 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockReleased();
 
+        stockEventProducer.stockReleased(response);
+
         return response;
     }
 
@@ -192,6 +219,8 @@ public class InventoryServiceImpl implements InventoryService {
                 );
 
         inventoryMetrics.reservationConfirmed();
+
+        stockEventProducer.stockUpdated(response);
 
         return response;
     }
