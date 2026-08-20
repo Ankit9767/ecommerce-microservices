@@ -1,19 +1,21 @@
 package com.ecommerce.common.events;
 
 import com.ecommerce.common.enums.PaymentMethod;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
-@Data
+/**
+ * Published on {@code order-created} when an order is placed.
+ */
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class OrderCreatedEvent {
-
-    private Long orderId;
-
-    private Long customerId;
+@SuperBuilder
+public class OrderCreatedEvent extends OrderEvent {
 
     private Long productId;
 
@@ -22,4 +24,5 @@ public class OrderCreatedEvent {
     private BigDecimal amount;
 
     private PaymentMethod paymentMethod;
+
 }

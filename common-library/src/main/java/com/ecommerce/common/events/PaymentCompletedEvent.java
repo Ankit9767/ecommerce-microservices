@@ -1,26 +1,23 @@
 package com.ecommerce.common.events;
 
-import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
-
-@Data
-@Builder
+/**
+ * Published on {@code payment-completed} when a payment resolves to a
+ * final state.
+ */
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class PaymentCompletedEvent {
-
-    private Long paymentId;
-
-    private Long orderId;
-
-    private BigDecimal amount;
-
-    private PaymentMethod paymentMethod;
+@SuperBuilder
+public class PaymentCompletedEvent extends PaymentEvent {
 
     private PaymentStatus paymentStatus;
 
-    private String transactionId;
+    private String failureReason;
+
 }
