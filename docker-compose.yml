@@ -113,6 +113,42 @@ services:
 
   ######################################################
 
+  cart-service:
+
+    build:
+      context: .
+      dockerfile: cart-service/Dockerfile
+
+    container_name: cart-service
+
+    restart: always
+
+    depends_on:
+      - mysql
+      - kafka
+      - eureka-server
+
+    ports:
+      - "8084:8084"
+
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cart_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      MANAGEMENT_TRACING_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+
+    networks:
+      - ecommerce-network
+
+    ########################################################
+
   payment-service:
 
     build:
@@ -184,6 +220,44 @@ services:
       - ecommerce-network
 
   ########################################################
+
+  inventory-service:
+
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+
+    container_name: inventory-service
+
+    restart: always
+
+    depends_on:
+      - mysql
+      - kafka
+      - eureka-server
+
+    ports:
+      - "8083:8083"
+
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inventory_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      MANAGEMENT_TRACING_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+
+    networks:
+      - ecommerce-network
+
+
+  ########################################################
+
 
   auth-service:
 
