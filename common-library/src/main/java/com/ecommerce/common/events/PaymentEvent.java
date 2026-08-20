@@ -2,6 +2,8 @@ package com.ecommerce.common.events;
 
 import com.ecommerce.common.enums.Currency;
 import com.ecommerce.common.enums.PaymentMethod;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +15,15 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "eventType",
+        visible = true)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = PaymentCompletedEvent.class, name = "payment-successful"),
+        @JsonSubTypes.Type(value = PaymentCompletedEvent.class, name = "payment-failed")
+})
 public abstract class PaymentEvent extends DomainEvent {
 
     private Long paymentId;

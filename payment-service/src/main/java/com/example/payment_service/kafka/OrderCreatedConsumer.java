@@ -1,6 +1,7 @@
 package com.example.payment_service.kafka;
 
 import com.ecommerce.common.events.OrderEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import com.example.payment_service.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,14 @@ public class OrderCreatedConsumer {
 
         log.info("Received OrderEvent [{}] for order {}", event.getEventType(),
                 event.getOrderId());
+
+        if (event.getEventType() != EventType.ORDER_CREATED) {
+
+            log.debug("Ignoring OrderEvent type {} for payment processing",
+                    event.getEventType());
+
+            return;
+        }
 
         paymentService.processOrderEvent(event);
     }
