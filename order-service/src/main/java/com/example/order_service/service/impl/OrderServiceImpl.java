@@ -4,6 +4,7 @@ import com.ecommerce.common.dto.*;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.events.OrderItemDto;
 import com.ecommerce.common.events.PaymentEvent;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
@@ -88,22 +89,32 @@ public class OrderServiceImpl implements OrderService {
 
     private void writeOrderCreatedToOutbox(Order order) {
 
+        List<OrderItemDto> items = new ArrayList<>();
+
         for (OrderItem item : order.getItems()) {
 
-            OrderCreatedEvent event =
-                    OrderCreatedEvent.builder()
-                            .eventType(EventType.ORDER_CREATED)
-                            .orderId(order.getId())
-                            .customerId(order.getCustomerId())
-                            .currency(order.getCurrency())
-                            .productId(item.getProductId())
-                            .quantity(item.getQuantity())
-                            .amount(item.getLineTotal())
-                            .paymentMethod(order.getPaymentMethod())
-                            .build();
-
-            outboxService.saveOrderCreatedEvent(event);
+            items.add(OrderItemDto.builder()
+                    .productId(item.getProductId())
+                    .productName(item.getProductName())
+                    .sku(item.getSku())
+                    .unitPrice(item.getUnitPrice())
+                    .quantity(item.getQuantity())
+                    .lineTotal(item.getLineTotal())
+                    .build());
         }
+
+        OrderCreatedEvent event =
+                OrderCreatedEvent.builder()
+                        .eventType(EventType.ORDER_CREATED)
+                        .orderId(order.getId())
+                        .customerId(order.getCustomerId())
+                        .currency(order.getCurrency())
+                        .paymentMethod(order.getPaymentMethod())
+                        .totalAmount(order.getTotalAmount())
+                        .items(items)
+                        .build();
+
+        outboxService.saveOrderCreatedEvent(event);
     }
 
     @Override

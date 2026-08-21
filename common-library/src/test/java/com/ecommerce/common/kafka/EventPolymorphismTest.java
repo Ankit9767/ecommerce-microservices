@@ -4,6 +4,7 @@ import com.ecommerce.common.events.CartAbandonedEvent;
 import com.ecommerce.common.events.CartEvent;
 import com.ecommerce.common.events.InventoryEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.events.OrderItemDto;
 import com.ecommerce.common.events.OrderEvent;
 import com.ecommerce.common.events.OutOfStockEvent;
 import com.ecommerce.common.events.PaymentCompletedEvent;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -135,16 +137,23 @@ class EventPolymorphismTest {
                         .eventType(EventType.ORDER_CREATED)
                         .orderId(1L)
                         .customerId(2L)
-                        .productId(10L)
-                        .quantity(2)
-                        .amount(new BigDecimal("100.00"))
                         .paymentMethod(PaymentMethod.CARD)
+                        .totalAmount(new BigDecimal("100.00"))
+                        .items(List.of(
+                                OrderItemDto.builder()
+                                        .productId(10L)
+                                        .quantity(2)
+                                        .unitPrice(new BigDecimal("50.00"))
+                                        .lineTotal(new BigDecimal("100.00"))
+                                        .build()))
                         .build());
 
         // No @class / @type field sneaks into the wire format.
         assertThat(json).doesNotContain("@class").doesNotContain("\"type\"");
         // eventType remains the discriminator on the wire.
         assertThat(json).contains("\"eventType\":\"order-created\"");
+        // The whole order is carried on a single event (item list, not per-item events).
+        assertThat(json).contains("\"items\"");
     }
 
     @Test
