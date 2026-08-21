@@ -27,6 +27,11 @@ spring:
     discovery:
       enabled: false
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false
+
 eureka:
   client:
     enabled: false
