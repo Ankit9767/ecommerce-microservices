@@ -1,6 +1,5 @@
-package com.example.payment_service.repository;
+package com.ecommerce.common.kafka;
 
-import com.example.payment_service.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

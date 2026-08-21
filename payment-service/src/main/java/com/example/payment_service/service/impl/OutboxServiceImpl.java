@@ -2,8 +2,8 @@ package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.events.PaymentEvent;
 import com.ecommerce.common.exception.OutboxEventCreationException;
-import com.example.payment_service.entity.OutboxEvent;
-import com.example.payment_service.repository.OutboxRepository;
+import com.ecommerce.common.kafka.OutboxEvent;
+import com.ecommerce.common.kafka.OutboxRepository;
 import com.example.payment_service.service.OutboxService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

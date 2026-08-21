@@ -1,4 +1,4 @@
-package com.example.payment_service.entity;
+package com.ecommerce.common.kafka;
 
 import jakarta.persistence.*;
 import lombok.*;
