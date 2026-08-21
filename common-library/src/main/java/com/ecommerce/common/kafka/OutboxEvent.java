@@ -6,7 +6,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "outbox_events")
+@Table(
+        name = "outbox_events",
+        indexes = {
+                @Index(
+                        name = "idx_outbox_published_id",
+                        columnList = "published,id"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,15 +26,21 @@ public class OutboxEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 100)
     private String eventType;
 
+    @Column(nullable = false)
     private Long aggregateId;
 
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
+    @Column(nullable = false)
     private boolean published;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    private LocalDateTime publishedAt;
 }

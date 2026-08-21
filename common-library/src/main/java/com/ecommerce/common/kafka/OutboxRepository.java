@@ -8,6 +8,6 @@ import java.util.List;
 @Repository
 public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
 
-    List<OutboxEvent> findByPublishedFalse();
+    List<OutboxEvent> findTop100ByPublishedFalseOrderByIdAsc();
 
 }
