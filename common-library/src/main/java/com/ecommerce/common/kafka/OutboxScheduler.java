@@ -42,10 +42,6 @@ public class OutboxScheduler {
         List<OutboxEvent> events =
                 repository.findTop100ByPublishedFalseOrderByIdAsc();
 
-        if (events.isEmpty()) {
-            return;
-        }
-
         for (OutboxEvent outbox : events) {
 
             try {
@@ -53,24 +49,39 @@ public class OutboxScheduler {
                 EventType type = EventType.fromValue(outbox.getEventType());
 
                 if (type == null) {
-                    log.warn("Skipping outbox event {} with unknown type '{}'",
-                            outbox.getId(), outbox.getEventType());
+
+                    log.warn(
+                            "Skipping outbox event {} with unknown type '{}'",
+                            outbox.getId(),
+                            outbox.getEventType()
+                    );
+
                     continue;
                 }
 
-                OutboxProducer producer = producers.stream()
-                        .filter(p -> p.supports(type))
-                        .findFirst()
-                        .orElse(null);
+                OutboxProducer producer =
+                        producers.stream()
+                                .filter(p -> p.supports(type))
+                                .findFirst()
+                                .orElse(null);
 
                 if (producer == null) {
-                    log.warn("No OutboxProducer registered for event type {} "
-                            + "(outbox {})", type, outbox.getId());
+
+                    log.warn(
+                            "No producer registered for event type {} " +
+                                    "(outbox={})",
+                            type,
+                            outbox.getId()
+                    );
+
                     continue;
                 }
 
-                DomainEvent event = objectMapper.readValue(
-                        outbox.getPayload(), type.getEventClass());
+                DomainEvent event =
+                        objectMapper.readValue(
+                                outbox.getPayload(),
+                                type.getEventClass()
+                        );
 
                 producer.publish(event);
 
@@ -78,11 +89,19 @@ public class OutboxScheduler {
 
                 repository.save(outbox);
 
-                log.info("Published Outbox Event {} ({})", outbox.getId(), type);
+                log.info(
+                        "Successfully published outbox event id={}, type={}",
+                        outbox.getId(),
+                        type
+                );
 
             } catch (Exception ex) {
 
-                log.error("Failed to publish Outbox Event {}", outbox.getId(), ex);
+                log.error(
+                        "Failed to publish outbox event id={}",
+                        outbox.getId(),
+                        ex
+                );
             }
         }
     }
