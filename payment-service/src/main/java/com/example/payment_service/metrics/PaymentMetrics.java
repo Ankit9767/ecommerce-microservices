@@ -29,6 +29,8 @@ public class PaymentMetrics {
 
     private final Counter webhookFailures;
 
+    private final Counter webhookDuplicates;
+
     private final Counter concurrentModifications;
 
     public PaymentMetrics(MeterRegistry meterRegistry) {
@@ -118,6 +120,15 @@ public class PaymentMetrics {
                         )
                         .register(meterRegistry);
 
+        webhookDuplicates =
+                Counter.builder(
+                                "payment.webhook.duplicate"
+                        )
+                        .description(
+                                "Number of duplicate payment webhook events"
+                        )
+                        .register(meterRegistry);
+
         concurrentModifications =
                 Counter.builder(
                                 "payment.concurrent_modification"
@@ -170,6 +181,10 @@ public class PaymentMetrics {
 
     public void webhookFailed() {
         webhookFailures.increment();
+    }
+
+    public void webhookDuplicate() {
+        webhookDuplicates.increment();
     }
 
     public void concurrentModification() {

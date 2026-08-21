@@ -84,62 +84,27 @@ public class PaymentPersistenceService {
         }
     }
 
-
-    /**
-     * Transaction #2
-     *
-     * Updates the payment after the external provider
-     * has responded.
-     */
     @Transactional
-    public PaymentResponse completePayment(Long paymentId,
-                                           PaymentProviderResponse providerResponse) {
+    public PaymentResponse markPaymentProcessing(Long paymentId,
+                                                 PaymentProviderResponse providerResponse) {
 
         Payment payment =
                 paymentRepository.findById(paymentId)
                         .orElseThrow(() ->
-                                new PaymentNotFoundException(
-                                        paymentId
-                                )
+                                new PaymentNotFoundException(paymentId)
                         );
 
-        payment.setProviderReference(
-                providerResponse.providerReference()
+        transitionStatus(
+                payment,
+                providerResponse.status()
         );
 
-        transitionStatus(payment, providerResponse.status());
+        payment.setProviderReference(providerResponse.providerReference());
 
-        if (providerResponse.failureReason() != null) {
-            payment.setFailureReason(
-                    providerResponse.failureReason()
-            );
-        }
+        Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
-        Payment savedPayment = paymentRepository.save(payment);
-
-        PaymentResponse response =
-                paymentMapper.toResponse(savedPayment);
-
-        if (response.status() == PaymentStatus.SUCCESS) {
-
-            writePaymentOutbox(
-                    EventType.PAYMENT_SUCCESSFUL,
-                    response,
-                    null
-            );
-
-        } else if (response.status() == PaymentStatus.FAILED) {
-
-            writePaymentOutbox(
-                    EventType.PAYMENT_FAILED,
-                    response,
-                    response.failureReason()
-            );
-        }
-
-        return response;
+        return paymentMapper.toResponse(savedPayment);
     }
-
 
     private void transitionStatus(Payment payment,
                                   PaymentStatus targetStatus) {
@@ -176,25 +141,5 @@ public class PaymentPersistenceService {
 
             paymentMetrics.paymentCancelled();
         }
-    }
-
-    private void writePaymentOutbox(EventType eventType,
-                                    PaymentResponse payment,
-                                    String failureReason) {
-
-        PaymentCompletedEvent outboxEvent =
-                PaymentCompletedEvent.builder()
-                        .eventType(eventType)
-                        .paymentId(payment.id())
-                        .orderId(payment.orderId())
-                        .amount(payment.amount())
-                        .currency(payment.currency())
-                        .paymentMethod(payment.paymentMethod())
-                        .paymentStatus(payment.status())
-                        .transactionId(payment.providerReference())
-                        .failureReason(failureReason)
-                        .build();
-
-        outboxService.savePaymentCompletedEvent(outboxEvent);
     }
 }

@@ -2,6 +2,8 @@ package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.PaymentCompletedEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.example.payment_service.dto.webhook.PaymentWebhookRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
@@ -11,6 +13,7 @@ import com.example.payment_service.exception.PaymentProviderMismatchException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
+import com.example.payment_service.service.OutboxService;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import com.example.payment_service.service.PaymentWebhookService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,8 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
     private final PaymentMetrics paymentMetrics;
 
+    private final OutboxService outboxService;
+
     @Override
     @Transactional
     public PaymentResponse processWebhook(PaymentWebhookRequest request) {
@@ -42,6 +47,7 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                                 request.providerReference()
                         )
                         .orElseThrow(() -> {
+
                             paymentMetrics.webhookFailed();
 
                             return new PaymentNotFoundException(
@@ -49,25 +55,21 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                             );
                         });
 
-        /*
-         * Make sure the webhook belongs to
-         * the provider associated with this payment.
-         */
         if (!payment.getProvider()
                 .equalsIgnoreCase(request.provider())) {
 
             paymentMetrics.webhookFailed();
+
             throw new PaymentProviderMismatchException(
                     payment.getProvider(),
                     request.provider()
             );
         }
 
-        /*
-         * Ignore duplicate webhook events
-         * that report the current state.
-         */
         if (payment.getStatus() == request.status()) {
+
+            paymentMetrics.webhookDuplicate();
+
             return paymentMapper.toResponse(payment);
         }
 
@@ -80,7 +82,9 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                 targetStatus)) {
 
             paymentMetrics.webhookFailed();
+
             paymentMetrics.invalidStatusTransition();
+
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus
@@ -90,6 +94,7 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
         payment.setStatus(targetStatus);
 
         if (request.failureReason() != null) {
+
             payment.setFailureReason(request.failureReason());
         }
 
@@ -97,15 +102,60 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
             Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
+            // --------------------------------------------------
+            // 6. Create Kafka outbox event only for
+            //    terminal payment states
+            // --------------------------------------------------
+
+            if (targetStatus == PaymentStatus.SUCCESS) {
+
+                writePaymentCompletedOutbox(
+                        EventType.PAYMENT_SUCCESSFUL,
+                        savedPayment,
+                        null
+                );
+
+            } else if (targetStatus == PaymentStatus.FAILED) {
+
+                writePaymentCompletedOutbox(
+                        EventType.PAYMENT_FAILED,
+                        savedPayment,
+                        savedPayment.getFailureReason()
+                );
+            }
+
             return paymentMapper.toResponse(savedPayment);
 
         } catch (ObjectOptimisticLockingFailureException ex) {
 
             paymentMetrics.webhookFailed();
+
             paymentMetrics.concurrentModification();
+
             throw new PaymentConcurrentModificationException(
                     payment.getId()
             );
         }
+    }
+
+
+    private void writePaymentCompletedOutbox(EventType eventType,
+                                             Payment payment,
+                                             String failureReason) {
+
+        PaymentCompletedEvent event =
+                PaymentCompletedEvent.builder()
+                        .eventType(eventType)
+                        .paymentId(payment.getId())
+                        .orderId(payment.getOrderId())
+                        .amount(payment.getAmount())
+                        .currency(payment.getCurrency())
+                        .paymentMethod(payment.getPaymentMethod())
+                        .paymentStatus(payment.getStatus())
+                        .transactionId(payment.getProviderReference())
+                        .failureReason(failureReason)
+                        .build();
+
+        outboxService.savePaymentCompletedEvent(event);
     }
 }

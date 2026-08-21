@@ -107,7 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // --------------------------------------------------
         // NO DATABASE TRANSACTION HERE
-        // External provider call
+        // External Mock provider call
         // --------------------------------------------------
 
         PaymentProviderRequest providerRequest =
@@ -122,13 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentProviderResponse providerResponse =
                 paymentProvider.createPayment(providerRequest);
 
-
-        // --------------------------------------------------
-        // TRANSACTION #2
-        // Save provider response and COMMIT
-        // --------------------------------------------------
-
-        return paymentPersistenceService.completePayment(
+        return paymentPersistenceService.markPaymentProcessing(
                 pendingPayment.id(),
                 providerResponse
         );
