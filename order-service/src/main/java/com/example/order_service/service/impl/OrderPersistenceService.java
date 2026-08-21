@@ -19,7 +19,6 @@ public class OrderPersistenceService {
 
     private final OrderMetrics orderMetrics;
 
-    @Transactional
     public OrderResponse createOrder(Order order) {
 
         Order savedOrder = repository.save(order);
@@ -39,7 +38,7 @@ public class OrderPersistenceService {
         return mapper.toResponse(savedOrder);
     }
 
-    @Transactional
+
     public OrderResponse createOrderFromCart(Order order) {
 
         Order savedOrder = repository.save(order);

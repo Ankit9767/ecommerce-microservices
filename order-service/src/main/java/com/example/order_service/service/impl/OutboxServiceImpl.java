@@ -2,6 +2,7 @@ package com.example.order_service.service.impl;
 
 import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.exception.OutboxEventCreationException;
 import com.ecommerce.common.kafka.EventType;
 import com.example.order_service.entity.OutboxEvent;
 import com.example.order_service.repository.OutboxRepository;
@@ -23,30 +24,40 @@ public class OutboxServiceImpl
     private final ObjectMapper objectMapper;
 
     @Override
-    public void saveOrderCreatedEvent(OrderCreatedEvent event)
-            throws JsonProcessingException {
+    public void saveOrderCreatedEvent(OrderCreatedEvent event) {
 
         save(EventType.ORDER_CREATED, event, event.getOrderId());
     }
 
     @Override
-    public void saveOrderCancelledEvent(OrderCancelledEvent event)
-            throws JsonProcessingException {
+    public void saveOrderCancelledEvent(OrderCancelledEvent event) {
 
         save(EventType.ORDER_CANCELLED, event, event.getOrderId());
     }
 
-    private void save(EventType eventType, Object event, Long aggregateId)
-            throws JsonProcessingException {
+    private void save(EventType eventType, Object event, Long aggregateId) {
 
-        OutboxEvent outbox = OutboxEvent.builder()
-                .eventType(eventType.getValue())
-                .aggregateId(aggregateId)
-                .payload(objectMapper.writeValueAsString(event))
-                .published(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        try {
 
-        repository.save(outbox);
+            OutboxEvent outbox = OutboxEvent.builder()
+                    .eventType(eventType.getValue())
+                    .aggregateId(aggregateId)
+                    .payload(objectMapper.writeValueAsString(event))
+                    .published(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            repository.save(outbox);
+
+        } catch (JsonProcessingException ex) {
+
+            throw new OutboxEventCreationException(
+                    "Failed to serialize outbox event: "
+                            + eventType
+                            + " for aggregate "
+                            + aggregateId,
+                    ex
+            );
+        }
     }
 }

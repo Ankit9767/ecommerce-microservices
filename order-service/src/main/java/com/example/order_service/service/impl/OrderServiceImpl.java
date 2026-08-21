@@ -86,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
         this.outboxService = outboxService;
     }
 
-    private void writeOrderCreatedToOutbox(Order order) throws JsonProcessingException {
+    private void writeOrderCreatedToOutbox(Order order) {
 
         for (OrderItem item : order.getItems()) {
 
@@ -107,6 +107,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponse createOrder(CreateOrderRequest request,
                                      Authentication authentication) {
 
@@ -179,19 +180,10 @@ public class OrderServiceImpl implements OrderService {
         orderInventoryHelperService.reserveInventory(order);
 
         try {
-
             OrderResponse response =
                     orderPersistenceService.createOrder(order);
 
-            try {
-
-                writeOrderCreatedToOutbox(order);
-
-            } catch (JsonProcessingException ex) {
-
-                log.error("Failed to write order-created event to outbox for order {}",
-                        order.getId(), ex);
-            }
+            writeOrderCreatedToOutbox(order);
 
             return response;
 
@@ -580,6 +572,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponse createOrderFromCart(CreateOrderFromCartRequest request,
                                              Authentication authentication) {
 
@@ -669,15 +662,7 @@ public class OrderServiceImpl implements OrderService {
             OrderResponse savedOrder =
                     orderPersistenceService.createOrderFromCart(order);
 
-            try {
-
-                writeOrderCreatedToOutbox(order);
-
-            } catch (JsonProcessingException ex) {
-
-                log.error("Failed to write order-created event to outbox for order {}",
-                        order.getId(), ex);
-            }
+            writeOrderCreatedToOutbox(order);
 
             cartClient.clearCart();
 

@@ -1,6 +1,7 @@
 package com.example.order_service.exception;
 
 import com.ecommerce.common.dto.ErrorResponse;
+import com.ecommerce.common.exception.OutboxEventCreationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -133,6 +134,20 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Empty Cart",
                 ex.getMessage(),
+                request,
+                null
+        );
+    }
+
+    @ExceptionHandler(OutboxEventCreationException.class)
+    public ResponseEntity<ErrorResponse> handleOutboxEventCreation(
+            OutboxEventCreationException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Order Creation Failed",
+                "Unable to create the order event.",
                 request,
                 null
         );
