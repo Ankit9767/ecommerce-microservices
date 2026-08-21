@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface OutboxService {
 
-    void savePaymentCompletedEvent(PaymentEvent event)
-            throws JsonProcessingException;
+    void savePaymentCompletedEvent(PaymentEvent event);
 
 }

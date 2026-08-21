@@ -1,6 +1,7 @@
 package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.events.PaymentEvent;
+import com.ecommerce.common.exception.OutboxEventCreationException;
 import com.example.payment_service.entity.OutboxEvent;
 import com.example.payment_service.repository.OutboxRepository;
 import com.example.payment_service.service.OutboxService;
@@ -20,17 +21,29 @@ public class OutboxServiceImpl implements OutboxService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void savePaymentCompletedEvent(PaymentEvent event)
-            throws JsonProcessingException {
+    public void savePaymentCompletedEvent(PaymentEvent event) {
 
-        OutboxEvent outbox = OutboxEvent.builder()
-                .eventType(event.getEventType().getValue())
-                .aggregateId(event.getOrderId())
-                .payload(objectMapper.writeValueAsString(event))
-                .published(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        try {
 
-        repository.save(outbox);
+            OutboxEvent outbox = OutboxEvent.builder()
+                    .eventType(event.getEventType().getValue())
+                    .aggregateId(event.getOrderId())
+                    .payload(objectMapper.writeValueAsString(event))
+                    .published(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            repository.save(outbox);
+
+        } catch (JsonProcessingException ex) {
+
+            throw new OutboxEventCreationException(
+                    "Failed to serialize payment outbox event "
+                            + event.getEventType()
+                            + " for order "
+                            + event.getOrderId(),
+                    ex
+            );
+        }
     }
 }

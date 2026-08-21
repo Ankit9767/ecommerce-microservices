@@ -4,6 +4,8 @@ import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.PaymentCompletedEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.DuplicatePaymentException;
@@ -13,6 +15,7 @@ import com.example.payment_service.exception.PaymentNotFoundException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
+import com.example.payment_service.service.OutboxService;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,6 +33,8 @@ public class PaymentPersistenceService {
     private final PaymentStatusLifecycle statusLifecycle;
 
     private final PaymentMetrics paymentMetrics;
+
+    private final OutboxService outboxService;
 
 
     /**
@@ -112,7 +117,27 @@ public class PaymentPersistenceService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        return paymentMapper.toResponse(savedPayment);
+        PaymentResponse response =
+                paymentMapper.toResponse(savedPayment);
+
+        if (response.status() == PaymentStatus.SUCCESS) {
+
+            writePaymentOutbox(
+                    EventType.PAYMENT_SUCCESSFUL,
+                    response,
+                    null
+            );
+
+        } else if (response.status() == PaymentStatus.FAILED) {
+
+            writePaymentOutbox(
+                    EventType.PAYMENT_FAILED,
+                    response,
+                    response.failureReason()
+            );
+        }
+
+        return response;
     }
 
 
@@ -151,5 +176,25 @@ public class PaymentPersistenceService {
 
             paymentMetrics.paymentCancelled();
         }
+    }
+
+    private void writePaymentOutbox(EventType eventType,
+                                    PaymentResponse payment,
+                                    String failureReason) {
+
+        PaymentCompletedEvent outboxEvent =
+                PaymentCompletedEvent.builder()
+                        .eventType(eventType)
+                        .paymentId(payment.id())
+                        .orderId(payment.orderId())
+                        .amount(payment.amount())
+                        .currency(payment.currency())
+                        .paymentMethod(payment.paymentMethod())
+                        .paymentStatus(payment.status())
+                        .transactionId(payment.providerReference())
+                        .failureReason(failureReason)
+                        .build();
+
+        outboxService.savePaymentCompletedEvent(outboxEvent);
     }
 }
