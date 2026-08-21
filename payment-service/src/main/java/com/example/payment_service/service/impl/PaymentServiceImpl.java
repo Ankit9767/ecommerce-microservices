@@ -164,9 +164,17 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
+        if (orderEvent.getTotalAmount() == null) {
+            throw new MissingPaymentDetailsException(
+                    orderEvent.getOrderId(),
+                    "totalAmount"
+            );
+        }
+
         CreatePaymentRequest request =
                 new CreatePaymentRequest(
                         orderEvent.getOrderId(),
+                        orderEvent.getTotalAmount(),
                         orderEvent.getCurrency(),
                         orderEvent.getPaymentMethod()
                 );
