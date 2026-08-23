@@ -4,34 +4,81 @@ import com.ecommerce.common.events.PaymentEvent;
 import com.ecommerce.common.kafka.KafkaTopics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PaymentCompletedProducer {
+
+    private static final String PAYMENT_COMPLETED_TOPIC =
+            KafkaTopics.PAYMENT_COMPLETED;
 
     private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
 
-    private final MeterRegistry meterRegistry;
+    private final Counter publishedCounter;
 
-    public void publish(PaymentEvent event) {
+    private final Counter failedCounter;
 
-        log.info("Publishing {} on topic {} : {}", event.getEventType(),
-                KafkaTopics.PAYMENT_COMPLETED, event);
+    public PaymentCompletedProducer(KafkaTemplate<String, PaymentEvent> kafkaTemplate,
+                                    MeterRegistry meterRegistry) {
 
-        kafkaTemplate.send(
-                KafkaTopics.PAYMENT_COMPLETED,
-                event.getOrderId().toString(),
-                event
+        this.kafkaTemplate = kafkaTemplate;
+
+        this.publishedCounter = Counter.builder("kafka.payment.events.published")
+                .description("Number of payment events successfully published to Kafka")
+                .tag("topic", PAYMENT_COMPLETED_TOPIC)
+                .register(meterRegistry);
+
+        this.failedCounter = Counter.builder("kafka.payment.events.failed")
+                .description("Number of payment events that failed to publish to Kafka")
+                .tag("topic", PAYMENT_COMPLETED_TOPIC)
+                .register(meterRegistry);
+    }
+
+    public CompletableFuture<?> publish(PaymentEvent event) {
+
+        String orderId = event.getOrderId().toString();
+
+        log.debug(
+                "Publishing payment event: orderId={}, topic={}",
+                orderId,
+                PAYMENT_COMPLETED_TOPIC
         );
 
-        Counter.builder("kafka.payment.events.published")
-                .description("Payment events published to Kafka")
-                .register(meterRegistry)
-                .increment();
+        return kafkaTemplate
+                .send(
+                        PAYMENT_COMPLETED_TOPIC,
+                        orderId,
+                        event
+                )
+                .whenComplete((result, throwable) -> {
+
+                    if (throwable != null) {
+                        failedCounter.increment();
+
+                        log.error(
+                                "Failed to publish payment event: orderId={}, topic={}",
+                                orderId,
+                                PAYMENT_COMPLETED_TOPIC,
+                                throwable
+                        );
+
+                        return;
+                    }
+
+                    publishedCounter.increment();
+
+                    log.debug(
+                            "Successfully published payment event: orderId={}, topic={}, partition={}, offset={}",
+                            orderId,
+                            PAYMENT_COMPLETED_TOPIC,
+                            result.getRecordMetadata().partition(),
+                            result.getRecordMetadata().offset()
+                    );
+                });
     }
 }

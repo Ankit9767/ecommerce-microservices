@@ -4,34 +4,73 @@ import com.ecommerce.common.events.OrderEvent;
 import com.ecommerce.common.kafka.KafkaTopics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class OrderKafkaProducer {
+
+    private static final String ORDER_CREATED_TOPIC = KafkaTopics.ORDER_CREATED;
 
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
-    private final MeterRegistry meterRegistry;
+    private final Counter publishedCounter;
 
-    public void publish(OrderEvent event) {
+    public OrderKafkaProducer(KafkaTemplate<String, OrderEvent> kafkaTemplate,
+                              MeterRegistry meterRegistry) {
 
-        log.info("Publishing {} on topic {} : {}", event.getEventType(),
-                KafkaTopics.ORDER_CREATED, event);
+        this.kafkaTemplate = kafkaTemplate;
 
-        kafkaTemplate.send(
-                KafkaTopics.ORDER_CREATED,
-                event.getOrderId().toString(),
-                event
+        this.publishedCounter = Counter.builder("kafka.order.events.published")
+                .description("Number of order events successfully published to Kafka")
+                .tag("topic", ORDER_CREATED_TOPIC)
+                .register(meterRegistry);
+    }
+
+    public CompletableFuture<?> publish(OrderEvent event) {
+
+        String orderId = event.getOrderId().toString();
+
+        log.debug(
+                "Publishing order event: eventType={}, orderId={}, topic={}",
+                event.getEventType(),
+                orderId,
+                ORDER_CREATED_TOPIC
         );
 
-        Counter.builder("kafka.order.events.published")
-                .description("Order events published to Kafka")
-                .register(meterRegistry)
-                .increment();
+        return kafkaTemplate
+                .send(
+                        ORDER_CREATED_TOPIC,
+                        orderId,
+                        event
+                )
+                .whenComplete((result, throwable) -> {
+
+                    if (throwable != null) {
+                        log.error(
+                                "Failed to publish order event: eventType={}, orderId={}, topic={}",
+                                event.getEventType(),
+                                orderId,
+                                ORDER_CREATED_TOPIC,
+                                throwable
+                        );
+                        return;
+                    }
+
+                    publishedCounter.increment();
+
+                    log.debug(
+                            "Successfully published order event: eventType={}, orderId={}, topic={}, partition={}, offset={}",
+                            event.getEventType(),
+                            orderId,
+                            ORDER_CREATED_TOPIC,
+                            result.getRecordMetadata().partition(),
+                            result.getRecordMetadata().offset()
+                    );
+                });
     }
 }

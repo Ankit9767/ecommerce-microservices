@@ -7,6 +7,8 @@ import com.ecommerce.common.kafka.OutboxProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 @Component
 @RequiredArgsConstructor
 public class OrderOutboxProducer implements OutboxProducer {
@@ -14,8 +16,8 @@ public class OrderOutboxProducer implements OutboxProducer {
     private final OrderKafkaProducer producer;
 
     @Override
-    public void publish(DomainEvent event) {
-        producer.publish((OrderEvent) event);
+    public CompletableFuture<?> publish(DomainEvent event) {
+       return producer.publish((OrderEvent) event);
     }
 
     @Override
