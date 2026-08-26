@@ -7,10 +7,10 @@ import com.example.cart_service.exception.CartConcurrentModificationException;
 import com.example.cart_service.exception.CartItemNotFoundException;
 import com.example.cart_service.exception.CartNotFoundException;
 import com.ecommerce.common.events.CartCheckedOutEvent;
-import com.example.cart_service.kafka.CartEventProducer;
 import com.example.cart_service.mapper.CartMapper;
 import com.example.cart_service.metrics.CartMetrics;
 import com.example.cart_service.repository.CartRepository;
+import com.example.cart_service.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class CartPersistenceService {
 
     private final CartMetrics cartMetrics;
 
-    private final CartEventProducer cartEventProducer;
+    private final OutboxService outboxService;
 
 
     @Transactional
@@ -178,8 +178,8 @@ public class CartPersistenceService {
 
         Cart savedCart = cartRepository.save(cart);
 
-        cartEventProducer.publish(
-                CartCheckedOutEvent.of(customerId)
+        outboxService.saveCartCheckedOutEvent(
+                (CartCheckedOutEvent) CartCheckedOutEvent.of(customerId)
         );
 
         return cartMapper.toResponse(savedCart);
