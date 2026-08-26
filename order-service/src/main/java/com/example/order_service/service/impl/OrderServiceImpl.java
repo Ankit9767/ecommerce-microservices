@@ -460,7 +460,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse handlePaymentCompleted(PaymentEvent event) {
 
         Order order =
-                repository.findById(event.getOrderId())
+                repository.findByIdWithItems(event.getOrderId())
                         .orElseThrow(() -> {
                             orderMetrics.orderNotFound();
 
@@ -469,16 +469,14 @@ public class OrderServiceImpl implements OrderService {
                             );
                         });
 
-        /*
-         * Idempotent: a duplicate PAYMENT_SUCCESSFUL event (at-least-once
-         * delivery) must not fail the consumer.
-         */
         if (order.getStatus() == OrderStatus.PAID) {
-
-            orderMetrics.orderViewed();
 
             return mapper.toResponse(order);
         }
+
+        orderInventoryHelperService.confirmReservations(
+                order.getItems()
+        );
 
         transitionStatus(
                 order,
@@ -491,8 +489,6 @@ public class OrderServiceImpl implements OrderService {
          * Commit the stock that was reserved at order creation time
          * (external call - happens outside the DB transaction).
          */
-        orderInventoryHelperService.confirmReservations(order.getItems());
-
         orderMetrics.orderPaid();
 
         return response;
