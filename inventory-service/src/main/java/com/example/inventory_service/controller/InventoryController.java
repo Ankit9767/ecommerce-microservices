@@ -81,7 +81,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/confirm")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'INTERNAL_SERVICE')")
     public InventoryResponse confirmReservation(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {

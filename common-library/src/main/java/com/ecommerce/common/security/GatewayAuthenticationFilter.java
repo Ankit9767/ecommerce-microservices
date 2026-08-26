@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,9 +19,8 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
 
-        String path = request.getRequestURI();
-
-        return path.startsWith("/actuator/");
+        return request.getRequestURI()
+                .startsWith("/actuator/");
     }
 
     @Override
@@ -29,6 +29,22 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        /*
+         * InternalServiceAuthenticationFilter runs before this filter.
+         */
+        Authentication auth =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (auth != null && auth.isAuthenticated()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        /*
+         * Gateway/user authentication.
+         */
         String username = request.getHeader(
                         GatewaySecurityHeaders.AUTHENTICATED_USER
                 );
@@ -76,6 +92,7 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                         .toList();
 
         if (authorities.isEmpty()) {
+
             response.setStatus(
                     HttpServletResponse.SC_UNAUTHORIZED
             );
