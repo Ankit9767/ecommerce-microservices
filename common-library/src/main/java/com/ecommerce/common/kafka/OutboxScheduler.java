@@ -83,8 +83,18 @@ public class OutboxScheduler {
                                 type.getEventClass()
                         );
 
-                producer.publish(event);
+                /*
+                 * IMPORTANT:
+                 *
+                 * Wait for Kafka acknowledgement.
+                 */
+                producer.publish(event).get();
 
+                /*
+                 * Kafka confirmed successful publication.
+                 *
+                 * Only NOW mark the outbox event as published.
+                 */
                 outbox.setPublished(true);
 
                 repository.save(outbox);

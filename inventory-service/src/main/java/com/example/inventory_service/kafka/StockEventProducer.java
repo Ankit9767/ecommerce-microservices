@@ -39,6 +39,9 @@ public class StockEventProducer {
 
         String key = event.getProductId().toString();
 
+        log.info("Publishing {} on topic {}", event.getEventType(),
+                KafkaTopics.INVENTORY_UPDATED);
+
         return kafkaTemplate
                 .send(
                         INVENTORY_UPDATED_TOPIC,

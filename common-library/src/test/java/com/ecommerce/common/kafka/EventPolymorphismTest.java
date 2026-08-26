@@ -17,6 +17,9 @@ import com.ecommerce.common.events.UserEvent;
 import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -31,7 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EventPolymorphismTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
 
     @Test
     void reconstructsOrderCreatedFromPayload() throws Exception {
