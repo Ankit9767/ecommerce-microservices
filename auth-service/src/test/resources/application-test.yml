@@ -99,3 +99,7 @@ logging:
 pagination:
   default-page-size: 20
   max-page-size: 100
+
+service:
+  security:
+    internal-token: test-internal-token
