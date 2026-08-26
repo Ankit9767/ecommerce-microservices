@@ -1,88 +1,67 @@
 package com.example.inventory_service.kafka;
 
-import com.ecommerce.common.dto.InventoryResponse;
 import com.ecommerce.common.events.InventoryEvent;
-import com.ecommerce.common.events.OutOfStockEvent;
-import com.ecommerce.common.events.StockReleasedEvent;
-import com.ecommerce.common.events.StockReservedEvent;
-import com.ecommerce.common.events.StockUpdatedEvent;
-import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class StockEventProducer {
+
+    private static final String INVENTORY_UPDATED_TOPIC =
+            KafkaTopics.INVENTORY_UPDATED;
 
     private final KafkaTemplate<String, InventoryEvent> kafkaTemplate;
 
-    private final MeterRegistry meterRegistry;
+    private final Counter publishedCounter;
 
-    public void stockReserved(InventoryResponse response) {
+    public StockEventProducer(KafkaTemplate<String, InventoryEvent> kafkaTemplate,
+                              MeterRegistry meterRegistry) {
 
-        publish(StockReservedEvent.builder()
-                .eventType(EventType.STOCK_RESERVED)
-                .productId(response.productId())
-                .quantity(response.quantity())
-                .availableQuantity(response.availableQuantity())
-                .reservedQuantity(response.reservedQuantity())
-                .build());
+        this.kafkaTemplate = kafkaTemplate;
+
+        this.publishedCounter =
+                Counter.builder("kafka.stock.events.published")
+                        .description(
+                                "Number of stock events successfully published to Kafka"
+                        )
+                        .tag("topic", INVENTORY_UPDATED_TOPIC)
+                        .register(meterRegistry);
     }
 
-    public void stockReleased(InventoryResponse response) {
+    public CompletableFuture<?> publish(InventoryEvent event) {
 
-        publish(StockReleasedEvent.builder()
-                .eventType(EventType.STOCK_RELEASED)
-                .productId(response.productId())
-                .quantity(response.quantity())
-                .availableQuantity(response.availableQuantity())
-                .reservedQuantity(response.reservedQuantity())
-                .build());
-    }
+        String key = event.getProductId().toString();
 
-    public void stockUpdated(InventoryResponse response) {
+        return kafkaTemplate
+                .send(
+                        INVENTORY_UPDATED_TOPIC,
+                        key,
+                        event
+                )
+                .whenComplete((result, throwable) -> {
 
-        publish(StockUpdatedEvent.builder()
-                .eventType(EventType.STOCK_UPDATED)
-                .productId(response.productId())
-                .quantity(response.quantity())
-                .availableQuantity(response.availableQuantity())
-                .reservedQuantity(response.reservedQuantity())
-                .build());
-    }
+                    if (throwable != null) {
 
-    public void outOfStock(Long productId, Integer requestedQuantity,
-                           Integer availableQuantity) {
+                        log.error(
+                                "Failed to publish inventory event: " +
+                                        "eventType={}, productId={}, topic={}",
+                                event.getEventType(),
+                                key,
+                                INVENTORY_UPDATED_TOPIC,
+                                throwable
+                        );
 
-        publish(OutOfStockEvent.builder()
-                .eventType(EventType.OUT_OF_STOCK)
-                .productId(productId)
-                .quantity(requestedQuantity)
-                .availableQuantity(availableQuantity)
-                .requestedQuantity(requestedQuantity)
-                .build());
-    }
+                        return;
+                    }
 
-    private void publish(InventoryEvent event) {
-
-        log.info("Publishing {} on topic {}", event.getEventType(),
-                KafkaTopics.INVENTORY_UPDATED);
-
-        kafkaTemplate.send(
-                KafkaTopics.INVENTORY_UPDATED,
-                event.getProductId().toString(),
-                event
-        );
-
-        Counter.builder("kafka.stock.events.published")
-                .description("Stock events published to Kafka")
-                .register(meterRegistry)
-                .increment();
+                    publishedCounter.increment();
+                });
     }
 }

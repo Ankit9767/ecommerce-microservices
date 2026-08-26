@@ -2,7 +2,12 @@ package com.example.inventory_service.service.impl;
 
 import com.ecommerce.common.dto.InventoryResponse;
 import com.ecommerce.common.dto.ProductResponse;
+import com.ecommerce.common.events.OutOfStockEvent;
+import com.ecommerce.common.events.StockReleasedEvent;
+import com.ecommerce.common.events.StockReservedEvent;
+import com.ecommerce.common.events.StockUpdatedEvent;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
+import com.ecommerce.common.kafka.EventType;
 import com.example.inventory_service.client.ProductClient;
 import com.example.inventory_service.dto.CreateInventoryRequest;
 import com.ecommerce.common.dto.InventoryQuantityRequest;
@@ -11,11 +16,11 @@ import com.example.inventory_service.exception.InventoryAlreadyExistsException;
 import com.example.inventory_service.exception.InsufficientInventoryException;
 import com.example.inventory_service.exception.InventoryNotFoundException;
 import com.example.inventory_service.exception.ProductNotAvailableException;
-import com.example.inventory_service.kafka.StockEventProducer;
 import com.example.inventory_service.mapper.InventoryMapper;
 import com.example.inventory_service.metrics.InventoryMetrics;
 import com.example.inventory_service.repository.InventoryRepository;
 import com.example.inventory_service.service.InventoryService;
+import com.example.inventory_service.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +39,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryMapper inventoryMapper;
 
-    private final StockEventProducer stockEventProducer;
+    private final OutboxService outboxService;
 
     @Override
     @Transactional
@@ -118,7 +123,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockIncreased();
 
-        stockEventProducer.stockUpdated(response);
+        outboxService.saveStockUpdatedEvent(
+                StockUpdatedEvent.builder()
+                        .eventType(EventType.STOCK_UPDATED)
+                        .productId(response.productId())
+                        .quantity(response.quantity())
+                        .availableQuantity(response.availableQuantity())
+                        .reservedQuantity(response.reservedQuantity())
+                        .build()
+        );
 
         return response;
     }
@@ -140,7 +153,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockDecreased();
 
-        stockEventProducer.stockUpdated(response);
+        outboxService.saveStockUpdatedEvent(
+                StockUpdatedEvent.builder()
+                        .eventType(EventType.STOCK_UPDATED)
+                        .productId(response.productId())
+                        .quantity(response.quantity())
+                        .availableQuantity(response.availableQuantity())
+                        .reservedQuantity(response.reservedQuantity())
+                        .build()
+        );
 
         return response;
     }
@@ -160,10 +181,18 @@ public class InventoryServiceImpl implements InventoryService {
 
             inventoryMetrics.insufficientInventory();
 
-            stockEventProducer.outOfStock(
-                    productId,
-                    request.quantity(),
-                    inventory.getAvailableQuantity()
+            outboxService.saveOutOfStockEvent(
+                    OutOfStockEvent.builder()
+                            .eventType(EventType.OUT_OF_STOCK)
+                            .productId(productId)
+                            .quantity(request.quantity())
+                            .availableQuantity(
+                                    inventory.getAvailableQuantity()
+                            )
+                            .requestedQuantity(
+                                    request.quantity()
+                            )
+                            .build()
             );
 
             throw ex;
@@ -177,7 +206,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockReserved();
 
-        stockEventProducer.stockReserved(response);
+        outboxService.saveStockReservedEvent(
+                StockReservedEvent.builder()
+                        .eventType(EventType.STOCK_RESERVED)
+                        .productId(response.productId())
+                        .quantity(response.quantity())
+                        .availableQuantity(response.availableQuantity())
+                        .reservedQuantity(response.reservedQuantity())
+                        .build()
+        );
 
         return response;
     }
@@ -198,7 +235,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.stockReleased();
 
-        stockEventProducer.stockReleased(response);
+        outboxService.saveStockReleasedEvent(
+                StockReleasedEvent.builder()
+                        .eventType(EventType.STOCK_RELEASED)
+                        .productId(response.productId())
+                        .quantity(response.quantity())
+                        .availableQuantity(response.availableQuantity())
+                        .reservedQuantity(response.reservedQuantity())
+                        .build()
+        );
 
         return response;
     }
@@ -220,7 +265,15 @@ public class InventoryServiceImpl implements InventoryService {
 
         inventoryMetrics.reservationConfirmed();
 
-        stockEventProducer.stockUpdated(response);
+        outboxService.saveStockUpdatedEvent(
+                StockUpdatedEvent.builder()
+                        .eventType(EventType.STOCK_UPDATED)
+                        .productId(response.productId())
+                        .quantity(response.quantity())
+                        .availableQuantity(response.availableQuantity())
+                        .reservedQuantity(response.reservedQuantity())
+                        .build()
+        );
 
         return response;
     }
