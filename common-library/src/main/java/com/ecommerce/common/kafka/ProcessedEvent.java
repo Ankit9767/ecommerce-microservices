@@ -10,8 +10,14 @@ import java.time.Instant;
         name = "processed_events",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_processed_event_id",
+                        name = "uk_processed_event_event_id",
                         columnNames = "event_id"
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_processed_event_event_id",
+                        columnList = "event_id"
                 )
         }
 )
@@ -35,7 +41,8 @@ public class ProcessedEvent {
 
     @Column(
             name = "event_type",
-            nullable = false
+            nullable = false,
+            length = 50
     )
     private String eventType;
 

@@ -93,10 +93,10 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
-        // --------------------------------------------------
-        // Order is the source of truth for payment details
-        // --------------------------------------------------
 
+        /*
+         * Order is the source of truth for payment details.
+         */
         if (order.getTotalAmount() == null) {
 
             throw new MissingPaymentDetailsException(
@@ -122,23 +122,65 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
 
-        // --------------------------------------------------
-        // TRANSACTION #1
-        // Create PENDING payment and COMMIT
-        // --------------------------------------------------
-
-        PaymentResponse pendingPayment =
+        /*
+         * --------------------------------------------------
+         * TRANSACTION #1
+         *
+         * Create PENDING payment.
+         *
+         * If payment already exists:
+         *      created = false
+         *
+         * If new:
+         *      created = true
+         * --------------------------------------------------
+         */
+        PaymentPersistenceService.PaymentCreationResult creationResult =
                 paymentPersistenceService.createPendingPayment(
                         order,
                         paymentProvider.getProviderName()
                 );
 
+        PaymentResponse pendingPayment = creationResult.payment();
 
-        // --------------------------------------------------
-        // NO DATABASE TRANSACTION HERE
-        // External Mock provider call
-        // --------------------------------------------------
 
+        /*
+         * --------------------------------------------------
+         * BUSINESS IDEMPOTENCY
+         *
+         * Payment already exists.
+         *
+         * Do NOT create another provider payment.
+         * --------------------------------------------------
+         */
+        if (!creationResult.created()) {
+
+            log.info(
+                    "Returning existing payment for order {}: " +
+                            "paymentId={}, status={}",
+                    order.getId(),
+                    pendingPayment.id(),
+                    pendingPayment.status()
+            );
+
+            PaymentStatus status = pendingPayment.status();
+
+            if (status == PaymentStatus.SUCCESS ||
+                    status == PaymentStatus.FAILED) {
+
+                return pendingPayment;
+            }
+        }
+
+
+        /*
+         * --------------------------------------------------
+         * NEW PAYMENT
+         *
+         * External provider call.
+         * No DB transaction should wrap this operation.
+         * --------------------------------------------------
+         */
         PaymentProviderRequest providerRequest =
                 new PaymentProviderRequest(
                         pendingPayment.id(),
@@ -148,9 +190,44 @@ public class PaymentServiceImpl implements PaymentService {
                         pendingPayment.paymentMethod()
                 );
 
-        PaymentProviderResponse providerResponse =
-                paymentProvider.createPayment(providerRequest);
+        PaymentProviderResponse providerResponse;
 
+        try {
+
+            providerResponse =
+                    paymentProvider.createPayment(
+                            providerRequest
+                    );
+
+        } catch (RuntimeException ex) {
+
+            log.error(
+                    "Payment provider failed: paymentId={}, " +
+                            "orderId={}",
+                    pendingPayment.id(),
+                    pendingPayment.orderId(),
+                    ex
+            );
+
+            /*
+             * Keep the payment as PENDING.
+             *
+             * A retry can continue processing it.
+             *
+             * Do NOT delete it.
+             */
+            throw ex;
+        }
+
+
+        /*
+         * --------------------------------------------------
+         * TRANSACTION #2
+         *
+         * Update PENDING -> SUCCESS / FAILED / PROCESSING
+         * depending on provider response.
+         * --------------------------------------------------
+         */
         return paymentPersistenceService.markPaymentProcessing(
                 pendingPayment.id(),
                 providerResponse

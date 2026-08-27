@@ -1,6 +1,8 @@
 package com.example.payment_service.kafka;
 
 import com.ecommerce.common.events.OrderEvent;
+import com.ecommerce.common.exception.InvalidEventIdException;
+import com.ecommerce.common.kafka.EventIdempotencyService;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import com.example.payment_service.service.PaymentService;
@@ -21,6 +23,8 @@ public class OrderCreatedConsumer {
 
     private final PaymentService paymentService;
 
+    private final EventIdempotencyService eventIdempotencyService;
+
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 3000),
@@ -32,23 +36,94 @@ public class OrderCreatedConsumer {
     )
     public void consume(OrderEvent event) {
 
-        log.info("Received OrderEvent [{}] for order {}", event.getEventType(),
-                event.getOrderId());
+        validateEvent(event);
+
+        log.info(
+                "Received OrderEvent: eventId={}, eventType={}, orderId={}",
+                event.getEventId(),
+                event.getEventType(),
+                event.getOrderId()
+        );
 
         if (event.getEventType() != EventType.ORDER_CREATED) {
 
-            log.debug("Ignoring OrderEvent type {} for payment processing",
-                    event.getEventType());
+            log.debug(
+                    "Ignoring OrderEvent type {} for payment processing: " +
+                            "eventId={}, orderId={}",
+                    event.getEventType(),
+                    event.getEventId(),
+                    event.getOrderId()
+            );
+
+            return;
+        }
+
+        if (eventIdempotencyService.alreadyProcessed(event)) {
+
+            log.info(
+                    "Ignoring already processed ORDER_CREATED event: " +
+                            "eventId={}, orderId={}",
+                    event.getEventId(),
+                    event.getOrderId()
+            );
 
             return;
         }
 
         paymentService.processOrderCreatedEvent(event);
+
+        markProcessed(event);
+    }
+
+    private void markProcessed(OrderEvent event) {
+
+        boolean marked = eventIdempotencyService.markProcessed(event);
+
+        if (!marked) {
+
+            log.info(
+                    "ORDER_CREATED event was processed concurrently: " +
+                            "eventId={}, orderId={}",
+                    event.getEventId(),
+                    event.getOrderId()
+            );
+        }
+    }
+
+    private void validateEvent(OrderEvent event) {
+
+        if (event == null) {
+
+            throw new InvalidEventIdException(
+                    "OrderEvent must not be null"
+            );
+        }
+
+        if (event.getEventId() == null) {
+
+            throw new InvalidEventIdException(
+                    "OrderEvent must contain an eventId"
+            );
+        }
+
+        if (event.getEventType() == null) {
+
+            throw new InvalidEventIdException(
+                    "OrderEvent must contain an eventType"
+            );
+        }
     }
 
     @DltHandler
     public void handleDeadLetter(OrderEvent event) {
 
-        log.error("Order event moved to DLT after retries exhausted : {}", event);
+        log.error(
+                "Order-created event moved to DLT after retries exhausted: " +
+                        "eventId={}, eventType={}, orderId={}, event={}",
+                event != null ? event.getEventId() : null,
+                event != null ? event.getEventType() : null,
+                event != null ? event.getOrderId() : null,
+                event
+        );
     }
 }

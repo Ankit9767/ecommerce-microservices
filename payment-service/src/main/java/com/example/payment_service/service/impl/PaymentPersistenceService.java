@@ -4,9 +4,7 @@ import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
-import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.entity.Payment;
-import com.example.payment_service.exception.DuplicatePaymentException;
 import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
 import com.example.payment_service.exception.PaymentConcurrencyException;
 import com.example.payment_service.exception.PaymentNotFoundException;
@@ -15,10 +13,13 @@ import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentPersistenceService {
@@ -31,21 +32,30 @@ public class PaymentPersistenceService {
 
     private final PaymentMetrics paymentMetrics;
 
-    /**
-     * Transaction #1
-     *
-     * Creates the payment in PENDING state and commits it.
-     */
     @Transactional
-    public PaymentResponse createPendingPayment(OrderResponse order,
-                                                String providerName) {
+    public PaymentCreationResult createPendingPayment(OrderResponse order,
+                                                      String providerName) {
 
-        if (paymentRepository.existsByOrderId(order.getId())) {
+        Payment existingPayment =
+                paymentRepository
+                        .findByOrderId(order.getId())
+                        .orElse(null);
+
+        if (existingPayment != null) {
 
             paymentMetrics.duplicatePayment();
 
-            throw new DuplicatePaymentException(
-                    order.getId()
+            log.info(
+                    "Payment already exists for order {}. " +
+                            "paymentId={}, status={}",
+                    order.getId(),
+                    existingPayment.getId(),
+                    existingPayment.getStatus()
+            );
+
+            return new PaymentCreationResult(
+                    paymentMapper.toResponse(existingPayment),
+                    false
             );
         }
 
@@ -65,11 +75,56 @@ public class PaymentPersistenceService {
 
             paymentMetrics.paymentCreated();
 
-            return paymentMapper.toResponse(savedPayment);
+            log.info(
+                    "Created new payment {} for order {}",
+                    savedPayment.getId(),
+                    order.getId()
+            );
+
+            return new PaymentCreationResult(
+                    paymentMapper.toResponse(savedPayment),
+                    true
+            );
 
         } catch (DataIntegrityViolationException ex) {
 
-            paymentMetrics.duplicatePayment();
+            /*
+             * Race condition:
+             *
+             * Thread A -> inserts payment
+             * Thread B -> INSERT fails because of UNIQUE(order_id)
+             *
+             * Therefore try to retrieve the payment created by
+             * the other transaction.
+             */
+            Payment concurrentPayment =
+                    paymentRepository
+                            .findByOrderId(order.getId())
+                            .orElse(null);
+
+            if (concurrentPayment != null) {
+
+                paymentMetrics.duplicatePayment();
+
+                log.info(
+                        "Payment was created concurrently for order {}. " +
+                                "Returning payment {}.",
+                        order.getId(),
+                        concurrentPayment.getId()
+                );
+
+                return new PaymentCreationResult(
+                        paymentMapper.toResponse(concurrentPayment),
+                        false
+                );
+            }
+
+            log.error(
+                    "Payment creation failed for order {} and no " +
+                            "existing payment could be found.",
+                    order.getId(),
+                    ex
+            );
 
             throw new PaymentConcurrencyException(
                     order.getId()
@@ -81,11 +136,30 @@ public class PaymentPersistenceService {
     public PaymentResponse markPaymentProcessing(Long paymentId,
                                                  PaymentProviderResponse providerResponse) {
 
+        if (providerResponse == null) {
+
+            throw new IllegalArgumentException(
+                    "Payment provider response must not be null"
+            );
+        }
+
         Payment payment =
                 paymentRepository.findById(paymentId)
                         .orElseThrow(() ->
                                 new PaymentNotFoundException(paymentId)
                         );
+
+        if (payment.getStatus() == providerResponse.status()) {
+
+            log.info(
+                    "Payment {} is already in status {}. " +
+                            "Ignoring duplicate provider response.",
+                    paymentId,
+                    payment.getStatus()
+            );
+
+            return paymentMapper.toResponse(payment);
+        }
 
         transitionStatus(
                 payment,
@@ -94,9 +168,25 @@ public class PaymentPersistenceService {
 
         payment.setProviderReference(providerResponse.providerReference());
 
-        Payment savedPayment = paymentRepository.saveAndFlush(payment);
+        try {
 
-        return paymentMapper.toResponse(savedPayment);
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
+
+            return paymentMapper.toResponse(savedPayment);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            paymentMetrics.concurrentModification();
+
+            log.warn(
+                    "Concurrent modification while updating payment {}",
+                    paymentId
+            );
+
+            throw new PaymentConcurrencyException(
+                    paymentId
+            );
+        }
     }
 
     private void transitionStatus(Payment payment,
@@ -134,5 +224,11 @@ public class PaymentPersistenceService {
 
             paymentMetrics.paymentCancelled();
         }
+    }
+
+    public record PaymentCreationResult(
+            PaymentResponse payment,
+            boolean created
+    ) {
     }
 }

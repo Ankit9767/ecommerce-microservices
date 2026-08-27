@@ -1,6 +1,8 @@
 package com.example.order_service.kafka;
 
 import com.ecommerce.common.events.PaymentEvent;
+import com.ecommerce.common.exception.InvalidEventIdException;
+import com.ecommerce.common.kafka.EventIdempotencyService;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import com.example.order_service.service.OrderService;
@@ -21,6 +23,8 @@ public class PaymentCompletedConsumer {
 
     private final OrderService orderService;
 
+    private final EventIdempotencyService eventIdempotencyService;
+
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 3000),
@@ -32,33 +36,109 @@ public class PaymentCompletedConsumer {
     )
     public void consume(PaymentEvent event) {
 
-        log.info("Received PaymentEvent [{}] : {}", event.getEventType(), event);
+        validateEvent(event);
 
-        EventType eventType = event.getEventType();
+        log.info(
+                "Received PaymentEvent: eventId={}, eventType={}, orderId={}",
+                event.getEventId(),
+                event.getEventType(),
+                event.getOrderId()
+        );
 
-        if (eventType == null) {
+        if (eventIdempotencyService.alreadyProcessed(event)) {
 
-            log.warn("Ignoring payment event with unknown event type for order {}",
-                    event.getOrderId());
+            log.info(
+                    "Ignoring already processed PaymentEvent: eventId={}, " +
+                            "eventType={}, orderId={}",
+                    event.getEventId(),
+                    event.getEventType(),
+                    event.getOrderId()
+            );
 
             return;
         }
 
+        EventType eventType = event.getEventType();
+
         switch (eventType) {
-            case PAYMENT_SUCCESSFUL ->
-                    orderService.handlePaymentCompleted(event);
-            case PAYMENT_FAILED ->
-                    orderService.handlePaymentFailed(event);
-            default ->
-                    log.warn("Ignoring unexpected payment event type '{}'",
-                            eventType);
+
+            case PAYMENT_SUCCESSFUL -> {
+
+                orderService.handlePaymentCompleted(event);
+
+                markProcessed(event);
+            }
+
+            case PAYMENT_FAILED -> {
+
+                orderService.handlePaymentFailed(event);
+
+                markProcessed(event);
+            }
+
+            default -> {
+
+                log.warn(
+                        "Ignoring unexpected payment event type: eventId={}, " +
+                                "eventType={}, orderId={}",
+                        event.getEventId(),
+                        eventType,
+                        event.getOrderId()
+                );
+            }
+        }
+    }
+
+    private void markProcessed(PaymentEvent event) {
+
+        boolean marked = eventIdempotencyService.markProcessed(event);
+
+        if (!marked) {
+
+            log.info(
+                    "Payment event was processed concurrently: " +
+                            "eventId={}, eventType={}, orderId={}",
+                    event.getEventId(),
+                    event.getEventType(),
+                    event.getOrderId()
+            );
+        }
+    }
+
+    private void validateEvent(PaymentEvent event) {
+
+        if (event == null) {
+
+            throw new InvalidEventIdException(
+                    "PaymentEvent must not be null"
+            );
+        }
+
+        if (event.getEventId() == null) {
+
+            throw new InvalidEventIdException(
+                    "PaymentEvent must contain an eventId"
+            );
+        }
+
+        if (event.getEventType() == null) {
+
+            throw new InvalidEventIdException(
+                    "PaymentEvent must contain an eventType"
+            );
         }
     }
 
     @DltHandler
     public void handleDeadLetter(PaymentEvent event) {
 
-        log.error("Payment event moved to DLT after retries exhausted : {}",
-                event);
+        log.error(
+                "Payment event moved to DLT after retries exhausted: " +
+                        "eventId={}, eventType={}, orderId={}, event={}",
+                event != null ? event.getEventId() : null,
+                event != null ? event.getEventType() : null,
+                event != null ? event.getOrderId() : null,
+                event
+        );
     }
 }
