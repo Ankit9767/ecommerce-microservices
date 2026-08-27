@@ -5,9 +5,7 @@ import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.entity.Payment;
-import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
-import com.example.payment_service.exception.PaymentConcurrencyException;
-import com.example.payment_service.exception.PaymentNotFoundException;
+import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
@@ -138,8 +136,23 @@ public class PaymentPersistenceService {
 
         if (providerResponse == null) {
 
-            throw new IllegalArgumentException(
-                    "Payment provider response must not be null"
+            throw new InvalidPaymentProviderResponseException(
+                    paymentId
+            );
+        }
+
+        if (providerResponse.status() == null) {
+
+            throw new InvalidPaymentProviderResponseException(
+                    paymentId
+            );
+        }
+
+        if (providerResponse.providerReference() == null ||
+                providerResponse.providerReference().isBlank()) {
+
+            throw new InvalidPaymentProviderResponseException(
+                    paymentId
             );
         }
 
@@ -149,13 +162,34 @@ public class PaymentPersistenceService {
                                 new PaymentNotFoundException(paymentId)
                         );
 
+        /*
+         * --------------------------------------------------
+         * PROVIDER REFERENCE IDEMPOTENCY
+         * --------------------------------------------------
+         */
+
+        if (payment.getProviderReference() != null &&
+                !payment.getProviderReference()
+                        .equals(providerResponse.providerReference())) {
+
+            throw new PaymentProviderReferenceMismatchException(
+                    paymentId,
+                    payment.getProviderReference(),
+                    providerResponse.providerReference()
+            );
+        }
+
         if (payment.getStatus() == providerResponse.status()) {
 
+            /*
+             * Same status + same provider reference.
+             */
             log.info(
-                    "Payment {} is already in status {}. " +
-                            "Ignoring duplicate provider response.",
+                    "Ignoring duplicate provider response: " +
+                            "paymentId={}, status={}, providerReference={}",
                     paymentId,
-                    payment.getStatus()
+                    providerResponse.status(),
+                    providerResponse.providerReference()
             );
 
             return paymentMapper.toResponse(payment);

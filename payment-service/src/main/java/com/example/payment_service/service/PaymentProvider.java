@@ -9,7 +9,7 @@ public interface PaymentProvider {
 
     String getProviderName();
 
-    PaymentProviderResponse createPayment(PaymentProviderRequest request);
+    PaymentProviderResponse createProviderPaymentTransaction(PaymentProviderRequest request);
 
     PaymentProviderResponse verifyPayment(String providerReference);
 

@@ -195,7 +195,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
 
             providerResponse =
-                    paymentProvider.createPayment(
+                    paymentProvider.createProviderPaymentTransaction(
                             providerRequest
                     );
 
@@ -224,7 +224,7 @@ public class PaymentServiceImpl implements PaymentService {
          * --------------------------------------------------
          * TRANSACTION #2
          *
-         * Update PENDING -> SUCCESS / FAILED / PROCESSING
+         * Update PENDING -> PROCESSING
          * depending on provider response.
          * --------------------------------------------------
          */
