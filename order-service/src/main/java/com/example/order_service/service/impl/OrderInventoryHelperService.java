@@ -1,4 +1,4 @@
-package com.example.order_service.service;
+package com.example.order_service.service.impl;
 
 import com.ecommerce.common.dto.InventoryQuantityRequest;
 import com.ecommerce.common.exception.InventoryConfirmException;

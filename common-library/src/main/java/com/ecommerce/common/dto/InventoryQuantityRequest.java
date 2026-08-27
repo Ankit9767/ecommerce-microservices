@@ -11,8 +11,12 @@ public record InventoryQuantityRequest(
         @Min(value = 1, message = "Quantity must be at least 1")
         Integer quantity,
 
-        @NotNull(message = "Reservation ID is required")
         UUID reservationId
 
 ) {
+
+    public InventoryQuantityRequest(Integer quantity) {
+        this(quantity, null);
+    }
+
 }

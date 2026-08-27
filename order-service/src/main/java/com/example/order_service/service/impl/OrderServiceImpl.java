@@ -22,7 +22,6 @@ import com.example.order_service.exception.*;
 import com.example.order_service.mapper.OrderMapper;
 import com.example.order_service.metrics.OrderMetrics;
 import com.example.order_service.repository.OrderRepository;
-import com.example.order_service.service.OrderInventoryHelperService;
 import com.example.order_service.service.OrderService;
 import com.example.order_service.service.OrderStatusLifecycle;
 import com.example.order_service.service.OutboxService;

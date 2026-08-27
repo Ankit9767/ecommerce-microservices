@@ -33,6 +33,9 @@ public class InventoryMetrics {
 
     private final Counter productNotAvailable;
 
+    private final Counter reservationDuplicateCounter;
+
+
     public InventoryMetrics(
             MeterRegistry meterRegistry
     ) {
@@ -103,6 +106,12 @@ public class InventoryMetrics {
                                 "Number of inventory creation attempts for unavailable products"
                         )
                         .register(meterRegistry);
+
+        reservationDuplicateCounter =
+                Counter.builder("inventory.reservation_duplicate")
+                        .description("Number of duplicate inventory reservation attempts")
+                        .register(meterRegistry);
+
     }
 
     public void inventoryCreated() {
@@ -155,5 +164,9 @@ public class InventoryMetrics {
 
     public void productNotAvailable() {
         productNotAvailable.increment();
+    }
+
+    public void reservationDuplicate() {
+        reservationDuplicateCounter.increment();
     }
 }
