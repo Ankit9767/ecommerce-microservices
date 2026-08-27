@@ -132,6 +132,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(BigDecimal.ZERO)
                 .paymentMethod(request.getPaymentMethod())
                 .currency(request.getCurrency())
+                .reservationId(UUID.randomUUID())
                 .build();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -200,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
 
-            orderInventoryHelperService.releaseInventory(order.getItems());
+            orderInventoryHelperService.releaseInventory(order.getItems(), order.getReservationId());
 
             throw ex;
         }
@@ -357,7 +358,8 @@ public class OrderServiceImpl implements OrderService {
         List<OrderInventoryHelperService.InventoryAdjustment> reservations =
                 orderInventoryHelperService.reserveInventoryForUpdate(
                         existingItems,
-                        newItems
+                        newItems,
+                        existingOrder.getReservationId()
                 );
 
         try {
@@ -381,7 +383,10 @@ public class OrderServiceImpl implements OrderService {
              * Now release inventory that the new order
              * no longer requires.
              */
-            orderInventoryHelperService.releaseReducedInventory(existingItems, newItems);
+            orderInventoryHelperService.releaseReducedInventory(existingItems,
+                    newItems,
+                    existingOrder.getReservationId()
+            );
 
             return response;
 
@@ -439,7 +444,9 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = repository.save(order);
 
-        orderInventoryHelperService.releaseInventory(order.getItems());
+        orderInventoryHelperService.releaseInventory(order.getItems(),
+                order.getReservationId()
+        );
 
         try {
 
@@ -474,9 +481,7 @@ public class OrderServiceImpl implements OrderService {
             return mapper.toResponse(order);
         }
 
-        orderInventoryHelperService.confirmReservations(
-                order.getItems()
-        );
+        orderInventoryHelperService.confirmReservations(order);
 
         transitionStatus(
                 order,
@@ -606,6 +611,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(BigDecimal.ZERO)
                 .paymentMethod(request.paymentMethod())
                 .currency(request.currency())
+                .reservationId(UUID.randomUUID())
                 .build();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -677,7 +683,10 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
 
-            orderInventoryHelperService.releaseInventory(order.getItems());
+            orderInventoryHelperService.releaseInventory(
+                    order.getItems(),
+                    order.getReservationId()
+            );
 
             throw ex;
         }

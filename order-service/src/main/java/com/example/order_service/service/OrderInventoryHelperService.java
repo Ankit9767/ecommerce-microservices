@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
 @Service
 public class OrderInventoryHelperService {
 
@@ -33,6 +35,13 @@ public class OrderInventoryHelperService {
      */
     public void reserveInventory(Order order) {
 
+        if (order.getReservationId() == null) {
+
+            throw new InventoryReservationException(
+                    "Order reservationId must not be null"
+            );
+        }
+
         List<OrderItem> reservedItems = new ArrayList<>();
 
         try {
@@ -42,7 +51,8 @@ public class OrderInventoryHelperService {
                 inventoryClient.reserveStock(
                         item.getProductId(),
                         new InventoryQuantityRequest(
-                                item.getQuantity()
+                                item.getQuantity(),
+                                order.getReservationId()
                         )
                 );
 
@@ -54,7 +64,7 @@ public class OrderInventoryHelperService {
             orderMetrics.inventoryReservationFailed();
 
             // Compensate for reservations already made.
-            releaseInventory(reservedItems);
+            releaseInventory(reservedItems, order.getReservationId());
 
             throw new InventoryReservationException(
                     "Unable to reserve inventory for order"
@@ -65,7 +75,8 @@ public class OrderInventoryHelperService {
     /**
      * Release all inventory associated with the given order items.
      */
-    public void releaseInventory(List<OrderItem> items) {
+    public void releaseInventory(List<OrderItem> items,
+                                 UUID reservationId) {
 
         for (OrderItem item : items) {
 
@@ -74,7 +85,8 @@ public class OrderInventoryHelperService {
                 inventoryClient.releaseStock(
                         item.getProductId(),
                         new InventoryQuantityRequest(
-                                item.getQuantity()
+                                item.getQuantity(),
+                                reservationId
                         )
                 );
 
@@ -90,7 +102,8 @@ public class OrderInventoryHelperService {
      * inventory required by the new order.
      */
     public List<InventoryAdjustment> reserveInventoryForUpdate(List<OrderItem> existingItems,
-                                                               List<OrderItem> newItems) {
+                                                               List<OrderItem> newItems,
+                                                               UUID reservationId) {
 
         Map<Long, Integer> existingQuantities =
                 existingItems.stream()
@@ -136,14 +149,16 @@ public class OrderInventoryHelperService {
                 inventoryClient.reserveStock(
                         productId,
                         new InventoryQuantityRequest(
-                                additionalQuantity
+                                additionalQuantity,
+                                reservationId
                         )
                 );
 
                 reservations.add(
                         new InventoryAdjustment(
                                 productId,
-                                additionalQuantity
+                                additionalQuantity,
+                                reservationId
                         )
                 );
             }
@@ -167,7 +182,8 @@ public class OrderInventoryHelperService {
      * after an order update.
      */
     public void releaseReducedInventory(List<OrderItem> existingItems,
-                                        List<OrderItem> newItems) {
+                                        List<OrderItem> newItems,
+                                        UUID reservationId) {
 
         Map<Long, Integer> existingQuantities =
                 existingItems.stream()
@@ -211,7 +227,8 @@ public class OrderInventoryHelperService {
                 inventoryClient.releaseStock(
                         productId,
                         new InventoryQuantityRequest(
-                                releasedQuantity
+                                releasedQuantity,
+                                reservationId
                         )
                 );
 
@@ -230,16 +247,19 @@ public class OrderInventoryHelperService {
     /**
      * Confirm (commit) the reservations of an order that has been paid.
      */
-    public void confirmReservations(List<OrderItem> items) {
+    public void confirmReservations(Order order) {
 
-        for (OrderItem item : items) {
+        UUID reservationId = order.getReservationId();
+
+        for (OrderItem item : order.getItems()) {
 
             try {
 
                 inventoryClient.confirmReservation(
                         item.getProductId(),
                         new InventoryQuantityRequest(
-                                item.getQuantity()
+                                item.getQuantity(),
+                                reservationId
                         )
                 );
 
@@ -266,7 +286,8 @@ public class OrderInventoryHelperService {
                 inventoryClient.releaseStock(
                         adjustment.productId(),
                         new InventoryQuantityRequest(
-                                adjustment.quantity()
+                                adjustment.quantity(),
+                                adjustment.reservationId()
                         )
                 );
 
@@ -279,7 +300,8 @@ public class OrderInventoryHelperService {
 
     public record InventoryAdjustment(
             Long productId,
-            Integer quantity
+            Integer quantity,
+            UUID reservationId
     ) {
     }
 }

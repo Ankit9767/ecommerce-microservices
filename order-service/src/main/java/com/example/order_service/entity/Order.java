@@ -10,6 +10,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -66,6 +67,13 @@ public class Order extends BaseEntity {
             orphanRemoval = true
     )
     private List<OrderItem> items = new ArrayList<>();
+
+    @Column(
+            name = "reservation_id",
+            nullable = false,
+            unique = true
+    )
+    private UUID reservationId;
 
     @PrePersist
     @Override
