@@ -37,16 +37,15 @@ public class PaymentPersistenceService {
      * Creates the payment in PENDING state and commits it.
      */
     @Transactional
-    public PaymentResponse createPendingPayment(CreatePaymentRequest request,
-                                                OrderResponse order,
+    public PaymentResponse createPendingPayment(OrderResponse order,
                                                 String providerName) {
 
-        if (paymentRepository.existsByOrderId(request.orderId())) {
+        if (paymentRepository.existsByOrderId(order.getId())) {
 
             paymentMetrics.duplicatePayment();
 
             throw new DuplicatePaymentException(
-                    request.orderId()
+                    order.getId()
             );
         }
 
@@ -54,8 +53,8 @@ public class PaymentPersistenceService {
                 .orderId(order.getId())
                 .customerId(order.getCustomerId())
                 .amount(order.getTotalAmount())
-                .currency(request.currency())
-                .paymentMethod(request.paymentMethod())
+                .currency(order.getCurrency())
+                .paymentMethod(order.getPaymentMethod())
                 .provider(providerName)
                 .status(PaymentStatus.PENDING)
                 .build();
@@ -73,7 +72,7 @@ public class PaymentPersistenceService {
             paymentMetrics.duplicatePayment();
 
             throw new PaymentConcurrencyException(
-                    request.orderId()
+                    order.getId()
             );
         }
     }

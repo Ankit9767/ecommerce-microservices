@@ -1,6 +1,8 @@
 package com.ecommerce.common.dto;
 
+import com.ecommerce.common.enums.Currency;
 import com.ecommerce.common.enums.OrderStatus;
+import com.ecommerce.common.enums.PaymentMethod;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -19,6 +21,10 @@ public class OrderResponse {
     private Long customerId;
 
     private BigDecimal totalAmount;
+
+    private Currency currency;
+
+    private PaymentMethod paymentMethod;
 
     private OrderStatus status;
 

@@ -84,10 +84,38 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
-        if (order.getStatus() == OrderStatus.CANCELLED) {
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
 
             throw new PaymentAlreadyCancelledException(
                     order.getId()
+            );
+        }
+
+        // --------------------------------------------------
+        // Order is the source of truth for payment details
+        // --------------------------------------------------
+
+        if (order.getTotalAmount() == null) {
+
+            throw new MissingPaymentDetailsException(
+                    order.getId(),
+                    "totalAmount"
+            );
+        }
+
+        if (order.getCurrency() == null) {
+
+            throw new MissingPaymentDetailsException(
+                    order.getId(),
+                    "currency"
+            );
+        }
+
+        if (order.getPaymentMethod() == null) {
+
+            throw new MissingPaymentDetailsException(
+                    order.getId(),
+                    "paymentMethod"
             );
         }
 
@@ -99,7 +127,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentResponse pendingPayment =
                 paymentPersistenceService.createPendingPayment(
-                        request,
                         order,
                         paymentProvider.getProviderName()
                 );
@@ -167,10 +194,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         CreatePaymentRequest request =
                 new CreatePaymentRequest(
-                        orderEvent.getOrderId(),
-                        orderEvent.getTotalAmount(),
-                        orderEvent.getCurrency(),
-                        orderEvent.getPaymentMethod()
+                        orderEvent.getOrderId()
                 );
 
         try {
