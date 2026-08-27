@@ -48,8 +48,7 @@ public class PaymentCompletedConsumer {
             case PAYMENT_SUCCESSFUL ->
                     orderService.handlePaymentCompleted(event);
             case PAYMENT_FAILED ->
-                    log.warn("Payment failed for order {} - no status change",
-                            event.getOrderId());
+                    orderService.handlePaymentFailed(event);
             default ->
                     log.warn("Ignoring unexpected payment event type '{}'",
                             eventType);

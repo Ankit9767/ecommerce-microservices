@@ -5,9 +5,11 @@ import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
 import com.ecommerce.common.events.OrderEvent;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
 import com.example.payment_service.dto.CreatePaymentRequest;
@@ -17,10 +19,7 @@ import com.example.payment_service.exception.*;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
-import com.example.payment_service.service.PaymentProvider;
-import com.example.payment_service.service.PaymentService;
-import com.example.payment_service.service.PaymentStatusLifecycle;
-import com.example.payment_service.service.OutboxService;
+import com.example.payment_service.service.*;
 import com.ecommerce.common.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +54,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentProvider paymentProvider;
 
+    private final PaymentEventFactory paymentEventFactory;
+
+    private final OutboxService outboxService;
 
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request,
@@ -156,7 +158,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void processOrderEvent(OrderEvent event) {
+    public void processOrderCreatedEvent(OrderEvent event) {
 
         /*
          * Only newly-placed orders drive payment auto-creation. Order
@@ -213,6 +215,97 @@ public class PaymentServiceImpl implements PaymentService {
                     event.getOrderId(), ex);
 
             throw ex;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void processOrderCancelledEvent(OrderCancelledEvent event) {
+
+        Long orderId = event.getOrderId();
+
+        Payment payment =
+                paymentRepository.findByOrderId(orderId)
+                        .orElse(null);
+
+        if (payment == null) {
+
+            log.info(
+                    "No payment found for cancelled order {}",
+                    orderId
+            );
+
+            return;
+        }
+
+        PaymentStatus currentStatus = payment.getStatus();
+
+        if (currentStatus == PaymentStatus.SUCCESS) {
+
+            log.warn(
+                    "Order {} was cancelled but payment {} is already SUCCESS. " +
+                            "Refund handling is required.",
+                    orderId,
+                    payment.getId()
+            );
+
+            return;
+        }
+
+        if (currentStatus == PaymentStatus.FAILED) {
+
+            log.info(
+                    "Payment {} for order {} is already FAILED. " +
+                            "Ignoring duplicate cancellation.",
+                    payment.getId(),
+                    orderId
+            );
+
+            return;
+        }
+
+        transitionStatus(
+                payment,
+                PaymentStatus.FAILED
+        );
+
+        payment.setFailureReason(
+                event.getReason() != null
+                        ? event.getReason()
+                        : "Order cancelled"
+        );
+
+        try {
+
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
+
+            outboxService.savePaymentCompletedEvent(
+                    paymentEventFactory.createPaymentEvent(
+                            EventType.PAYMENT_FAILED,
+                            savedPayment
+                    )
+            );
+
+            log.info(
+                    "Payment {} for order {} marked FAILED because order was cancelled",
+                    savedPayment.getId(),
+                    orderId
+            );
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            paymentMetrics.concurrentModification();
+
+            log.warn(
+                    "Concurrent modification while cancelling payment {} " +
+                            "for order {}",
+                    payment.getId(),
+                    orderId
+            );
+
+            throw new PaymentConcurrentModificationException(
+                    payment.getId()
+            );
         }
     }
 
@@ -325,6 +418,7 @@ public class PaymentServiceImpl implements PaymentService {
                 targetStatus)) {
 
             paymentMetrics.invalidStatusTransition();
+
             throw new InvalidPaymentStatusTransitionException(
                     currentStatus,
                     targetStatus

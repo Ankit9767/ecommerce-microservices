@@ -2,6 +2,7 @@ package com.example.payment_service.service;
 
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
+import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderEvent;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import org.springframework.data.domain.Page;
@@ -25,5 +26,7 @@ public interface PaymentService {
     PaymentResponse updatePaymentStatus(Long paymentId,
                                                PaymentStatus targetStatus);
 
-    void processOrderEvent(OrderEvent event);
+    void processOrderCreatedEvent(OrderEvent event);
+
+    void processOrderCancelledEvent(OrderCancelledEvent event);
 }

@@ -2,6 +2,7 @@ package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.events.PaymentEvent;
 import com.ecommerce.common.exception.OutboxEventCreationException;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.OutboxEvent;
 import com.ecommerce.common.kafka.OutboxRepository;
 import com.example.payment_service.service.OutboxService;
@@ -23,15 +24,28 @@ public class OutboxServiceImpl implements OutboxService {
     @Override
     public void savePaymentCompletedEvent(PaymentEvent event) {
 
+        save(
+                event.getEventType(),
+                event,
+                event.getOrderId()
+        );
+    }
+
+    private void save(EventType eventType,
+                      Object event,
+                      Long aggregateId) {
+
         try {
 
             OutboxEvent outbox = OutboxEvent.builder()
-                    .eventType(event.getEventType().getValue())
-                    .aggregateId(event.getOrderId())
-                    .payload(objectMapper.writeValueAsString(event))
-                    .published(false)
-                    .createdAt(LocalDateTime.now())
-                    .build();
+                            .eventType(eventType.getValue())
+                            .aggregateId(aggregateId)
+                            .payload(
+                                    objectMapper.writeValueAsString(event)
+                            )
+                            .published(false)
+                            .createdAt(LocalDateTime.now())
+                            .build();
 
             repository.save(outbox);
 
@@ -39,9 +53,9 @@ public class OutboxServiceImpl implements OutboxService {
 
             throw new OutboxEventCreationException(
                     "Failed to serialize payment outbox event "
-                            + event.getEventType()
-                            + " for order "
-                            + event.getOrderId(),
+                            + eventType
+                            + " for aggregate "
+                            + aggregateId,
                     ex
             );
         }

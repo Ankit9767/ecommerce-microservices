@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class OutboxServiceImpl
-        implements OutboxService {
+public class OutboxServiceImpl implements OutboxService {
 
     private final OutboxRepository repository;
 

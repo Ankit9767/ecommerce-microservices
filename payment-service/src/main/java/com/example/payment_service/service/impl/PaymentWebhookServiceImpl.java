@@ -14,6 +14,7 @@ import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.OutboxService;
+import com.example.payment_service.service.PaymentEventFactory;
 import com.example.payment_service.service.PaymentStatusLifecycle;
 import com.example.payment_service.service.PaymentWebhookService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
     private final PaymentMetrics paymentMetrics;
 
     private final OutboxService outboxService;
+
+    private final PaymentEventFactory paymentEventFactory;
 
     @Override
     @Transactional
@@ -109,18 +112,20 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
             if (targetStatus == PaymentStatus.SUCCESS) {
 
-                writePaymentCompletedOutbox(
-                        EventType.PAYMENT_SUCCESSFUL,
-                        savedPayment,
-                        null
+                outboxService.savePaymentCompletedEvent(
+                        paymentEventFactory.createPaymentEvent(
+                                EventType.PAYMENT_SUCCESSFUL,
+                                savedPayment
+                        )
                 );
 
             } else if (targetStatus == PaymentStatus.FAILED) {
 
-                writePaymentCompletedOutbox(
-                        EventType.PAYMENT_FAILED,
-                        savedPayment,
-                        savedPayment.getFailureReason()
+                outboxService.savePaymentCompletedEvent(
+                        paymentEventFactory.createPaymentEvent(
+                                EventType.PAYMENT_FAILED,
+                                savedPayment
+                        )
                 );
             }
 
@@ -136,26 +141,5 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
                     payment.getId()
             );
         }
-    }
-
-
-    private void writePaymentCompletedOutbox(EventType eventType,
-                                             Payment payment,
-                                             String failureReason) {
-
-        PaymentCompletedEvent event =
-                PaymentCompletedEvent.builder()
-                        .eventType(eventType)
-                        .paymentId(payment.getId())
-                        .orderId(payment.getOrderId())
-                        .amount(payment.getAmount())
-                        .currency(payment.getCurrency())
-                        .paymentMethod(payment.getPaymentMethod())
-                        .paymentStatus(payment.getStatus())
-                        .transactionId(payment.getProviderReference())
-                        .failureReason(failureReason)
-                        .build();
-
-        outboxService.savePaymentCompletedEvent(event);
     }
 }

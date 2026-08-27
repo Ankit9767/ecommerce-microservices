@@ -498,6 +498,54 @@ public class OrderServiceImpl implements OrderService {
         return response;
     }
 
+    @Override
+    @Transactional
+    public OrderResponse handlePaymentFailed(PaymentEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        /*
+         * This PAYMENT_FAILED event was generated because
+         * the order itself was cancelled.
+         *
+         * The order is already CANCELLED, so there is no
+         * additional state transition or inventory action.
+         */
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+
+            log.info(
+                    "Payment {} failed for already cancelled order {}. " +
+                            "No further order action required.",
+                    event.getPaymentId(),
+                    order.getId()
+            );
+
+            return mapper.toResponse(order);
+        }
+
+        /*
+         * This protects against an unexpected PAYMENT_FAILED
+         * event that was not caused by order cancellation.
+         */
+        log.warn(
+                "Payment failed for order {} while order is in status {}. " +
+                        "No automatic order transition performed.",
+                order.getId(),
+                order.getStatus()
+        );
+
+        return mapper.toResponse(order);
+    }
+
     private void writeOrderCancelledToOutbox(Order order) throws JsonProcessingException {
 
         OrderCancelledEvent event =

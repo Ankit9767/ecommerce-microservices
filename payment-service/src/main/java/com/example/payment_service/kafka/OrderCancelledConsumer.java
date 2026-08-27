@@ -1,6 +1,6 @@
 package com.example.payment_service.kafka;
 
-import com.ecommerce.common.events.OrderEvent;
+import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import com.example.payment_service.service.PaymentService;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("!test")
 @RequiredArgsConstructor
-public class OrderCreatedConsumer {
+public class OrderCancelledConsumer {
 
     private final PaymentService paymentService;
 
@@ -27,28 +27,36 @@ public class OrderCreatedConsumer {
             dltTopicSuffix = "-dlt"
     )
     @KafkaListener(
-            topics = KafkaTopics.ORDER_CREATED,
-            groupId = "payment-group"
+            topics = KafkaTopics.ORDER_CANCELLED,
+            groupId = "payment-cancellation-group"
     )
-    public void consume(OrderEvent event) {
+    public void consume(OrderCancelledEvent event) {
 
-        log.info("Received OrderEvent [{}] for order {}", event.getEventType(),
-                event.getOrderId());
+        log.info(
+                "Received ORDER_CANCELLED event for order {}, reason={}",
+                event.getOrderId(),
+                event.getReason()
+        );
 
-        if (event.getEventType() != EventType.ORDER_CREATED) {
+        if (event.getEventType() != EventType.ORDER_CANCELLED) {
 
-            log.debug("Ignoring OrderEvent type {} for payment processing",
-                    event.getEventType());
+            log.debug(
+                    "Ignoring unexpected event type {}",
+                    event.getEventType()
+            );
 
             return;
         }
 
-        paymentService.processOrderCreatedEvent(event);
+        paymentService.processOrderCancelledEvent(event);
     }
 
     @DltHandler
-    public void handleDeadLetter(OrderEvent event) {
+    public void handleDeadLetter(OrderCancelledEvent event) {
 
-        log.error("Order event moved to DLT after retries exhausted : {}", event);
+        log.error(
+                "Order-cancelled event moved to DLT after retries exhausted: {}",
+                event
+        );
     }
 }

@@ -30,4 +30,6 @@ public interface OrderService {
                                       Authentication authentication);
 
     OrderResponse handlePaymentCompleted(PaymentEvent event);
+
+    OrderResponse handlePaymentFailed(PaymentEvent event);
 }
