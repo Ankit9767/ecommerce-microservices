@@ -11,6 +11,14 @@ spring:
     username: sa
     password:
 
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      validation-timeout: 5000
+
   jpa:
     hibernate:
       ddl-auto: create-drop
