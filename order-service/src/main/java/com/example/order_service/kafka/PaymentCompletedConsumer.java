@@ -45,6 +45,22 @@ public class PaymentCompletedConsumer {
                 event.getOrderId()
         );
 
+        EventType eventType = event.getEventType();
+
+        if (eventType != EventType.PAYMENT_SUCCESSFUL &&
+                eventType != EventType.PAYMENT_FAILED) {
+
+            log.warn(
+                    "Ignoring unexpected payment event type: " +
+                            "eventId={}, eventType={}, orderId={}",
+                    event.getEventId(),
+                    eventType,
+                    event.getOrderId()
+            );
+
+            return;
+        }
+
         if (eventIdempotencyService.alreadyProcessed(event)) {
 
             log.info(
@@ -57,8 +73,6 @@ public class PaymentCompletedConsumer {
 
             return;
         }
-
-        EventType eventType = event.getEventType();
 
         switch (eventType) {
 
