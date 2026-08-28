@@ -50,8 +50,9 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
       properties:
-        spring.json.trusted.packages: com.ecommerce.common.events
+        spring.json.trusted.packages: "*"
         spring.json.use.type.headers: true
+        spring.json.value.default.type: com.ecommerce.common.events.DomainEvent
 
     listener:
       ack-mode: record
