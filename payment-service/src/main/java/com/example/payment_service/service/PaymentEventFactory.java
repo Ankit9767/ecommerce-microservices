@@ -15,6 +15,7 @@ public class PaymentEventFactory {
                 .eventType(eventType)
                 .paymentId(payment.getId())
                 .orderId(payment.getOrderId())
+                .customerId(payment.getCustomerId())
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())
                 .paymentMethod(payment.getPaymentMethod())

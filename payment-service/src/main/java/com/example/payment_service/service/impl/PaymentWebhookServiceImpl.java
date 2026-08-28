@@ -2,7 +2,6 @@ package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
-import com.ecommerce.common.events.PaymentCompletedEvent;
 import com.ecommerce.common.kafka.EventType;
 import com.example.payment_service.dto.webhook.PaymentWebhookRequest;
 import com.example.payment_service.entity.Payment;

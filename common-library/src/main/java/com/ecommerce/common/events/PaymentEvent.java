@@ -30,6 +30,8 @@ public abstract class PaymentEvent extends DomainEvent {
 
     private Long orderId;
 
+    private Long customerId;
+
     private BigDecimal amount;
 
     private Currency currency;
