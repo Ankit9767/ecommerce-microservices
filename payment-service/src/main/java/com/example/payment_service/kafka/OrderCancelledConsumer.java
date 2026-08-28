@@ -1,7 +1,9 @@
 package com.example.payment_service.kafka;
 
 import com.ecommerce.common.events.OrderCancelledEvent;
-import com.ecommerce.common.exception.InvalidEventIdException;
+import com.ecommerce.common.exception.InvalidEventException;
+import com.ecommerce.common.exception.MissingEventIdException;
+import com.ecommerce.common.exception.MissingEventTypeException;
 import com.ecommerce.common.kafka.EventIdempotencyService;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
@@ -94,24 +96,15 @@ public class OrderCancelledConsumer {
     private void validateEvent(OrderCancelledEvent event) {
 
         if (event == null) {
-
-            throw new InvalidEventIdException(
-                    "OrderCancelledEvent must not be null"
-            );
+            throw new InvalidEventException();
         }
 
         if (event.getEventId() == null) {
-
-            throw new InvalidEventIdException(
-                    "OrderCancelledEvent must contain an eventId"
-            );
+            throw new MissingEventIdException();
         }
 
         if (event.getEventType() == null) {
-
-            throw new InvalidEventIdException(
-                    "OrderCancelledEvent must contain an eventType"
-            );
+            throw new MissingEventTypeException();
         }
     }
 
