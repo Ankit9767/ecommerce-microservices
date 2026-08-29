@@ -1,5 +1,6 @@
 package com.example.api_gateway.filter;
 
+import com.ecommerce.common.security.GatewaySecurityHeaders;
 import com.example.api_gateway.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -58,6 +59,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         Long userId = jwtService.extractUserId(token);
 
+        String email = jwtService.extractEmail(token);
+
         List<String> roles = jwtService.extractRoles(token);
 
         ServerWebExchange modifiedExchange =
@@ -70,31 +73,38 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                                             // Never trust security headers
                                             // supplied by the client.
                                             headers.remove(
-                                                    "X-Authenticated-User"
+                                                    GatewaySecurityHeaders.AUTHENTICATED_USER
                                             );
 
                                             headers.remove(
-                                                    "X-Authenticated-User-Id"
+                                                    GatewaySecurityHeaders.AUTHENTICATED_USER_ID
                                             );
 
                                             headers.remove(
-                                                    "X-User-Roles"
+                                                    GatewaySecurityHeaders.USER_ROLES
                                             );
 
                                             // Recreate them from the
                                             // validated JWT.
                                             headers.set(
-                                                    "X-Authenticated-User",
+                                                    GatewaySecurityHeaders.AUTHENTICATED_USER,
                                                     username
                                             );
 
                                             headers.set(
-                                                    "X-Authenticated-User-Id",
+                                                    GatewaySecurityHeaders.AUTHENTICATED_USER_ID,
                                                     String.valueOf(userId)
                                             );
 
+                                            if (email != null && !email.isBlank()) {
+                                                headers.set(
+                                                        GatewaySecurityHeaders.AUTHENTICATED_USER_EMAIL,
+                                                        email
+                                                );
+                                            }
+
                                             headers.set(
-                                                    "X-User-Roles",
+                                                    GatewaySecurityHeaders.USER_ROLES,
                                                     String.join(",", roles)
                                             );
                                         })

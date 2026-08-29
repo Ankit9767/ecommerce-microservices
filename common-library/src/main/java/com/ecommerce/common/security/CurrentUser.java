@@ -30,4 +30,12 @@ public class CurrentUser {
 
         return principal.username();
     }
+
+    public String getEmail( Authentication authentication) {
+
+        GatewayUserPrincipal principal =
+                (GatewayUserPrincipal)
+                        authentication.getPrincipal();
+
+        return principal.email(); }
 }

@@ -54,6 +54,10 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                         GatewaySecurityHeaders.AUTHENTICATED_USER_ID
                 );
 
+        String email = request.getHeader(
+                GatewaySecurityHeaders.AUTHENTICATED_USER_EMAIL
+        );
+
         String rolesHeader =
                 request.getHeader(
                         GatewaySecurityHeaders.USER_ROLES
@@ -102,7 +106,8 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
 
         GatewayUserPrincipal principal = new GatewayUserPrincipal(
                         userId,
-                        username
+                        username,
+                        email
                 );
 
         UsernamePasswordAuthenticationToken authentication =

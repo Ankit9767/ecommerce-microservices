@@ -31,11 +31,14 @@ public class JwtTokenGenerator {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
 
+        var user = customUserDetails.getUser();
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .claims(claims)
                 .claim(JwtConstants.SESSION_ID, sessionId)
                 .claim(JwtConstants.USER_ID, customUserDetails.getUser().getId())
+                .claim( JwtConstants.EMAIL, user.getEmail())
                 .claim(JwtConstants.ROLE, roles)
                 .claim(JwtConstants.TOKEN_TYPE, JwtTokenType.ACCESS.name())
                 .issuedAt(new Date())

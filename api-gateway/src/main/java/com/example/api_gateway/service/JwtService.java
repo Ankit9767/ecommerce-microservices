@@ -39,6 +39,12 @@ public class JwtService {
         return claimsExtractor.extractUserId(token);
     }
 
+    public String extractEmail(String token) {
+
+        return claimsExtractor.extractEmail(token);
+    }
+
+
     public List<String> extractRoles(String token) {
 
         return claimsExtractor.extractRoles(token);

@@ -43,6 +43,11 @@ public class JwtClaimsExtractor {
         return ((Number) userId).longValue();
     }
 
+    public String extractEmail(String token) {
+        return extractAllClaims(token)
+                .get(JwtConstants.EMAIL, String.class);
+    }
+
     public List<String> extractRoles(String token) {
 
         return extractAllClaims(token)
