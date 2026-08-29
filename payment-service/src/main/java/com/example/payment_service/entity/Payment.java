@@ -41,6 +41,13 @@ public class Payment extends BaseEntity {
     private Long customerId;
 
     @Column(
+            name = "customer_email",
+            nullable = false,
+            length = 255
+    )
+    private String customerEmail;
+
+    @Column(
             nullable = false,
             precision = 19,
             scale = 2

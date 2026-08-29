@@ -40,4 +40,6 @@ public abstract class PaymentEvent extends DomainEvent {
 
     private String transactionId;
 
+    private String recipientEmail;
+
 }

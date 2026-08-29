@@ -36,4 +36,6 @@ public abstract class OrderEvent extends DomainEvent {
 
     private Currency currency;
 
+    private String recipientEmail;
+
 }

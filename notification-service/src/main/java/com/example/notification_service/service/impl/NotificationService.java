@@ -34,9 +34,7 @@ public class NotificationService {
                                 .orderId(event.getOrderId())
                                 .type(NotificationType.ORDER_CREATED)
                                 .recipient(
-                                        buildRecipient(
-                                                event.getCustomerId()
-                                        )
+                                        event.getRecipientEmail()
                                 )
                                 .subject("Order Created")
                                 .message(
@@ -59,9 +57,7 @@ public class NotificationService {
                                 .orderId(event.getOrderId())
                                 .type(NotificationType.ORDER_CANCELLED)
                                 .recipient(
-                                        buildRecipient(
-                                                event.getCustomerId()
-                                        )
+                                        event.getRecipientEmail()
                                 )
                                 .subject("Order Cancelled")
                                 .message(
@@ -89,9 +85,7 @@ public class NotificationService {
                                         NotificationType.PAYMENT_SUCCESSFUL
                                 )
                                 .recipient(
-                                        buildRecipient(
-                                                event.getCustomerId()
-                                        )
+                                        event.getRecipientEmail()
                                 )
                                 .subject("Payment Successful")
                                 .message(
@@ -119,9 +113,7 @@ public class NotificationService {
                                         NotificationType.PAYMENT_FAILED
                                 )
                                 .recipient(
-                                        buildRecipient(
-                                                event.getCustomerId()
-                                        )
+                                        event.getRecipientEmail()
                                 )
                                 .subject("Payment Failed")
                                 .message(
@@ -170,16 +162,16 @@ public class NotificationService {
         }
     }
 
-    /*
-     * Temporary recipient strategy.
-     *
-     * Later this should come from customer/profile data
-     * rather than constructing an address here.
-     */
-    private String buildRecipient(Long customerId) {
-
-        return "customer-" +
-                customerId +
-                "@example.com";
-    }
+//    /*
+//     * Temporary recipient strategy.
+//     *
+//     * Later this should come from customer/profile data
+//     * rather than constructing an address here.
+//     */
+//    private String buildRecipient(Long customerId) {
+//
+//        return "customer-" +
+//                customerId +
+//                "@example.com";
+//    }
 }

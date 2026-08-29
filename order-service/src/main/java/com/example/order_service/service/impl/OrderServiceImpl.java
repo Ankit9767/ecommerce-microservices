@@ -107,6 +107,7 @@ public class OrderServiceImpl implements OrderService {
                         .eventType(EventType.ORDER_CREATED)
                         .orderId(order.getId())
                         .customerId(order.getCustomerId())
+                        .recipientEmail(order.getCustomerEmail())
                         .currency(order.getCurrency())
                         .paymentMethod(order.getPaymentMethod())
                         .totalAmount(order.getTotalAmount())
@@ -125,8 +126,11 @@ public class OrderServiceImpl implements OrderService {
 
         Long customerId = currentUser.getUserId(authentication);
 
+        String customerEmail = currentUser.getEmail(authentication);
+
         Order order = Order.builder()
                 .customerId(customerId)
+                .customerEmail(customerEmail)
                 .status(OrderStatus.PENDING_PAYMENT)
                 .totalAmount(BigDecimal.ZERO)
                 .paymentMethod(request.getPaymentMethod())
@@ -553,6 +557,7 @@ public class OrderServiceImpl implements OrderService {
                         .eventType(EventType.ORDER_CANCELLED)
                         .orderId(order.getId())
                         .customerId(order.getCustomerId())
+                        .recipientEmail(order.getCustomerEmail())
                         .reason("Order cancelled by user or admin")
                         .build();
 
@@ -637,6 +642,8 @@ public class OrderServiceImpl implements OrderService {
 
         Long customerId = currentUser.getUserId(authentication);
 
+        String customerEmail = currentUser.getEmail(authentication);
+
         CartResponse cart;
 
         try {
@@ -654,6 +661,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = Order.builder()
                 .customerId(customerId)
+                .customerEmail(customerEmail)
                 .status(OrderStatus.PENDING_PAYMENT)
                 .totalAmount(BigDecimal.ZERO)
                 .paymentMethod(request.paymentMethod())

@@ -20,6 +20,8 @@ public class OrderResponse {
 
     private Long customerId;
 
+    private String customerEmail;
+
     private BigDecimal totalAmount;
 
     private Currency currency;

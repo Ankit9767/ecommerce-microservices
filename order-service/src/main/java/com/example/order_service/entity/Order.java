@@ -41,6 +41,13 @@ public class Order extends BaseEntity {
     private Long customerId;
 
     @Column(
+            name = "customer_email",
+            nullable = false,
+            length = 255
+    )
+    private String customerEmail;
+
+    @Column(
             name = "total_amount",
             nullable = false,
             precision = 19,

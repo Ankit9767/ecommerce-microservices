@@ -60,6 +60,7 @@ public class PaymentPersistenceService {
         Payment payment = Payment.builder()
                 .orderId(order.getId())
                 .customerId(order.getCustomerId())
+                .customerEmail(order.getCustomerEmail())
                 .amount(order.getTotalAmount())
                 .currency(order.getCurrency())
                 .paymentMethod(order.getPaymentMethod())
