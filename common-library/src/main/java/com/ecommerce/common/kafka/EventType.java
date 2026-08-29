@@ -1,27 +1,6 @@
 package com.ecommerce.common.kafka;
 
-import com.ecommerce.common.events.CartAbandonedEvent;
-import com.ecommerce.common.events.CartCheckedOutEvent;
-import com.ecommerce.common.events.CartEvent;
-import com.ecommerce.common.events.DomainEvent;
-import com.ecommerce.common.events.InventoryEvent;
-import com.ecommerce.common.events.OrderCancelledEvent;
-import com.ecommerce.common.events.OrderCreatedEvent;
-import com.ecommerce.common.events.OrderEvent;
-import com.ecommerce.common.events.OutOfStockEvent;
-import com.ecommerce.common.events.PaymentCompletedEvent;
-import com.ecommerce.common.events.PaymentEvent;
-import com.ecommerce.common.events.ProductCreatedEvent;
-import com.ecommerce.common.events.ProductDeletedEvent;
-import com.ecommerce.common.events.ProductEvent;
-import com.ecommerce.common.events.ProductUpdatedEvent;
-import com.ecommerce.common.events.StockReleasedEvent;
-import com.ecommerce.common.events.StockReservedEvent;
-import com.ecommerce.common.events.StockUpdatedEvent;
-import com.ecommerce.common.events.UserBlockedEvent;
-import com.ecommerce.common.events.UserDeletedEvent;
-import com.ecommerce.common.events.UserEvent;
-import com.ecommerce.common.events.UserRegisteredEvent;
+import com.ecommerce.common.events.*;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -31,6 +10,7 @@ public enum EventType {
 
     ORDER_CREATED("order-created"),
     ORDER_CANCELLED("order-cancelled"),
+    ORDER_PAID("order-paid"),
 
     PAYMENT_SUCCESSFUL("payment-successful"),
     PAYMENT_FAILED("payment-failed"),
@@ -89,6 +69,7 @@ public enum EventType {
         return switch (this) {
             case ORDER_CREATED -> OrderCreatedEvent.class;
             case ORDER_CANCELLED -> OrderCancelledEvent.class;
+            case ORDER_PAID -> OrderPaidEvent.class;
             case PAYMENT_SUCCESSFUL, PAYMENT_FAILED -> PaymentCompletedEvent.class;
             case STOCK_RESERVED -> StockReservedEvent.class;
             case STOCK_RELEASED -> StockReleasedEvent.class;
