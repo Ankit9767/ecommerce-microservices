@@ -241,6 +241,29 @@ notification:
 
 
 # ===========================
+# Shipping Service
+# ===========================
+
+shipping:
+  image:
+    repository: ecommerce-microservices-shipping-service
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+
+
+# ===========================
 # Redis
 # ===========================
 
