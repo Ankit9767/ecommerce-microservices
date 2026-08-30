@@ -48,6 +48,7 @@
         <module>cart-service</module>
         <module>inventory-service</module>
         <module>notification-service</module>
+        <module>shipping-service</module>
 
     </modules>
 
