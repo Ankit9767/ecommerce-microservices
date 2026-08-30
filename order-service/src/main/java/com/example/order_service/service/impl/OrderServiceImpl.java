@@ -2,10 +2,7 @@ package com.example.order_service.service.impl;
 
 import com.ecommerce.common.dto.*;
 import com.ecommerce.common.enums.OrderStatus;
-import com.ecommerce.common.events.OrderCancelledEvent;
-import com.ecommerce.common.events.OrderCreatedEvent;
-import com.ecommerce.common.events.OrderItemDto;
-import com.ecommerce.common.events.PaymentEvent;
+import com.ecommerce.common.events.*;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.security.CurrentUser;
@@ -115,6 +112,39 @@ public class OrderServiceImpl implements OrderService {
                         .build();
 
         outboxService.saveOrderCreatedEvent(event);
+    }
+
+    private void writeOrderPaidToOutbox(Order order) {
+
+        List<OrderItemDto> items = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+
+            items.add(
+                    OrderItemDto.builder()
+                            .productId(item.getProductId())
+                            .productName(item.getProductName())
+                            .sku(item.getSku())
+                            .unitPrice(item.getUnitPrice())
+                            .quantity(item.getQuantity())
+                            .lineTotal(item.getLineTotal())
+                            .build()
+            );
+        }
+
+        OrderPaidEvent event =
+                OrderPaidEvent.builder()
+                        .eventType(EventType.ORDER_PAID)
+                        .orderId(order.getId())
+                        .customerId(order.getCustomerId())
+                        .customerEmail(order.getCustomerEmail())
+                        .currency(order.getCurrency())
+                        .paymentMethod(order.getPaymentMethod())
+                        .totalAmount(order.getTotalAmount())
+                        .items(items)
+                        .build();
+
+        outboxService.saveOrderPaidEvent(event);
     }
 
     @Override
@@ -492,6 +522,8 @@ public class OrderServiceImpl implements OrderService {
         );
 
         OrderResponse response = orderPersistenceService.updateOrder(order);
+
+        writeOrderPaidToOutbox(order);
 
         /*
          * Commit the stock that was reserved at order creation time

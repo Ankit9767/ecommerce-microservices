@@ -26,7 +26,8 @@ import lombok.experimental.SuperBuilder;
         visible = true)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = OrderCreatedEvent.class, name = "order-created"),
-        @JsonSubTypes.Type(value = OrderCancelledEvent.class, name = "order-cancelled")
+        @JsonSubTypes.Type(value = OrderCancelledEvent.class, name = "order-cancelled"),
+        @JsonSubTypes.Type(value = OrderPaidEvent.class, name = "order-paid")
 })
 public abstract class OrderEvent extends DomainEvent {
 

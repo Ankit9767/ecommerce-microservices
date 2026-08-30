@@ -2,6 +2,7 @@ package com.example.order_service.service.impl;
 
 import com.ecommerce.common.events.OrderCancelledEvent;
 import com.ecommerce.common.events.OrderCreatedEvent;
+import com.ecommerce.common.events.OrderPaidEvent;
 import com.ecommerce.common.exception.OutboxEventCreationException;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.OutboxEvent;
@@ -32,6 +33,11 @@ public class OutboxServiceImpl implements OutboxService {
     public void saveOrderCancelledEvent(OrderCancelledEvent event) {
 
         save(EventType.ORDER_CANCELLED, event, event.getOrderId());
+    }
+
+    public void saveOrderPaidEvent(OrderPaidEvent event) {
+
+        save(EventType.ORDER_PAID, event.getEventId(), event.getOrderId());
     }
 
     private void save(EventType eventType, Object event, Long aggregateId) {
