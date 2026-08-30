@@ -1,10 +1,17 @@
 package com.example.shipping_service.exception;
 
-public class InvalidShipmentStatusTransitionException extends RuntimeException {
+public class InvalidShipmentStatusTransitionException
+        extends RuntimeException {
 
-    public InvalidShipmentStatusTransitionException(
-            String message) {
+    public InvalidShipmentStatusTransitionException(Long shipmentId,
+                                                    String currentStatus,
+                                                    String requestedStatus) {
 
-        super(message);
+        super(
+                "Invalid shipment status transition: " +
+                        "shipmentId=" + shipmentId +
+                        ", currentStatus=" + currentStatus +
+                        ", requestedStatus=" + requestedStatus
+        );
     }
 }

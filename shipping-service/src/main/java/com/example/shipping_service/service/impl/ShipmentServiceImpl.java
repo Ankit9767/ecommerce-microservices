@@ -162,12 +162,9 @@ public class ShipmentServiceImpl implements ShipmentService {
         if (!valid) {
 
             throw new InvalidShipmentStatusTransitionException(
-                    "Cannot transition shipment " +
-                            shipment.getId() +
-                            " from " +
-                            currentStatus +
-                            " to " +
-                            targetStatus
+                    shipment.getId(),
+                    currentStatus.name(),
+                    targetStatus.name()
             );
         }
     }
@@ -184,10 +181,9 @@ public class ShipmentServiceImpl implements ShipmentService {
                 shipment.getStatus() == ShipmentStatus.CANCELLED) {
 
             throw new InvalidShipmentStatusTransitionException(
-                    "Cannot assign tracking information to shipment " +
-                            shipmentId +
-                            " in status " +
-                            shipment.getStatus()
+                    shipmentId,
+                    shipment.getStatus().name(),
+                    "ASSIGN_TRACKING"
             );
         }
 
