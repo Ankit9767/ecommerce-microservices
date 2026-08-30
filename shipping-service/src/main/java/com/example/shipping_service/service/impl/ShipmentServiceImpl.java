@@ -67,6 +67,35 @@ public class ShipmentServiceImpl implements ShipmentService {
         return persistenceService.save(shipment);
     }
 
+    @Transactional
+    @Override
+    public Shipment markShipped(Long shipmentId,
+                                String carrier,
+                                String trackingNumber) {
+
+        Shipment shipment = persistenceService.find(shipmentId);
+
+        validateTransition(
+                shipment,
+                ShipmentStatus.SHIPPED
+        );
+
+        shipment.setCarrier(carrier);
+        shipment.setTrackingNumber(trackingNumber);
+        shipment.setStatus(ShipmentStatus.SHIPPED);
+        shipment.setShippedAt(Instant.now());
+
+        log.info(
+                "Shipment marked as SHIPPED: shipmentId={}, " +
+                        "orderId={}, trackingNumber={}",
+                shipmentId,
+                shipment.getOrderId(),
+                trackingNumber
+        );
+
+        return persistenceService.save(shipment);
+    }
+
     @Override
     @Transactional
     public Shipment markInTransit(Long shipmentId) {
@@ -117,6 +146,22 @@ public class ShipmentServiceImpl implements ShipmentService {
         return persistenceService.save(shipment);
     }
 
+    @Transactional
+    @Override
+    public Shipment markFailed(Long shipmentId) {
+
+        Shipment shipment = persistenceService.find(shipmentId);
+
+        validateTransition(
+                shipment,
+                ShipmentStatus.FAILED
+        );
+
+        shipment.setStatus(ShipmentStatus.FAILED);
+
+        return persistenceService.save(shipment);
+    }
+
     @Override
     @Transactional
     public Shipment cancelShipment(Long shipmentId) {
@@ -133,30 +178,34 @@ public class ShipmentServiceImpl implements ShipmentService {
         return persistenceService.save(shipment);
     }
 
-    private void validateTransition(Shipment shipment,
-                                    ShipmentStatus targetStatus) {
+    private void validateTransition(
+            Shipment shipment,
+            ShipmentStatus requestedStatus) {
 
-        ShipmentStatus currentStatus = shipment.getStatus();
+        ShipmentStatus currentStatus =
+                shipment.getStatus();
 
-        boolean valid = switch (targetStatus) {
+        boolean valid = switch (currentStatus) {
+
+            case CREATED ->
+                    requestedStatus == ShipmentStatus.SHIPPED
+                            || requestedStatus == ShipmentStatus.CANCELLED;
 
             case SHIPPED ->
-                    currentStatus == ShipmentStatus.CREATED;
+                    requestedStatus == ShipmentStatus.IN_TRANSIT
+                            || requestedStatus == ShipmentStatus.FAILED;
 
             case IN_TRANSIT ->
-                    currentStatus == ShipmentStatus.SHIPPED;
+                    requestedStatus == ShipmentStatus.OUT_FOR_DELIVERY
+                            || requestedStatus == ShipmentStatus.FAILED;
 
             case OUT_FOR_DELIVERY ->
-                    currentStatus == ShipmentStatus.IN_TRANSIT;
+                    requestedStatus == ShipmentStatus.DELIVERED
+                            || requestedStatus == ShipmentStatus.FAILED;
 
-            case DELIVERED ->
-                    currentStatus == ShipmentStatus.OUT_FOR_DELIVERY;
-
-            case CANCELLED ->
-                    currentStatus == ShipmentStatus.CREATED
-                            || currentStatus == ShipmentStatus.SHIPPED;
-
-            default -> false;
+            case DELIVERED,
+                 FAILED,
+                 CANCELLED -> false;
         };
 
         if (!valid) {
@@ -164,7 +213,7 @@ public class ShipmentServiceImpl implements ShipmentService {
             throw new InvalidShipmentStatusTransitionException(
                     shipment.getId(),
                     currentStatus.name(),
-                    targetStatus.name()
+                    requestedStatus.name()
             );
         }
     }
