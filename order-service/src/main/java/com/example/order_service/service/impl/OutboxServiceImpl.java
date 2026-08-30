@@ -37,7 +37,7 @@ public class OutboxServiceImpl implements OutboxService {
 
     public void saveOrderPaidEvent(OrderPaidEvent event) {
 
-        save(EventType.ORDER_PAID, event.getEventId(), event.getOrderId());
+        save(EventType.ORDER_PAID, event, event.getOrderId());
     }
 
     private void save(EventType eventType, Object event, Long aggregateId) {

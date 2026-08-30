@@ -89,6 +89,9 @@ public class OrderEventProducer {
             case ORDER_CANCELLED ->
                     KafkaTopics.ORDER_CANCELLED;
 
+            case ORDER_PAID ->
+                    KafkaTopics.ORDER_PAID;
+
             default ->
                     throw new IllegalArgumentException(
                             "Unsupported order event type: " + eventType

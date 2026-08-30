@@ -23,6 +23,7 @@ public class OrderOutboxProducer implements OutboxProducer {
     @Override
     public boolean supports(EventType eventType) {
         return eventType == EventType.ORDER_CREATED
-                || eventType == EventType.ORDER_CANCELLED;
+                || eventType == EventType.ORDER_CANCELLED
+                || eventType == EventType.ORDER_PAID;
     }
 }
