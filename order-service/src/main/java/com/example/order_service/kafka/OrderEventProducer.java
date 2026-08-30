@@ -13,13 +13,13 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
-public class OrderKafkaProducer {
+public class OrderEventProducer {
 
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
     private final Counter publishedCounter;
 
-    public OrderKafkaProducer(KafkaTemplate<String, OrderEvent> kafkaTemplate,
+    public OrderEventProducer(KafkaTemplate<String, OrderEvent> kafkaTemplate,
                               MeterRegistry meterRegistry) {
 
         this.kafkaTemplate = kafkaTemplate;

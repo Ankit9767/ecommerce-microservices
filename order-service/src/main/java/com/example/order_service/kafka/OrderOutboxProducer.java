@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class OrderOutboxProducer implements OutboxProducer {
 
-    private final OrderKafkaProducer producer;
+    private final OrderEventProducer producer;
 
     @Override
     public CompletableFuture<?> publish(DomainEvent event) {
