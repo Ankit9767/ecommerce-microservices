@@ -4,13 +4,16 @@ import com.ecommerce.common.events.OrderPaidEvent;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
 import com.example.shipping_service.exception.InvalidShipmentStatusTransitionException;
+import com.example.shipping_service.exception.MissingCarrierException;
+import com.example.shipping_service.exception.MissingTrackingNumberException;
+import com.example.shipping_service.exception.TrackingInformationAlreadyAssignedException;
 import com.example.shipping_service.service.ShipmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -51,24 +54,6 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     @Transactional
-    public Shipment markShipped(Long shipmentId) {
-
-        Shipment shipment = persistenceService.find(shipmentId);
-
-        validateTransition(
-                shipment,
-                ShipmentStatus.SHIPPED
-        );
-
-        shipment.setStatus(ShipmentStatus.SHIPPED);
-
-        shipment.setShippedAt(Instant.now());
-
-        return persistenceService.save(shipment);
-    }
-
-    @Transactional
-    @Override
     public Shipment markShipped(Long shipmentId,
                                 String carrier,
                                 String trackingNumber) {
@@ -80,16 +65,23 @@ public class ShipmentServiceImpl implements ShipmentService {
                 ShipmentStatus.SHIPPED
         );
 
+        validateTrackingInformation(
+                carrier,
+                trackingNumber
+        );
+
         shipment.setCarrier(carrier);
         shipment.setTrackingNumber(trackingNumber);
         shipment.setStatus(ShipmentStatus.SHIPPED);
-        shipment.setShippedAt(Instant.now());
+        shipment.setShippedAt(LocalDateTime.now());
 
         log.info(
-                "Shipment marked as SHIPPED: shipmentId={}, " +
-                        "orderId={}, trackingNumber={}",
+                "Shipment marked as SHIPPED: " +
+                        "shipmentId={}, orderId={}, " +
+                        "carrier={}, trackingNumber={}",
                 shipmentId,
                 shipment.getOrderId(),
+                carrier,
                 trackingNumber
         );
 
@@ -109,6 +101,13 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         shipment.setStatus(ShipmentStatus.IN_TRANSIT);
 
+        log.info(
+                "Shipment marked as IN_TRANSIT: " +
+                        "shipmentId={}, orderId={}",
+                shipmentId,
+                shipment.getOrderId()
+        );
+
         return persistenceService.save(shipment);
     }
 
@@ -125,10 +124,16 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         shipment.setStatus(ShipmentStatus.OUT_FOR_DELIVERY);
 
+        log.info(
+                "Shipment marked as OUT_FOR_DELIVERY: " +
+                        "shipmentId={}, orderId={}",
+                shipmentId,
+                shipment.getOrderId()
+        );
+
         return persistenceService.save(shipment);
     }
 
-    @Override
     @Transactional
     public Shipment markDelivered(Long shipmentId) {
 
@@ -141,7 +146,14 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         shipment.setStatus(ShipmentStatus.DELIVERED);
 
-        shipment.setDeliveredAt(Instant.now());
+        shipment.setDeliveredAt(LocalDateTime.now());
+
+        log.info(
+                "Shipment marked as DELIVERED: " +
+                        "shipmentId={}, orderId={}",
+                shipmentId,
+                shipment.getOrderId()
+        );
 
         return persistenceService.save(shipment);
     }
@@ -159,6 +171,13 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         shipment.setStatus(ShipmentStatus.FAILED);
 
+        log.info(
+                "Shipment marked as FAILED: " +
+                        "shipmentId={}, orderId={}",
+                shipmentId,
+                shipment.getOrderId()
+        );
+
         return persistenceService.save(shipment);
     }
 
@@ -175,15 +194,51 @@ public class ShipmentServiceImpl implements ShipmentService {
 
         shipment.setStatus(ShipmentStatus.CANCELLED);
 
+        log.info(
+                "Shipment cancelled: " +
+                        "shipmentId={}, orderId={}",
+                shipmentId,
+                shipment.getOrderId()
+        );
+
         return persistenceService.save(shipment);
     }
 
-    private void validateTransition(
-            Shipment shipment,
-            ShipmentStatus requestedStatus) {
+    @Override
+    @Transactional
+    public Shipment assignTracking(Long shipmentId,
+                                   String carrier,
+                                   String trackingNumber) {
 
-        ShipmentStatus currentStatus =
-                shipment.getStatus();
+        Shipment shipment = persistenceService.find(shipmentId);
+
+        validateTrackingAssignment(
+                shipment,
+                carrier,
+                trackingNumber
+        );
+
+        shipment.setCarrier(carrier);
+
+        shipment.setTrackingNumber(trackingNumber);
+
+        log.info(
+                "Tracking assigned: " +
+                        "shipmentId={}, orderId={}, " +
+                        "carrier={}, trackingNumber={}",
+                shipmentId,
+                shipment.getOrderId(),
+                carrier,
+                trackingNumber
+        );
+
+        return persistenceService.save(shipment);
+    }
+
+    private void validateTransition(Shipment shipment,
+                                    ShipmentStatus requestedStatus) {
+
+        ShipmentStatus currentStatus = shipment.getStatus();
 
         boolean valid = switch (currentStatus) {
 
@@ -218,28 +273,43 @@ public class ShipmentServiceImpl implements ShipmentService {
         }
     }
 
-    @Override
-    @Transactional
-    public Shipment assignTracking(Long shipmentId,
-                                   String carrier,
-                                   String trackingNumber) {
+    private void validateTrackingInformation(String carrier,
+                                             String trackingNumber) {
 
-        Shipment shipment = persistenceService.find(shipmentId);
+        if (carrier == null || carrier.isBlank()) {
 
-        if (shipment.getStatus() == ShipmentStatus.DELIVERED ||
-                shipment.getStatus() == ShipmentStatus.CANCELLED) {
+            throw new MissingCarrierException();
+        }
+
+        if (trackingNumber == null ||
+                trackingNumber.isBlank()) {
+
+            throw new MissingTrackingNumberException();
+        }
+    }
+
+
+    private void validateTrackingAssignment(Shipment shipment,
+                                            String carrier,
+                                            String trackingNumber) {
+
+        if (shipment.getStatus() != ShipmentStatus.CREATED) {
 
             throw new InvalidShipmentStatusTransitionException(
-                    shipmentId,
+                    shipment.getId(),
                     shipment.getStatus().name(),
                     "ASSIGN_TRACKING"
             );
         }
 
-        shipment.setCarrier(carrier);
+        if (shipment.getTrackingNumber() != null) {
 
-        shipment.setTrackingNumber(trackingNumber);
+            throw new TrackingInformationAlreadyAssignedException();
+        }
 
-        return persistenceService.save(shipment);
+        validateTrackingInformation(
+                carrier,
+                trackingNumber
+        );
     }
 }

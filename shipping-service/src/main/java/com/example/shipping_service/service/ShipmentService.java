@@ -2,7 +2,6 @@ package com.example.shipping_service.service;
 
 import com.ecommerce.common.events.OrderPaidEvent;
 import com.example.shipping_service.entity.Shipment;
-import org.springframework.transaction.annotation.Transactional;
 
 public interface ShipmentService {
 
@@ -11,8 +10,6 @@ public interface ShipmentService {
     Shipment getShipment(Long shipmentId);
 
     Shipment getShipmentByOrderId(Long orderId);
-
-    Shipment markShipped(Long shipmentId);
 
     Shipment markShipped(Long shipmentId,
                          String carrier,

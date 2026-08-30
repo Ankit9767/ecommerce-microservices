@@ -29,25 +29,17 @@ public class ShipmentController {
         );
     }
 
-    @PostMapping("/{shipmentId}/tracking")
-    public ResponseEntity<Shipment> assignTracking(@PathVariable Long shipmentId,
-                                                   @RequestParam String carrier,
-                                                   @RequestParam String trackingNumber) {
+    @PostMapping("/{shipmentId}/ship")
+    public ResponseEntity<Shipment> markShipped(@PathVariable Long shipmentId,
+                                                @RequestParam String carrier,
+                                                @RequestParam String trackingNumber) {
 
         return ResponseEntity.ok(
-                shipmentService.assignTracking(
+                shipmentService.markShipped(
                         shipmentId,
                         carrier,
                         trackingNumber
                 )
-        );
-    }
-
-    @PostMapping("/{shipmentId}/ship")
-    public ResponseEntity<Shipment> markShipped(@PathVariable Long shipmentId) {
-
-        return ResponseEntity.ok(
-                shipmentService.markShipped(shipmentId)
         );
     }
 
@@ -67,11 +59,19 @@ public class ShipmentController {
         );
     }
 
-    @PostMapping("/{shipmentId}/delivered")
+    @PostMapping("/{shipmentId}/deliver")
     public ResponseEntity<Shipment> markDelivered(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
                 shipmentService.markDelivered(shipmentId)
+        );
+    }
+
+    @PostMapping("/{shipmentId}/fail")
+    public ResponseEntity<Shipment> markFailed(@PathVariable Long shipmentId) {
+
+        return ResponseEntity.ok(
+                shipmentService.markFailed(shipmentId)
         );
     }
 

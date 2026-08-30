@@ -1,10 +1,11 @@
 package com.example.shipping_service.entity;
 
+import com.ecommerce.common.entity.BaseEntity;
 import com.example.shipping_service.enums.ShipmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -43,11 +44,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Shipment {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Shipment extends BaseEntity {
 
     @Column(
             name = "order_id",
@@ -84,27 +81,29 @@ public class Shipment {
     )
     private String carrier;
 
-    @Column(
-            name = "created_at",
-            nullable = false
-    )
-    private Instant createdAt;
-
     @Column(name = "shipped_at")
-    private Instant shippedAt;
+    private LocalDateTime shippedAt;
 
     @Column(name = "delivered_at")
-    private Instant deliveredAt;
+    private LocalDateTime deliveredAt;
+
+    @Version
+    @Column(
+            name = "version",
+            nullable = false
+    )
+    @Builder.Default
+    private Long version = 0L;
 
     @PrePersist
-    public void onCreate() {
-
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
+    public void initialize() {
 
         if (status == null) {
             status = ShipmentStatus.CREATED;
+        }
+
+        if (version == null) {
+            version = 0L;
         }
     }
 }
