@@ -55,6 +55,8 @@ public abstract class ShipmentEvent extends DomainEvent {
 
     private Long customerId;
 
+    private String recipientEmail;
+
     private String carrier;
 
     private String trackingNumber;

@@ -138,6 +138,7 @@ public class OrderServiceImpl implements OrderService {
                         .orderId(order.getId())
                         .customerId(order.getCustomerId())
                         .customerEmail(order.getCustomerEmail())
+                        .recipientEmail(order.getCustomerEmail())
                         .currency(order.getCurrency())
                         .paymentMethod(order.getPaymentMethod())
                         .totalAmount(order.getTotalAmount())

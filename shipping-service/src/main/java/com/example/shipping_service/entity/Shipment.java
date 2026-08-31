@@ -59,6 +59,13 @@ public class Shipment extends BaseEntity {
     )
     private Long customerId;
 
+    @Column(
+            name = "recipient_email",
+            nullable = false,
+            length = 255
+    )
+    private String recipientEmail;
+
     @Enumerated(EnumType.STRING)
     @Column(
             name = "status",

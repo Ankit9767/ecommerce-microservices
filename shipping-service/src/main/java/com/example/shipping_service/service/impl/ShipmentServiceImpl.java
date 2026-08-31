@@ -52,7 +52,8 @@ public class ShipmentServiceImpl implements ShipmentService {
         ShipmentCreationResult result =
                 persistenceService.createIfAbsent(
                         event.getOrderId(),
-                        event.getCustomerId()
+                        event.getCustomerId(),
+                        event.getRecipientEmail()
                 );
 
         Shipment shipment = result.shipment();

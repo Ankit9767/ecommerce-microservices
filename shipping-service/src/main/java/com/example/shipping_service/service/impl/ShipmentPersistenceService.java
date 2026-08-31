@@ -17,7 +17,8 @@ public class ShipmentPersistenceService {
 
     @Transactional
     public ShipmentCreationResult createIfAbsent(Long orderId,
-                                                 Long customerId) {
+                                                 Long customerId,
+                                                 String recipientEmail) {
 
         return repository.findByOrderId(orderId)
 
@@ -34,6 +35,7 @@ public class ShipmentPersistenceService {
                             Shipment.builder()
                                     .orderId(orderId)
                                     .customerId(customerId)
+                                    .recipientEmail(recipientEmail)
                                     .status(
                                             ShipmentStatus.CREATED
                                     )

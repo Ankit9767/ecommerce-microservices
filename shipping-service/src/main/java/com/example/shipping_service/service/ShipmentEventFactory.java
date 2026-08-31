@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 public class ShipmentEventFactory {
 
     public ShipmentShippedEvent buildShipmentShippedEvent(Shipment shipment) {
+
         return (ShipmentShippedEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_SHIPPED
@@ -16,6 +17,7 @@ public class ShipmentEventFactory {
     }
 
     public ShipmentInTransitEvent buildShipmentInTransitEvent(Shipment shipment) {
+
         return (ShipmentInTransitEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_IN_TRANSIT
@@ -23,6 +25,7 @@ public class ShipmentEventFactory {
     }
 
     public ShipmentOutForDeliveryEvent buildShipmentOutForDeliveryEvent(Shipment shipment) {
+
         return (ShipmentOutForDeliveryEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_OUT_FOR_DELIVERY
@@ -30,6 +33,7 @@ public class ShipmentEventFactory {
     }
 
     public ShipmentDeliveredEvent buildShipmentDeliveredEvent(Shipment shipment) {
+
         return (ShipmentDeliveredEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_DELIVERED
@@ -37,6 +41,7 @@ public class ShipmentEventFactory {
     }
 
     public ShipmentFailedEvent buildShipmentFailedEvent(Shipment shipment) {
+
         return (ShipmentFailedEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_FAILED
@@ -44,6 +49,7 @@ public class ShipmentEventFactory {
     }
 
     public ShipmentCancelledEvent buildShipmentCancelledEvent(Shipment shipment) {
+
         return (ShipmentCancelledEvent) buildShipmentEvent(
                 shipment,
                 EventType.SHIPMENT_CANCELLED
@@ -62,6 +68,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -72,6 +79,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -82,6 +90,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -92,6 +101,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -102,6 +112,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -112,6 +123,7 @@ public class ShipmentEventFactory {
                             .shipmentId(shipment.getId())
                             .orderId(shipment.getOrderId())
                             .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
                             .carrier(shipment.getCarrier())
                             .trackingNumber(shipment.getTrackingNumber())
                             .build();
@@ -123,5 +135,3 @@ public class ShipmentEventFactory {
         };
     }
 }
-
-
