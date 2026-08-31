@@ -27,9 +27,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -86,13 +90,37 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
+        return processPayment(order);
+    }
+
+
+    private void createPaymentInternal(CreatePaymentRequest request) {
+
+        OrderResponse order;
+
+        try {
+
+            order = orderClient.getOrder(request.orderId());
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            throw new OrderNotFoundException(
+                    request.orderId()
+            );
+        }
+
+        processPayment(order);
+    }
+
+
+    private PaymentResponse processPayment(OrderResponse order) {
+
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
 
             throw new PaymentAlreadyCancelledException(
                     order.getId()
             );
         }
-
 
         /*
          * Order is the source of truth for payment details.
@@ -175,10 +203,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         /*
          * --------------------------------------------------
-         * NEW PAYMENT
+         * NEW PAYMENT / PROCESSABLE PAYMENT
          *
          * External provider call.
-         * No DB transaction should wrap this operation.
          * --------------------------------------------------
          */
         PaymentProviderRequest providerRequest =
@@ -278,12 +305,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
 
-            createPayment(
-                    request,
-                    internalAuthentication(
-                            orderEvent.getCustomerId()
-                    )
-            );
+            createPaymentInternal(request);
 
         } catch (Exception ex) {
 
@@ -388,8 +410,14 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Authentication internalAuthentication(Long customerId) {
 
-        return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                customerId, null, java.util.Collections.emptyList()
+        return new UsernamePasswordAuthenticationToken(
+                "internal-service",
+                null,
+                List.of(
+                        new SimpleGrantedAuthority(
+                                "ROLE_INTERNAL_SERVICE"
+                        )
+                )
         );
     }
 

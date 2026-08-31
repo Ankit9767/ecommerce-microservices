@@ -253,20 +253,22 @@ public class OrderServiceImpl implements OrderService {
                     return new OrderNotFoundException(id);
                 });
 
-        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+        boolean internalService =
+                roleSecurity.hasRole(authentication, "INTERNAL_SERVICE");
 
-            orderMetrics.orderViewed();
+        boolean admin =
+                roleSecurity.hasRole(authentication, "ADMIN");
 
-            return mapper.toResponse(order);
-        }
+        if (!internalService && !admin) {
 
-        Long currentUserId = currentUser.getUserId(authentication);
+            Long currentUserId = currentUser.getUserId(authentication);
 
-        if (!order.getCustomerId().equals(currentUserId)) {
+            if (!order.getCustomerId().equals(currentUserId)) {
 
-            throw new AccessDeniedException(
-                    "You are not authorized to access this order"
-            );
+                throw new AccessDeniedException(
+                        "You are not authorized to access this order"
+                );
+            }
         }
 
         orderMetrics.orderViewed();
