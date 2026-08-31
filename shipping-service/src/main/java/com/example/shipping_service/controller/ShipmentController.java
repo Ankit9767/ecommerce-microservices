@@ -29,20 +29,6 @@ public class ShipmentController {
         );
     }
 
-    @PostMapping("/{shipmentId}/ship")
-    public ResponseEntity<Shipment> markShipped(@PathVariable Long shipmentId,
-                                                @RequestParam String carrier,
-                                                @RequestParam String trackingNumber) {
-
-        return ResponseEntity.ok(
-                shipmentService.markShipped(
-                        shipmentId,
-                        carrier,
-                        trackingNumber
-                )
-        );
-    }
-
     @PostMapping("/{shipmentId}/in-transit")
     public ResponseEntity<Shipment> markInTransit(@PathVariable Long shipmentId) {
 
