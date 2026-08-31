@@ -11,6 +11,8 @@ public final class KafkaTopics {
 
     public static final String ORDER_PAID = "order-paid";
 
+    public static final String SHIPMENT_EVENTS = "shipment-events";
+
     public static final String PAYMENT_COMPLETED = "payment-completed";
 
     public static final String INVENTORY_UPDATED = "inventory-updated";
