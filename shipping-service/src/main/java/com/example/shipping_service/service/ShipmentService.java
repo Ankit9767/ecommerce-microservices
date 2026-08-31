@@ -24,7 +24,4 @@ public interface ShipmentService {
     Shipment markFailed(Long shipmentId);
 
     Shipment cancelShipment(Long shipmentId);
-
-    Shipment assignTracking(Long shipmentId, String carrier,
-                            String trackingNumber);
 }

@@ -1,5 +1,6 @@
 package com.example.shipping_service.service.impl;
 
+import com.example.shipping_service.dto.ShipmentCreationResult;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
 import com.example.shipping_service.exception.ShipmentNotFoundException;
@@ -15,10 +16,18 @@ public class ShipmentPersistenceService {
     private final ShipmentRepository repository;
 
     @Transactional
-    public Shipment createIfAbsent(Long orderId,
-                                   Long customerId) {
+    public ShipmentCreationResult createIfAbsent(Long orderId,
+                                                 Long customerId) {
 
         return repository.findByOrderId(orderId)
+
+                .map(shipment ->
+                        new ShipmentCreationResult(
+                                shipment,
+                                false
+                        )
+                )
+
                 .orElseGet(() -> {
 
                     Shipment shipment =
@@ -30,8 +39,14 @@ public class ShipmentPersistenceService {
                                     )
                                     .build();
 
-                    return repository.saveAndFlush(
-                            shipment
+                    Shipment saved =
+                            repository.saveAndFlush(
+                                    shipment
+                            );
+
+                    return new ShipmentCreationResult(
+                            saved,
+                            true
                     );
                 });
     }
