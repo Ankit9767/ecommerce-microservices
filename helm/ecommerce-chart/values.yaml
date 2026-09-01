@@ -15,6 +15,7 @@ jwt:
 # ===========================
 # MySQL
 # ===========================
+
 mysql:
   image:
     repository: mysql
@@ -35,6 +36,7 @@ mysql:
 # ===========================
 # Zookeeper
 # ===========================
+
 zookeeper:
   image:
     repository: confluentinc/cp-zookeeper
@@ -46,17 +48,19 @@ zookeeper:
 # ===========================
 # Kafka
 # ===========================
+
 kafka:
   image:
     repository: confluentinc/cp-kafka
     tag: "7.6.1"
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
 # ===========================
 # Eureka Server
 # ===========================
+
 eureka:
   image:
     repository: ecommerce-microservices-eureka-server
@@ -73,16 +77,42 @@ eureka:
       cpu: "500m"
       memory: "1Gi"
 
+
+# ===========================
+# Elasticsearch
+# ===========================
+
+elasticsearch:
+  image:
+    repository: docker.elastic.co/elasticsearch/elasticsearch
+    tag: "8.13.4"
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+  storage:
+    size: 5Gi
+
 # ===========================
 # Product Service
 # ===========================
+
 product:
   image:
     repository: ecommerce-microservices-product-service
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -95,13 +125,14 @@ product:
 # ===========================
 # Order Service
 # ===========================
+
 order:
   image:
     repository: ecommerce-microservices-order-service
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -114,13 +145,14 @@ order:
 # ===========================
 # Payment Service
 # ===========================
+
 payment:
   image:
     repository: ecommerce-microservices-payment-service
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -133,13 +165,14 @@ payment:
 # ===========================
 # Auth Service
 # ===========================
+
 auth:
   image:
     repository: ecommerce-microservices-auth-service
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -152,6 +185,7 @@ auth:
 # ===========================
 # API Gateway
 # ===========================
+
 gateway:
   image:
     repository: ecommerce-microservices-api-gateway
@@ -162,7 +196,7 @@ gateway:
     host: redis
     port: 6379
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -183,7 +217,7 @@ cart:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -206,7 +240,7 @@ inventory:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -228,7 +262,7 @@ notification:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
 
   resources:
     requests:
@@ -250,7 +284,29 @@ shipping:
     tag: latest
     pullPolicy: IfNotPresent
 
-  replicas: 2
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+
+# ===========================
+# Search Service
+# ===========================
+
+search:
+  image:
+    repository: ecommerce-microservices-search-service
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicas: 1
 
   resources:
     requests:
