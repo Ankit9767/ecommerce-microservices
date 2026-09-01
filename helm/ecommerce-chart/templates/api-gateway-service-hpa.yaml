@@ -17,9 +17,9 @@ spec:
 
     name: api-gateway
 
-  minReplicas: 3
+  minReplicas: 1
 
-  maxReplicas: 5
+  maxReplicas: 2
 
   metrics:
 
