@@ -1,0 +1,43 @@
+package com.example.search_service.service;
+
+import com.ecommerce.common.events.ProductCreatedEvent;
+import com.example.search_service.document.ProductDocument;
+import com.example.search_service.repository.ProductSearchRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ProductIndexingService {
+
+    private final ProductSearchRepository productSearchRepository;
+
+    public void indexProduct(ProductCreatedEvent event) {
+
+        log.info(
+                "Indexing product: productId={}, sku={}, name={}",
+                event.getProductId(),
+                event.getSku(),
+                event.getName()
+        );
+
+        ProductDocument document =
+                ProductDocument.builder()
+                        .productId(event.getProductId())
+                        .name(event.getName())
+                        .sku(event.getSku())
+                        .category(event.getCategory())
+                        .price(event.getPrice())
+                        .active(event.getActive())
+                        .build();
+
+        productSearchRepository.save(document);
+
+        log.info(
+                "Product indexed successfully: productId={}",
+                event.getProductId()
+        );
+    }
+}
