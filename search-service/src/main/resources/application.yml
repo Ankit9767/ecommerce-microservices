@@ -6,6 +6,9 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME}
 
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS}
+
   data:
     web:
       pageable:
@@ -14,24 +17,6 @@ spring:
 
   lifecycle:
     timeout-per-shutdown-phase: 30s
-
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      validation-timeout: 5000
-
-  jpa:
-    hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
-    show-sql: false
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
@@ -48,7 +33,7 @@ spring:
 
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.value.default.type: com.ecommerce.common.events.InventoryEvent
+        spring.json.value.default.type: com.ecommerce.common.events.ProductEvent
 
 
 eureka:
@@ -63,9 +48,6 @@ eureka:
     registry-fetch-interval-seconds: 5
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
-
-  elasticsearch:
-    uris: ${SPRING_ELASTICSEARCH_URIS}
 
 
 management:

@@ -8,38 +8,9 @@ spring:
   elasticsearch:
     uris: http://localhost:9200
 
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      validation-timeout: 5000
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-
-    show-sql: true
-
-    database-platform: org.hibernate.dialect.H2Dialect
-
-  h2:
-    console:
-      enabled: true
-
-  cloud:
-    discovery:
-      enabled: false
-
   kafka:
     bootstrap-servers: localhost:9092
+
     listener:
       auto-startup: false
 
@@ -56,9 +27,6 @@ management:
   endpoint:
     health:
       show-details: always
-
-    prometheus:
-      enabled: false
 
   metrics:
     tags:
