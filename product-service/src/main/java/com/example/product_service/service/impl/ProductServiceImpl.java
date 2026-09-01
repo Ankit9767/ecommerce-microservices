@@ -1,6 +1,9 @@
 package com.example.product_service.service.impl;
 
 import com.ecommerce.common.dto.ProductResponse;
+import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.example.product_service.dto.CreateProductRequest;
 import com.example.product_service.dto.UpdateProductRequest;
 import com.example.product_service.entity.Category;
@@ -8,24 +11,19 @@ import com.example.product_service.entity.Product;
 import com.example.product_service.exception.CategoryNotFoundException;
 import com.example.product_service.exception.DuplicateSkuException;
 import com.example.product_service.exception.ProductNotFoundException;
-import com.ecommerce.common.events.ProductCreatedEvent;
-import com.ecommerce.common.events.ProductDeletedEvent;
-import com.ecommerce.common.events.ProductEvent;
-import com.ecommerce.common.events.ProductUpdatedEvent;
-import com.example.product_service.kafka.ProductEventProducer;
 import com.example.product_service.mapper.ProductMapper;
 import com.example.product_service.metrics.ProductMetrics;
 import com.example.product_service.repository.CategoryRepository;
 import com.example.product_service.repository.ProductRepository;
+import com.example.product_service.service.OutboxService;
 import com.example.product_service.service.ProductService;
 import com.example.product_service.specification.ProductSpecification;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -39,17 +37,19 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductMetrics metrics;
 
-    private final ProductEventProducer productEventProducer;
+    private final OutboxService outboxService;
 
-    public ProductServiceImpl(ProductRepository repository, CategoryRepository categoryRepository,
-                              ProductMapper mapper, ProductMetrics metrics,
-                              ProductEventProducer productEventProducer) {
+    public ProductServiceImpl(ProductRepository repository,
+                              CategoryRepository categoryRepository,
+                              ProductMapper mapper,
+                              ProductMetrics metrics,
+                              OutboxService outboxService) {
 
         this.repository = repository;
         this.categoryRepository = categoryRepository;
         this.mapper = mapper;
         this.metrics = metrics;
-        this.productEventProducer = productEventProducer;
+        this.outboxService = outboxService;
     }
 
     @Override
@@ -62,21 +62,25 @@ public class ProductServiceImpl implements ProductService {
                         .toUpperCase();
 
         if (repository.existsBySku(normalizedSku)) {
+
             metrics.duplicateSku();
+
             throw new DuplicateSkuException(normalizedSku);
         }
 
         Product product = mapper.toEntity(request);
 
-        Category category = categoryRepository
-                .findById(request.getCategoryId())
-                .orElseThrow(() ->
-                        new CategoryNotFoundException(
-                                request.getCategoryId()
-                        )
-                );
+        Category category =
+                categoryRepository
+                        .findById(request.getCategoryId())
+                        .orElseThrow(() ->
+                                new CategoryNotFoundException(
+                                        request.getCategoryId()
+                                )
+                        );
 
         if (!category.getActive()) {
+
             throw new IllegalStateException(
                     "Category is inactive"
             );
@@ -94,7 +98,7 @@ public class ProductServiceImpl implements ProductService {
 
         ProductResponse response = mapper.toResponse(saved);
 
-        publishProductEvent(
+        outboxService.saveProductCreatedEvent(
                 ProductCreatedEvent.of(
                         response.getId(),
                         response.getName(),
@@ -108,24 +112,18 @@ public class ProductServiceImpl implements ProductService {
         return response;
     }
 
-    private void publishProductEvent(ProductEvent event) {
-        try {
-            productEventProducer.publish(event);
-        } catch (Exception ex) {
-            metrics.productEventPublishFailed();
-            log.error("Failed to publish product event '{}'", event.getEventType(), ex);
-        }
-    }
-
     @Override
     @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
 
-        Product product = repository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> {
-                    metrics.productNotFound();
-                    return new ProductNotFoundException(id);
-                });
+        Product product =
+                repository.findByIdAndActiveTrue(id)
+                        .orElseThrow(() -> {
+
+                            metrics.productNotFound();
+
+                            return new ProductNotFoundException(id);
+                        });
 
         metrics.productViewed();
 
@@ -165,34 +163,38 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateProduct(Long id,
                                          UpdateProductRequest request) {
 
-        Product existing = repository.findById(id)
-                .orElseThrow(() -> {
-                            metrics.productNotFound();
-                            return new ProductNotFoundException(id);
-                        }
-                );
+        Product existing =
+                repository.findById(id)
+                        .orElseThrow(() -> {
 
-        Category category = categoryRepository
-                .findById(request.getCategoryId())
-                .orElseThrow(() ->
-                        new CategoryNotFoundException(
-                                request.getCategoryId()
-                        )
-                );
+                            metrics.productNotFound();
+
+                            return new ProductNotFoundException(id);
+                        });
+
+        Category category =
+                categoryRepository
+                        .findById(request.getCategoryId())
+                        .orElseThrow(() ->
+                                new CategoryNotFoundException(
+                                        request.getCategoryId()
+                                )
+                        );
 
         if (!category.getActive()) {
-            throw new IllegalStateException(
-                    "Category is inactive"
-            );
+
+            throw new IllegalStateException("Category is inactive");
         }
 
         mapper.updateEntity(request, existing);
 
         existing.setCategory(category);
 
-        ProductResponse response = mapper.toResponse(repository.save(existing));
+        ProductResponse response = mapper.toResponse(
+                        repository.save(existing)
+                );
 
-        publishProductEvent(
+        outboxService.saveProductUpdatedEvent(
                 ProductUpdatedEvent.of(
                         response.getId(),
                         response.getName(),
@@ -210,10 +212,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void deactivateProduct(Long id) {
 
-        Product product = repository.findById(id)
-                .orElseThrow(() ->
-                        new ProductNotFoundException(id)
-                );
+        Product product =
+                repository.findById(id)
+                        .orElseThrow(() ->
+                                new ProductNotFoundException(id)
+                        );
 
         product.setActive(false);
 
@@ -221,10 +224,8 @@ public class ProductServiceImpl implements ProductService {
 
         metrics.productDeactivated();
 
-        publishProductEvent(
-                ProductDeletedEvent.of(
-                        product.getId()
-                )
+        outboxService.saveProductDeletedEvent(
+                ProductDeletedEvent.of(product.getId())
         );
     }
 }
