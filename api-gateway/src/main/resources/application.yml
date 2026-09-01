@@ -188,6 +188,28 @@ spring:
                     - 503
                     - 504
 
+
+        - id: shipment-service
+          uri: lb://SHIPPING-SERVICE
+          predicates:
+            - Path=/api/shipments/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
+                key-resolver: "#{@ipKeyResolver}"
+
+            - name: CircuitBreaker
+              args:
+                name: shipmentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/shipments
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s

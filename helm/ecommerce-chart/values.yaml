@@ -224,7 +224,7 @@ inventory:
 
 notification:
   image:
-    repository: ecommerce/notification-service
+    repository: ecommerce-microservices-notification-service
     tag: latest
     pullPolicy: IfNotPresent
 
