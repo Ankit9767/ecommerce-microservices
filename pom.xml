@@ -49,6 +49,7 @@
         <module>inventory-service</module>
         <module>notification-service</module>
         <module>shipping-service</module>
+        <module>search-service</module>
 
     </modules>
 

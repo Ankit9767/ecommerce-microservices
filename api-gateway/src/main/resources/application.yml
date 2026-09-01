@@ -210,6 +210,28 @@ spring:
                   - 503
                   - 504
 
+
+        - id: search-service
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
+                key-resolver: "#{@ipKeyResolver}"
+
+            - name: CircuitBreaker
+              args:
+                name: searchServiceCircuitBreaker
+                fallbackUri: forward:/fallback/search
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
