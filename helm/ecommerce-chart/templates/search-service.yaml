@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: search-service
+
+  template:
+    metadata:
+      labels:
+        app: search-service
+
+    spec:
+      terminationGracePeriodSeconds: 40
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - search-service
+
+      serviceAccountName: search-service
+
+      containers:
+        - name: search-service
+
+          image: "{{ .Values.search.image.repository }}:{{ .Values.search.image.tag }}"
+
+          imagePullPolicy: {{ .Values.search.image.pullPolicy }}
+
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - sleep 15
+
+          ports:
+            - containerPort: 8080
+
+          envFrom:
+            - configMapRef:
+                name: search-service-config
+
+            - secretRef:
+                name: search-service-secret
+
+          resources:
+            requests:
+              cpu: {{ .Values.search.resources.requests.cpu | quote }}
+              memory: {{ .Values.search.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.search.resources.limits.cpu | quote }}
+              memory: {{ .Values.search.resources.limits.memory | quote }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
