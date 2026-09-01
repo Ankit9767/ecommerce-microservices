@@ -1,6 +1,7 @@
 package com.example.search_service.service;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductDeletedEvent;
 import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.example.search_service.document.ProductDocument;
 import com.example.search_service.repository.ProductSearchRepository;
@@ -67,6 +68,21 @@ public class ProductIndexingService {
         log.info(
                 "Product updated successfully in search index: " +
                         "productId={}",
+                event.getProductId()
+        );
+    }
+
+    public void deleteProduct(ProductDeletedEvent event) {
+
+        log.info(
+                "Deleting product from search index: productId={}",
+                event.getProductId()
+        );
+
+        productSearchRepository.deleteById(event.getProductId());
+
+        log.info(
+                "Product deleted from search index: productId={}",
                 event.getProductId()
         );
     }

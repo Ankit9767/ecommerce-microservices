@@ -1,6 +1,7 @@
 package com.example.search_service.kafka;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductDeletedEvent;
 import com.ecommerce.common.events.ProductEvent;
 import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.ecommerce.common.exception.InvalidEventException;
@@ -112,6 +113,40 @@ public class ProductCreatedConsumer {
 
                 log.info(
                         "Product updated successfully in search index: productId={}",
+                        productEvent.getProductId()
+                );
+            }
+
+            case PRODUCT_DELETED -> {
+
+                if (!(event instanceof ProductDeletedEvent productEvent)) {
+
+                    log.error(
+                            "Invalid PRODUCT_DELETED event type: {}",
+                            event.getClass().getName()
+                    );
+
+                    throw new InvalidEventException();
+                }
+
+                if (productEvent.getEventId() == null) {
+                    throw new MissingEventIdException();
+                }
+
+                if (productEvent.getProductId() == null) {
+                    throw new MissingProductIdException();
+                }
+
+                log.info(
+                        "Processing PRODUCT_DELETED event: eventId={}, productId={}",
+                        productEvent.getEventId(),
+                        productEvent.getProductId()
+                );
+
+                productIndexingService.deleteProduct(productEvent);
+
+                log.info(
+                        "Product deleted successfully from search index: productId={}",
                         productEvent.getProductId()
                 );
             }
