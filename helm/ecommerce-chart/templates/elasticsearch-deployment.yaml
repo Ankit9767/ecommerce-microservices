@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: {{ .Values.elasticsearch.replicas }}
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      app: elasticsearch
+
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      securityContext:
+        fsGroup: 1000
+
+      containers:
+        - name: elasticsearch
+
+          image: "{{ .Values.elasticsearch.image.repository }}:{{ .Values.elasticsearch.image.tag }}"
+
+          imagePullPolicy: {{ .Values.elasticsearch.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 9200
+
+            - name: transport
+              containerPort: 9300
+
+          env:
+            - name: discovery.type
+              value: single-node
+
+            - name: xpack.security.enabled
+              value: "false"
+
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+
+          resources:
+            requests:
+              cpu: {{ .Values.elasticsearch.resources.requests.cpu | quote }}
+              memory: {{ .Values.elasticsearch.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.elasticsearch.resources.limits.cpu | quote }}
+              memory: {{ .Values.elasticsearch.resources.limits.memory | quote }}
+
+          volumeMounts:
+            - name: elasticsearch-data
+              mountPath: /usr/share/elasticsearch/data
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9200
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9200
+
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      volumes:
+        - name: elasticsearch-data
+          emptyDir: {}
