@@ -1,6 +1,7 @@
 package com.example.search_service.service;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.example.search_service.document.ProductDocument;
 import com.example.search_service.repository.ProductSearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,35 @@ public class ProductIndexingService {
 
         log.info(
                 "Product indexed successfully: productId={}",
+                event.getProductId()
+        );
+    }
+
+    public void updateProduct(ProductUpdatedEvent event) {
+
+        log.info(
+                "Updating product in search index: " +
+                        "productId={}, sku={}, name={}",
+                event.getProductId(),
+                event.getSku(),
+                event.getName()
+        );
+
+        ProductDocument document =
+                ProductDocument.builder()
+                        .productId(event.getProductId())
+                        .name(event.getName())
+                        .sku(event.getSku())
+                        .category(event.getCategory())
+                        .price(event.getPrice())
+                        .active(event.getActive())
+                        .build();
+
+        productSearchRepository.save(document);
+
+        log.info(
+                "Product updated successfully in search index: " +
+                        "productId={}",
                 event.getProductId()
         );
     }
