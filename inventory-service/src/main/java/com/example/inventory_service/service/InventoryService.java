@@ -19,4 +19,6 @@ public interface InventoryService {
     InventoryResponse releaseStock(Long productId, InventoryQuantityRequest request);
 
     InventoryResponse confirmReservation(Long productId, InventoryQuantityRequest request);
+
+    void createInventoryForProduct(Long productId);
 }

@@ -14,8 +14,13 @@ import java.math.BigDecimal;
 @SuperBuilder
 public class ProductCreatedEvent extends ProductEvent {
 
-    public static ProductEvent of(Long productId, String name, String sku,
-                                  String category, BigDecimal price, Boolean active) {
+    public static ProductCreatedEvent of(Long productId,
+                                         String name,
+                                         String sku,
+                                         String category,
+                                         BigDecimal price,
+                                         Boolean active) {
+
         return ProductCreatedEvent.builder()
                 .eventType(EventType.PRODUCT_CREATED)
                 .productId(productId)

@@ -12,7 +12,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class ProductDeletedEvent extends ProductEvent {
 
-    public static ProductEvent of(Long productId) {
+    public static ProductDeletedEvent of(Long productId) {
+
         return ProductDeletedEvent.builder()
                 .eventType(EventType.PRODUCT_DELETED)
                 .productId(productId)

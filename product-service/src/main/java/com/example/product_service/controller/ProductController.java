@@ -36,7 +36,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication,'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication,'ADMIN', 'CUSTOMER', 'INTERNAL_SERVICE')")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Long id) {
 

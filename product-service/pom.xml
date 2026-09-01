@@ -26,6 +26,9 @@
 		<tag/>
 		<url/>
 	</scm>
+    <properties>
+        <java.version>21</java.version>
+    </properties>
 
 	<dependencies>
         <dependency>
@@ -114,6 +117,7 @@
             <groupId>io.zipkin.reporter2</groupId>
             <artifactId>zipkin-reporter-brave</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>common-library</artifactId>

@@ -102,6 +102,51 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional
+    public void createInventoryForProduct(Long productId) {
+
+        ProductResponse product;
+
+        try {
+
+            product = productClient.getProduct(productId);
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            inventoryMetrics.productNotAvailable();
+
+            throw new ProductNotAvailableException(productId);
+        }
+
+        if (product == null || Boolean.FALSE.equals(product.getActive())) {
+
+            inventoryMetrics.productNotAvailable();
+
+            throw new ProductNotAvailableException(productId);
+        }
+
+        if (inventoryRepository.existsByProductId(productId)) {
+
+            inventoryMetrics.inventoryAlreadyExists();
+
+            throw new InventoryAlreadyExistsException(productId);
+        }
+
+        Inventory inventory = Inventory.builder()
+                .productId(product.getId())
+                .quantity(0)
+                .reservedQuantity(0)
+                .build();
+
+        inventoryPersistenceService.create(
+                        inventory,
+                        productId
+                );
+
+        inventoryMetrics.inventoryCreated();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public InventoryResponse getInventory(Long productId) {
 
