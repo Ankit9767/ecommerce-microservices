@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
+import java.net.InetSocketAddress;
+
 @Configuration
 public class RateLimitConfig {
 
@@ -49,15 +51,13 @@ public class RateLimitConfig {
     private String getRemoteAddress(
             org.springframework.web.server.ServerWebExchange exchange) {
 
-        if (exchange.getRequest()
-                .getRemoteAddress() == null) {
+        InetSocketAddress remoteAddress =
+                exchange.getRequest().getRemoteAddress();
 
+        if (remoteAddress == null || remoteAddress.getAddress() == null) {
             return "unknown";
         }
 
-        return exchange.getRequest()
-                .getRemoteAddress()
-                .getAddress()
-                .getHostAddress();
+        return remoteAddress.getAddress().getHostAddress();
     }
 }
