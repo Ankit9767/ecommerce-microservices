@@ -1,6 +1,9 @@
 pipeline {
 
-    agent any
+     agent {
+         label 'windows'
+     }
+
 
     tools {
         jdk 'jdk21'
