@@ -105,6 +105,23 @@ public class OutboxScheduler {
                         type
                 );
 
+            } catch (InterruptedException ex) {
+
+                /*
+                 * Restore the interrupted status so the scheduler/thread
+                 * does not lose the interruption signal.
+                 */
+                Thread.currentThread().interrupt();
+
+                log.warn(
+                        "Outbox scheduler interrupted while publishing " +
+                                "event id={}",
+                        outbox.getId(),
+                        ex
+                );
+
+                return;
+
             } catch (Exception ex) {
 
                 log.error(
