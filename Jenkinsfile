@@ -1,8 +1,8 @@
 pipeline {
 
-     agent {
-         label 'windows'
-     }
+    agent {
+        label 'windows'
+    }
 
 
     tools {
@@ -55,41 +55,6 @@ pipeline {
             }
 
         }
-
-
-        stage('SonarQube Analysis') {
-
-            steps {
-
-                withSonarQubeEnv('SonarQube') {
-
-                    bat '''
-                    mvn sonar:sonar ^
-                    -Dsonar.projectKey=ecommerce ^
-                    -Dsonar.projectName=ecommerce
-                    '''
-
-                }
-
-            }
-
-        }
-
-
-        stage('Quality Gate') {
-
-            steps {
-
-                timeout(time: 5, unit: 'MINUTES') {
-
-                    waitForQualityGate abortPipeline: true
-
-                }
-
-            }
-
-        }
-
 
         stage('Package') {
 
@@ -160,7 +125,6 @@ pipeline {
 
         }
 
-
         stage('Push Images') {
 
             steps {
@@ -185,7 +149,6 @@ pipeline {
 
         }
 
-
         stage('Deploy To Kubernetes') {
 
             steps {
@@ -197,7 +160,6 @@ pipeline {
             }
 
         }
-
 
         stage('Verify Deployment') {
 
@@ -213,7 +175,6 @@ pipeline {
 
     }
 
-
     post {
 
         success {
@@ -222,13 +183,11 @@ pipeline {
 
         }
 
-
         failure {
 
             echo 'Pipeline Failed'
 
         }
-
 
         always {
 
