@@ -62,7 +62,7 @@ spec:
                   - sleep 15
 
           ports:
-            - containerPort: 8080
+            - containerPort: 8079
 
           envFrom:
             - configMapRef:
@@ -83,7 +83,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 8079
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -93,7 +93,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 8079
             initialDelaySeconds: 60
             periodSeconds: 15
             timeoutSeconds: 5
@@ -102,6 +102,6 @@ spec:
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 8079
             failureThreshold: 30
             periodSeconds: 10

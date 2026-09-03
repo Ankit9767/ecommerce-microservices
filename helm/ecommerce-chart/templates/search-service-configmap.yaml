@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 
 data:
-  SERVER_PORT: "8080"
+  SERVER_PORT: "8079"
 
   SPRING_APPLICATION_NAME: search-service
 

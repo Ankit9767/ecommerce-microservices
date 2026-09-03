@@ -26,6 +26,6 @@ RUN groupadd -g 1001 spring \
 # Run as non-root user
 USER spring:spring
 
-EXPOSE 8080
+EXPOSE 8079
 
 ENTRYPOINT ["java","-jar","app.jar"]

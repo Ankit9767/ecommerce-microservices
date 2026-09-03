@@ -9,7 +9,7 @@ spec:
     app: search-service
 
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 8079
+      targetPort: 8079
 
   type: ClusterIP
