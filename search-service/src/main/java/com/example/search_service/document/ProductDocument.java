@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
 
 import java.math.BigDecimal;
 
@@ -20,7 +22,15 @@ public class ProductDocument {
     @Id
     private Long productId;
 
-    @Field(type = FieldType.Text)
+    @MultiField(
+            mainField = @Field(type = FieldType.Text),
+            otherFields = {
+                    @InnerField(
+                            suffix = "keyword",
+                            type = FieldType.Keyword
+                    )
+            }
+    )
     private String name;
 
     @Field(type = FieldType.Keyword)
