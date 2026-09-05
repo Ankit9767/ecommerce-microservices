@@ -5,6 +5,7 @@ import com.example.search_service.repository.ProductSearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,8 @@ public class ProductSearchService {
 
     private final ProductSearchRepository productSearchRepository;
 
+    private final ProductSearchSortService productSearchSortService;
+
     public Page<ProductDocument> searchProducts(
             String query,
             String category,
@@ -23,13 +26,24 @@ public class ProductSearchService {
             Boolean active,
             Pageable pageable) {
 
+        Sort validatedSort =
+                productSearchSortService.validateAndBuildSort(
+                        pageable.getSort()
+                );
+
+        Pageable sortedPageable = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                validatedSort
+        );
+
         return productSearchRepository.searchProducts(
                 query,
                 category,
                 minPrice,
                 maxPrice,
                 active,
-                pageable
+                sortedPageable
         );
     }
 }
