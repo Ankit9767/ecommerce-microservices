@@ -1,6 +1,7 @@
 package com.example.search_service.service;
 
 import com.example.search_service.document.ProductDocument;
+import com.example.search_service.exception.InvalidSearchParameterException;
 import com.example.search_service.repository.ProductSearchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,8 @@ public class ProductSearchService {
             Boolean active,
             Pageable pageable) {
 
+        validatePriceRange(minPrice, maxPrice);
+
         Sort validatedSort =
                 productSearchSortService.validateAndBuildSort(
                         pageable.getSort()
@@ -45,5 +48,30 @@ public class ProductSearchService {
                 active,
                 sortedPageable
         );
+    }
+
+    private void validatePriceRange(BigDecimal minPrice,
+                                    BigDecimal maxPrice) {
+
+        if (minPrice != null && minPrice.signum() < 0) {
+            throw new InvalidSearchParameterException(
+                    "minPrice cannot be negative"
+            );
+        }
+
+        if (maxPrice != null && maxPrice.signum() < 0) {
+            throw new InvalidSearchParameterException(
+                    "maxPrice cannot be negative"
+            );
+        }
+
+        if (minPrice != null
+                && maxPrice != null
+                && minPrice.compareTo(maxPrice) > 0) {
+
+            throw new InvalidSearchParameterException(
+                    "minPrice cannot be greater than maxPrice"
+            );
+        }
     }
 }
