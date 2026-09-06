@@ -318,6 +318,28 @@ search:
       memory: "1Gi"
 
 
+# ===========================
+# Reviews Service
+# ===========================
+
+reviews:
+  image:
+    repository: ecommerce-microservices-reviews-service
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+
 
 # ===========================
 # Redis
