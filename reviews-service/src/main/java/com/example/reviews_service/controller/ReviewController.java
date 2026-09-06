@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<ReviewResponse> createReview(@Valid @RequestBody CreateReviewRequest request,
                                                        Authentication authentication) {
 
@@ -37,6 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<ReviewResponse> getReview(@PathVariable Long reviewId) {
 
         return ResponseEntity.ok(
@@ -45,6 +48,7 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<Page<ReviewResponse>> getProductReviews(@PathVariable Long productId,
                                                                   @PageableDefault(size = 20, sort = "createdAt")
                                                                   Pageable pageable) {
@@ -58,6 +62,7 @@ public class ReviewController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<Page<ReviewResponse>> getMyReviews(Authentication authentication,
                                                              @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
 
@@ -70,6 +75,7 @@ public class ReviewController {
     }
 
     @PatchMapping("/{reviewId}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
                                                        @Valid @RequestBody UpdateReviewRequest request,
                                                        Authentication authentication) {
@@ -84,6 +90,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
                                              Authentication authentication) {
 
