@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: reviews-service
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: reviews-service
+
+  template:
+
+    metadata:
+      labels:
+        app: reviews-service
+
+    spec:
+
+      terminationGracePeriodSeconds: 40
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      affinity:
+
+        podAntiAffinity:
+
+          preferredDuringSchedulingIgnoredDuringExecution:
+
+            - weight: 100
+
+              podAffinityTerm:
+
+                topologyKey: kubernetes.io/hostname
+
+                labelSelector:
+
+                  matchExpressions:
+
+                    - key: app
+
+                      operator: In
+
+                      values:
+
+                        - reviews-service
+
+      serviceAccountName: reviews-service
+
+      containers:
+
+        - name: reviews-service
+
+          image: "{{ .Values.reviews.image.repository }}:{{ .Values.reviews.image.tag }}"
+
+          imagePullPolicy: {{ .Values.reviews.image.pullPolicy }}
+
+          lifecycle:
+
+            preStop:
+
+              exec:
+
+                command:
+
+                  - sh
+                  - -c
+                  - sleep 15
+
+          ports:
+
+            - containerPort: 8078
+
+          envFrom:
+
+            - configMapRef:
+                name: reviews-service-config
+
+            - secretRef:
+                name: reviews-service-secret
+
+          resources:
+
+            requests:
+              cpu: {{ .Values.reviews.resources.requests.cpu | quote }}
+              memory: {{ .Values.reviews.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.reviews.resources.limits.cpu | quote }}
+              memory: {{ .Values.reviews.resources.limits.memory | quote }}
+
+          readinessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8078
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8078
+
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+
+            httpGet:
+              path: /actuator/health
+              port: 8078
+
+            failureThreshold: 30
+            periodSeconds: 10
