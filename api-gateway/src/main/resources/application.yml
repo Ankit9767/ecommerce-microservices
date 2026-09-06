@@ -232,6 +232,30 @@ spring:
                   - 503
                   - 504
 
+
+
+        - id: reviews-service
+          uri: lb://REVIEWS-SERVICE
+          predicates:
+              - Path=/api/reviews/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 2
+                redis-rate-limiter.burstCapacity: 2
+                key-resolver: "#{@ipKeyResolver}"
+
+            - name: CircuitBreaker
+              args:
+                name: reviewsServiceCircuitBreaker
+                fallbackUri: forward:/fallback/reviews
+                statusCodes:
+                  - 500
+                  - 502
+                  - 503
+                  - 504
+
+
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
