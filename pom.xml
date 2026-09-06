@@ -50,6 +50,7 @@
         <module>notification-service</module>
         <module>shipping-service</module>
         <module>search-service</module>
+        <module>reviews-service</module>
 
     </modules>
 
