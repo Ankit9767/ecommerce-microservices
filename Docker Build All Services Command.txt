@@ -1,11 +1,21 @@
-docker build -f product-service/Dockerfile -t product-service .
+docker build --no-cache -t ecommerce-microservices-product-service:latest -f product-service/Dockerfile .
 
-docker build -f order-service/Dockerfile -t order-service .
+docker build --no-cache -t ecommerce-microservices-order-service:latest -f order-service/Dockerfile .
 
-docker build -f payment-service/Dockerfile -t payment-service .
+docker build --no-cache -t ecommerce-microservices-api-gateway:latest -f api-gateway/Dockerfile .
 
-docker build -f api-gateway/Dockerfile -t api-gateway .
+docker build --no-cache -t ecommerce-microservices-auth-service:latest -f auth-service/Dockerfile .
 
-docker build -f eureka-server/Dockerfile -t eureka-server .
+docker build --no-cache -t ecommerce-microservices-payment-service:latest -f payment-service/Dockerfile .
 
-docker build -f auth-service/Dockerfile -t auth-service .
+docker build --no-cache -t ecommerce-microservices-cart-service:latest -f cart-service/Dockerfile .
+
+docker build --no-cache -t ecommerce-microservices-notification-service:latest -f notification-service/Dockerfile .
+
+docker build --no-cache -t ecommerce-microservices-inventory-service:latest -f inventory-service/Dockerfile .
+
+docker build --no-cache -t ecommerce-microservices-shipping-service:latest -f shipping-service/Dockerfile .
+
+docker build --no-cache -t ecommerce-microservices-search-service:latest -f search-service/Dockerfile .
+
+docker build --no-cache -t ecommerce-microservices-reviews-service:latest -f reviews-service/Dockerfile .
