@@ -223,4 +223,26 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
     }
+
+    @ExceptionHandler(ReviewNotEligibleException.class)
+    public ResponseEntity<ErrorResponse> handleReviewNotEligible(
+            ReviewNotEligibleException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getMessage();
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                message,
+                request.getRequestURI(),
+                List.of(message)
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
 }
