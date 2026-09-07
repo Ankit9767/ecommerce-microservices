@@ -1,5 +1,7 @@
 package com.example.reviews_service.service.impl;
 
+import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.security.CurrentUser;
 import com.example.reviews_service.client.OrderClient;
 import com.example.reviews_service.dto.CreateReviewRequest;
@@ -10,6 +12,7 @@ import com.example.reviews_service.entity.Review;
 import com.example.reviews_service.entity.ReviewStatus;
 import com.example.reviews_service.exception.*;
 import com.example.reviews_service.repository.ReviewRepository;
+import com.example.reviews_service.service.OutboxService;
 import com.example.reviews_service.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +31,8 @@ public class ReviewServiceImpl implements ReviewService {
     private final CurrentUser currentUser;
 
     private final OrderClient orderClient;
+
+    private final OutboxService outboxService;
 
     @Override
     @Transactional
@@ -86,8 +91,28 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review savedReview = reviewRepository.save(review);
 
+        writeReviewCreatedToOutbox(savedReview);
+
         return ReviewResponse.from(savedReview);
     }
+
+    private void writeReviewCreatedToOutbox(Review review) {
+
+        ReviewCreatedEvent event =
+                ReviewCreatedEvent.builder()
+                        .eventType(EventType.REVIEW_CREATED)
+                        .reviewId(review.getId())
+                        .productId(review.getProductId())
+                        .userId(review.getUserId())
+                        .orderId(review.getOrderId())
+                        .rating(review.getRating())
+                        .title(review.getTitle())
+                        .comment(review.getComment())
+                        .build();
+
+        outboxService.saveReviewCreatedEvent(event);
+    }
+
 
     @Override
     public ReviewResponse getReview(Long reviewId) {
