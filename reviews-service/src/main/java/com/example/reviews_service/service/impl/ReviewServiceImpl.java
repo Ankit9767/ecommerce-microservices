@@ -1,15 +1,14 @@
 package com.example.reviews_service.service.impl;
 
 import com.ecommerce.common.security.CurrentUser;
+import com.example.reviews_service.client.OrderClient;
 import com.example.reviews_service.dto.CreateReviewRequest;
+import com.ecommerce.common.dto.ReviewEligibilityResponse;
 import com.example.reviews_service.dto.ReviewResponse;
 import com.example.reviews_service.dto.UpdateReviewRequest;
 import com.example.reviews_service.entity.Review;
 import com.example.reviews_service.entity.ReviewStatus;
-import com.example.reviews_service.exception.DuplicateReviewException;
-import com.example.reviews_service.exception.ReviewAccessDeniedException;
-import com.example.reviews_service.exception.ReviewAlreadyDeletedException;
-import com.example.reviews_service.exception.ReviewNotFoundException;
+import com.example.reviews_service.exception.*;
 import com.example.reviews_service.repository.ReviewRepository;
 import com.example.reviews_service.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +27,40 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final CurrentUser currentUser;
 
+    private final OrderClient orderClient;
+
     @Override
     @Transactional
     public ReviewResponse createReview(CreateReviewRequest request,
                                        Authentication authentication) {
 
         Long userId = currentUser.getUserId(authentication);
+
+        ReviewEligibilityResponse eligibility;
+
+        try {
+
+            eligibility = orderClient.checkReviewEligibility(
+                    request.getOrderId(),
+                    userId,
+                    request.getProductId()
+            );
+
+        } catch (RuntimeException ex) {
+
+            throw new ReviewEligibilityCheckException();
+
+        }
+
+        if (eligibility == null || !eligibility.eligible()) {
+
+            String reason =
+                    eligibility != null && eligibility.reason() != null
+                            ? eligibility.reason()
+                            : "User is not eligible to review this product";
+
+            throw new ReviewNotEligibleException(reason);
+        }
 
         if (reviewRepository.existsByUserIdAndProductIdAndOrderId(
                 userId,
