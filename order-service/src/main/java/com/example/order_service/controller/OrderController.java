@@ -1,6 +1,7 @@
 package com.example.order_service.controller;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.dto.ReviewEligibilityResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.security.CurrentUser;
 import com.example.order_service.dto.CreateOrderFromCartRequest;
@@ -119,4 +120,23 @@ public class OrderController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+    @GetMapping("/{id}/review-eligibility")
+    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN', 'INTERNAL_SERVICE')")
+    public ResponseEntity<ReviewEligibilityResponse> checkReviewEligibility(
+            @PathVariable Long id,
+            @RequestParam Long productId,
+            Authentication authentication) {
+
+        Long userId = currentUser.getUserId(authentication);
+
+        return ResponseEntity.ok(
+                service.checkReviewEligibility(
+                        id,
+                        userId,
+                        productId
+                )
+        );
+    }
+
 }

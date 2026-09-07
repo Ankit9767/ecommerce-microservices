@@ -1,6 +1,7 @@
 package com.example.order_service.service;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.dto.ReviewEligibilityResponse;
 import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.events.PaymentEvent;
 import com.example.order_service.dto.CreateOrderFromCartRequest;
@@ -20,7 +21,8 @@ public interface OrderService {
 
     Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable);
 
-    Page<OrderResponse> getOrdersByStatus(OrderStatus status, Authentication authentication, Pageable pageable);
+    Page<OrderResponse> getOrdersByStatus(OrderStatus status, Authentication authentication,
+                                          Pageable pageable);
 
     OrderResponse updateOrder(Long id, UpdateOrderRequest request);
 
@@ -32,4 +34,7 @@ public interface OrderService {
     OrderResponse handlePaymentCompleted(PaymentEvent event);
 
     OrderResponse handlePaymentFailed(PaymentEvent event);
+
+    ReviewEligibilityResponse checkReviewEligibility(Long id, Long userId, Long productId);
+
 }

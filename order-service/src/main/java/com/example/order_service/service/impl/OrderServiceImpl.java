@@ -781,4 +781,50 @@ public class OrderServiceImpl implements OrderService {
             throw ex;
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewEligibilityResponse checkReviewEligibility(Long id, Long userId,
+                                                            Long productId) {
+
+        Order order = repository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(id)
+                );
+
+        if (!order.getCustomerId().equals(userId)) {
+
+            return new ReviewEligibilityResponse(
+                    false,
+                    "Order does not belong to this user"
+            );
+        }
+
+        boolean productPurchased = order.getItems()
+                .stream()
+                .anyMatch(item ->
+                        item.getProductId().equals(productId)
+                );
+
+        if (!productPurchased) {
+
+            return new ReviewEligibilityResponse(
+                    false,
+                    "Product was not purchased in this order"
+            );
+        }
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+
+            return new ReviewEligibilityResponse(
+                    false,
+                    "Order has not been delivered"
+            );
+        }
+
+        return new ReviewEligibilityResponse(
+                true,
+                "User is eligible to review this product"
+        );
+    }
 }
