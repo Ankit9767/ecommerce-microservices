@@ -122,13 +122,11 @@ public class OrderController {
     }
 
     @GetMapping("/{id}/review-eligibility")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN', 'INTERNAL_SERVICE')")
+    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
     public ResponseEntity<ReviewEligibilityResponse> checkReviewEligibility(
             @PathVariable Long id,
             @RequestParam Long productId,
-            Authentication authentication) {
-
-        Long userId = currentUser.getUserId(authentication);
+            @RequestParam Long userId) {
 
         return ResponseEntity.ok(
                 service.checkReviewEligibility(

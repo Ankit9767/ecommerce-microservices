@@ -814,7 +814,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        if (order.getStatus() != OrderStatus.DELIVERED) {
+        if (order.getStatus() != OrderStatus.PAID) {
 
             return new ReviewEligibilityResponse(
                     false,
