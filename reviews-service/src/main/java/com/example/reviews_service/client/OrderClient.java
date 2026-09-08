@@ -16,7 +16,7 @@ public interface OrderClient {
     @GetMapping("/api/orders/{id}/review-eligibility")
     ReviewEligibilityResponse checkReviewEligibility(
             @PathVariable("id") Long id,
-            @RequestParam Long userId,
-            @RequestParam Long productId
+            @RequestParam("productId") Long productId,
+            @RequestParam("userId") Long userId
     );
 }

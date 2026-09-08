@@ -47,8 +47,8 @@ public class ReviewServiceImpl implements ReviewService {
 
             eligibility = orderClient.checkReviewEligibility(
                     request.getOrderId(),
-                    userId,
-                    request.getProductId()
+                    request.getProductId(),
+                    userId
             );
 
         } catch (RuntimeException ex) {
