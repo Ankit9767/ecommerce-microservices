@@ -1,9 +1,6 @@
 package com.example.search_service.service;
 
-import com.ecommerce.common.events.ProductCreatedEvent;
-import com.ecommerce.common.events.ProductDeletedEvent;
-import com.ecommerce.common.events.ProductUpdatedEvent;
-import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.events.*;
 import com.example.search_service.document.ProductDocument;
 import com.example.search_service.repository.ProductSearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +13,8 @@ import org.springframework.stereotype.Service;
 public class ProductIndexingService {
 
     private final ProductSearchRepository productSearchRepository;
+
+    private final ReviewSearchService reviewSearchService;
 
     public void indexProduct(ProductCreatedEvent event) {
 
@@ -100,17 +99,78 @@ public class ProductIndexingService {
 
     public void indexReview(ReviewCreatedEvent event) {
 
-        productSearchRepository.updateReviewRating(
+        productSearchRepository.createReviewRating(
                 event.getProductId(),
                 event.getReviewId(),
+                event.getEventId().toString(),
                 event.getRating()
         );
 
+        reviewSearchService.createReview(
+                event.getReviewId(),
+                event.getProductId(),
+                event.getUserId(),
+                event.getRating(),
+                event.getTitle(),
+                event.getComment()
+        );
+
         log.info(
-                "Product rating updated successfully: " +
+                "Review indexed successfully: " +
                         "reviewId={}, productId={}",
                 event.getReviewId(),
                 event.getProductId()
+        );
+    }
+
+    public void updateReview(ReviewUpdatedEvent event) {
+
+        productSearchRepository.updateReviewRating(
+                event.getProductId(),
+                event.getReviewId(),
+                event.getEventId().toString(),
+                event.getOldRating(),
+                event.getNewRating()
+        );
+
+        reviewSearchService.updateReview(
+                event.getReviewId(),
+                event.getProductId(),
+                event.getUserId(),
+                event.getNewRating(),
+                event.getTitle(),
+                event.getComment()
+        );
+
+        log.info(
+                "Review search document updated: " +
+                        "reviewId={}, productId={}, oldRating={}, newRating={}",
+                event.getReviewId(),
+                event.getProductId(),
+                event.getOldRating(),
+                event.getNewRating()
+        );
+    }
+
+    public void deleteReview(ReviewDeletedEvent event) {
+
+        productSearchRepository.deleteReviewRating(
+                event.getProductId(),
+                event.getReviewId(),
+                event.getEventId().toString(),
+                event.getRating()
+        );
+
+        reviewSearchService.deleteReview(
+                event.getReviewId()
+        );
+
+        log.info(
+                "Review search document deleted: " +
+                        "reviewId={}, productId={}, rating={}",
+                event.getReviewId(),
+                event.getProductId(),
+                event.getRating()
         );
     }
 }
