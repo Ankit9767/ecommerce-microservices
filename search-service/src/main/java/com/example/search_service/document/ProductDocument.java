@@ -10,6 +10,7 @@ import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -44,4 +45,16 @@ public class ProductDocument {
 
     @Field(type = FieldType.Boolean)
     private Boolean active;
+
+    @Field(type = FieldType.Double)
+    private Double ratingSum;
+
+    @Field(type = FieldType.Long)
+    private Long reviewCount;
+
+    @Field(type = FieldType.Double)
+    private Double averageRating;
+
+    @Field(type = FieldType.Long)
+    private List<Long> processedReviewIds;
 }
