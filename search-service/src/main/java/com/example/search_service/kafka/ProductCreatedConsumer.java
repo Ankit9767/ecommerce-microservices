@@ -37,9 +37,7 @@ public class ProductCreatedConsumer {
     )
     public void consume(ProductEvent event) {
 
-        if (event == null || event.getEventType() == null) {
-            throw new InvalidEventException();
-        }
+        validateEvent(event);
 
         log.info(
                 "Received ProductEvent [{}] for product {}",
@@ -59,14 +57,6 @@ public class ProductCreatedConsumer {
                     );
 
                     throw new InvalidEventException();
-                }
-
-                if (productEvent.getEventId() == null) {
-                    throw new MissingEventIdException();
-                }
-
-                if (productEvent.getProductId() == null) {
-                    throw new MissingProductIdException();
                 }
 
                 log.info(
@@ -95,14 +85,6 @@ public class ProductCreatedConsumer {
                     throw new InvalidEventException();
                 }
 
-                if (productEvent.getEventId() == null) {
-                    throw new MissingEventIdException();
-                }
-
-                if (productEvent.getProductId() == null) {
-                    throw new MissingProductIdException();
-                }
-
                 log.info(
                         "Processing PRODUCT_UPDATED event: eventId={}, productId={}",
                         productEvent.getEventId(),
@@ -129,14 +111,6 @@ public class ProductCreatedConsumer {
                     throw new InvalidEventException();
                 }
 
-                if (productEvent.getEventId() == null) {
-                    throw new MissingEventIdException();
-                }
-
-                if (productEvent.getProductId() == null) {
-                    throw new MissingProductIdException();
-                }
-
                 log.info(
                         "Processing PRODUCT_DELETED event: eventId={}, productId={}",
                         productEvent.getEventId(),
@@ -155,6 +129,21 @@ public class ProductCreatedConsumer {
                     "Ignoring product event type: {}",
                     event.getEventType()
             );
+        }
+    }
+
+    private void validateEvent(ProductEvent event) {
+
+        if (event == null || event.getEventType() == null) {
+            throw new InvalidEventException();
+        }
+
+        if (event.getEventId() == null) {
+            throw new MissingEventIdException();
+        }
+
+        if (event.getProductId() == null) {
+            throw new MissingProductIdException();
         }
     }
 
