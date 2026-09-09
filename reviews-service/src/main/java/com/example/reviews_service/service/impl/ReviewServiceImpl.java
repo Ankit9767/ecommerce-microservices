@@ -1,6 +1,8 @@
 package com.example.reviews_service.service.impl;
 
 import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.events.ReviewDeletedEvent;
+import com.ecommerce.common.events.ReviewUpdatedEvent;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.security.CurrentUser;
 import com.example.reviews_service.client.OrderClient;
@@ -164,6 +166,8 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ReviewAlreadyDeletedException(reviewId);
         }
 
+        Integer oldRating = review.getRating();
+
         if (request.getRating() != null) {
             review.setRating(request.getRating());
         }
@@ -176,21 +180,36 @@ public class ReviewServiceImpl implements ReviewService {
             review.setComment(request.getComment());
         }
 
-        /*
-         * Because Review is already managed by the current transaction,
-         * save() isn't strictly required here. Keeping it explicit makes
-         * the persistence operation clear and is consistent with the
-         * create/delete methods.
-         */
         Review updatedReview = reviewRepository.save(review);
 
+        writeReviewUpdatedToOutbox(updatedReview, oldRating);
+
         return ReviewResponse.from(updatedReview);
+
+    }
+
+    private void writeReviewUpdatedToOutbox(Review review,
+                                            Integer oldRating) {
+
+        ReviewUpdatedEvent event =
+                ReviewUpdatedEvent.builder()
+                        .eventType(EventType.REVIEW_UPDATED)
+                        .reviewId(review.getId())
+                        .productId(review.getProductId())
+                        .userId(review.getUserId())
+                        .orderId(review.getOrderId())
+                        .oldRating(oldRating)
+                        .newRating(review.getRating())
+                        .title(review.getTitle())
+                        .comment(review.getComment())
+                        .build();
+
+        outboxService.saveReviewUpdatedEvent(event);
     }
 
     @Override
     @Transactional
-    public void deleteReview(Long reviewId,
-                             Authentication authentication) {
+    public void deleteReview(Long reviewId, Authentication authentication) {
 
         Long currentUserId = currentUser.getUserId(authentication);
 
@@ -202,9 +221,29 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ReviewAlreadyDeletedException(reviewId);
         }
 
+        Integer rating = review.getRating();
+
         review.setStatus(ReviewStatus.DELETED);
 
         reviewRepository.save(review);
+
+        writeReviewDeletedToOutbox(review, rating);
+
+    }
+
+    private void writeReviewDeletedToOutbox(Review review, Integer rating) {
+
+        ReviewDeletedEvent event =
+                ReviewDeletedEvent.builder()
+                        .eventType(EventType.REVIEW_DELETED)
+                        .reviewId(review.getId())
+                        .productId(review.getProductId())
+                        .userId(review.getUserId())
+                        .orderId(review.getOrderId())
+                        .rating(rating)
+                        .build();
+
+        outboxService.saveReviewDeletedEvent(event);
     }
 
     /**
