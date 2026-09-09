@@ -7,9 +7,9 @@ import com.ecommerce.common.events.ReviewUpdatedEvent;
 import com.ecommerce.common.exception.InvalidEventException;
 import com.ecommerce.common.exception.MissingEventIdException;
 import com.ecommerce.common.exception.MissingEventTypeException;
-import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.KafkaTopics;
 import com.example.search_service.service.ProductIndexingService;
+import com.example.search_service.service.ReviewIndexingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -26,6 +26,8 @@ import org.springframework.stereotype.Component;
 public class ReviewEventConsumer {
 
     private final ProductIndexingService productIndexingService;
+
+    private final ReviewIndexingService reviewIndexingService;
 
     @RetryableTopic(
             attempts = "4",
@@ -63,21 +65,58 @@ public class ReviewEventConsumer {
 
     private void handleEvent(ReviewEvent event) {
 
-        if (event.getEventType() == EventType.REVIEW_CREATED) {
+        switch (event.getEventType()) {
 
-            productIndexingService.indexReview((ReviewCreatedEvent) event);
+            case REVIEW_CREATED -> {
 
-        } else if (event.getEventType() == EventType.REVIEW_UPDATED) {
+                if (!(event instanceof ReviewCreatedEvent reviewEvent)) {
+                    throw new InvalidEventException();
+                }
 
-            productIndexingService.updateReview((ReviewUpdatedEvent) event);
+                productIndexingService.createReviewRating(
+                        reviewEvent.getProductId(),
+                        reviewEvent.getReviewId(),
+                        reviewEvent.getEventId().toString(),
+                        reviewEvent.getRating()
+                );
 
-        } else if (event.getEventType() == EventType.REVIEW_DELETED) {
+                reviewIndexingService.indexReview(reviewEvent);
+            }
 
-            productIndexingService.deleteReview((ReviewDeletedEvent) event);
+            case REVIEW_UPDATED -> {
 
-        } else {
+                if (!(event instanceof ReviewUpdatedEvent reviewEvent)) {
+                    throw new InvalidEventException();
+                }
 
-            log.warn(
+                productIndexingService.updateReviewRating(
+                        reviewEvent.getProductId(),
+                        reviewEvent.getReviewId(),
+                        reviewEvent.getEventId().toString(),
+                        reviewEvent.getOldRating(),
+                        reviewEvent.getNewRating()
+                );
+
+                reviewIndexingService.updateReview(reviewEvent);
+            }
+
+            case REVIEW_DELETED -> {
+
+                if (!(event instanceof ReviewDeletedEvent reviewEvent)) {
+                    throw new InvalidEventException();
+                }
+
+                productIndexingService.deleteReviewRating(
+                        reviewEvent.getProductId(),
+                        reviewEvent.getReviewId(),
+                        reviewEvent.getEventId().toString(),
+                        reviewEvent.getRating()
+                );
+
+                reviewIndexingService.deleteReview(reviewEvent);
+            }
+
+            default -> log.warn(
                     "Ignoring unsupported review event type: " +
                             "eventId={}, eventType={}, reviewId={}",
                     event.getEventId(),

@@ -1,6 +1,8 @@
 package com.example.search_service.service;
 
-import com.ecommerce.common.events.*;
+import com.ecommerce.common.events.ProductCreatedEvent;
+import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.example.search_service.document.ProductDocument;
 import com.example.search_service.repository.ProductSearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +15,6 @@ import org.springframework.stereotype.Service;
 public class ProductIndexingService {
 
     private final ProductSearchRepository productSearchRepository;
-
-    private final ReviewSearchService reviewSearchService;
 
     public void indexProduct(ProductCreatedEvent event) {
 
@@ -97,80 +97,32 @@ public class ProductIndexingService {
         );
     }
 
-    public void indexReview(ReviewCreatedEvent event) {
+    public void createReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer rating) {
 
         productSearchRepository.createReviewRating(
-                event.getProductId(),
-                event.getReviewId(),
-                event.getEventId().toString(),
-                event.getRating()
-        );
-
-        reviewSearchService.createReview(
-                event.getReviewId(),
-                event.getProductId(),
-                event.getUserId(),
-                event.getRating(),
-                event.getTitle(),
-                event.getComment()
-        );
-
-        log.info(
-                "Review indexed successfully: " +
-                        "reviewId={}, productId={}",
-                event.getReviewId(),
-                event.getProductId()
+                productId, reviewId,
+                eventId, rating
         );
     }
 
-    public void updateReview(ReviewUpdatedEvent event) {
+    public void updateReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer oldRating,
+                                   Integer newRating) {
 
         productSearchRepository.updateReviewRating(
-                event.getProductId(),
-                event.getReviewId(),
-                event.getEventId().toString(),
-                event.getOldRating(),
-                event.getNewRating()
-        );
-
-        reviewSearchService.updateReview(
-                event.getReviewId(),
-                event.getProductId(),
-                event.getUserId(),
-                event.getNewRating(),
-                event.getTitle(),
-                event.getComment()
-        );
-
-        log.info(
-                "Review search document updated: " +
-                        "reviewId={}, productId={}, oldRating={}, newRating={}",
-                event.getReviewId(),
-                event.getProductId(),
-                event.getOldRating(),
-                event.getNewRating()
+                productId, reviewId,
+                eventId, oldRating,
+                newRating
         );
     }
 
-    public void deleteReview(ReviewDeletedEvent event) {
+    public void deleteReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer rating) {
 
         productSearchRepository.deleteReviewRating(
-                event.getProductId(),
-                event.getReviewId(),
-                event.getEventId().toString(),
-                event.getRating()
-        );
-
-        reviewSearchService.deleteReview(
-                event.getReviewId()
-        );
-
-        log.info(
-                "Review search document deleted: " +
-                        "reviewId={}, productId={}, rating={}",
-                event.getReviewId(),
-                event.getProductId(),
-                event.getRating()
+                productId, reviewId,
+                eventId, rating
         );
     }
 }
