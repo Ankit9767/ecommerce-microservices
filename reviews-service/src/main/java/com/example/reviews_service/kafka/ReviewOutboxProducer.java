@@ -1,7 +1,7 @@
 package com.example.reviews_service.kafka;
 
 import com.ecommerce.common.events.DomainEvent;
-import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.events.ReviewEvent;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.OutboxProducer;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,13 @@ public class ReviewOutboxProducer implements OutboxProducer {
 
     @Override
     public CompletableFuture<?> publish(DomainEvent event) {
-        return producer.publish((ReviewCreatedEvent) event);
+        return producer.publish((ReviewEvent) event);
     }
 
     @Override
     public boolean supports(EventType eventType) {
-        return eventType == EventType.REVIEW_CREATED;
+        return eventType == EventType.REVIEW_CREATED
+                || eventType == EventType.REVIEW_UPDATED
+                || eventType == EventType.REVIEW_DELETED;
     }
 }
