@@ -84,4 +84,5 @@ spec:
 
       volumes:
         - name: elasticsearch-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: elasticsearch-storage
