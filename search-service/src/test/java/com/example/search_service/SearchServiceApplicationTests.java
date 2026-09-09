@@ -1,6 +1,7 @@
 package com.example.search_service;
 
 import com.example.search_service.repository.ProductSearchRepository;
+import com.example.search_service.repository.ReviewSearchRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,7 +14,10 @@ class SearchServiceApplicationTests {
     @MockBean
     private ProductSearchRepository productSearchRepository;
 
-	@Test
+    @MockBean
+    private ReviewSearchRepository reviewSearchRepository;
+
+    @Test
 	void contextLoads() {
 	}
 
