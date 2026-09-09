@@ -21,7 +21,7 @@ public final class KafkaTopics {
 
     public static final String NOTIFICATION_SENT = "notification-sent";
 
-    public static final String REVIEW_CREATED = "review-created";
+    public static final String REVIEW_EVENTS = "review-events";
 
     /*
      * Kafka message header that carries the fine-grained event type for
