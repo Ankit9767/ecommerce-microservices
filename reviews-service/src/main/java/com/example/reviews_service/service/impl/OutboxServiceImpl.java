@@ -1,6 +1,8 @@
 package com.example.reviews_service.service.impl;
 
 import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.events.ReviewDeletedEvent;
+import com.ecommerce.common.events.ReviewUpdatedEvent;
 import com.ecommerce.common.exception.OutboxEventCreationException;
 import com.ecommerce.common.kafka.EventType;
 import com.ecommerce.common.kafka.OutboxEvent;
@@ -24,20 +26,45 @@ public class OutboxServiceImpl implements OutboxService {
     @Override
     public void saveReviewCreatedEvent(ReviewCreatedEvent event) {
 
-        save(EventType.REVIEW_CREATED, event, event.getReviewId());
+        save(
+                EventType.REVIEW_CREATED,
+                event,
+                event.getReviewId()
+        );
     }
 
-    private void save(EventType eventType, Object event, Long aggregateId) {
+    @Override
+    public void saveReviewUpdatedEvent(ReviewUpdatedEvent event) {
+
+        save(
+                EventType.REVIEW_UPDATED,
+                event,
+                event.getReviewId()
+        );
+    }
+
+    @Override
+    public void saveReviewDeletedEvent(ReviewDeletedEvent event) {
+
+        save(
+                EventType.REVIEW_DELETED,
+                event,
+                event.getReviewId()
+        );
+    }
+
+    private void save(EventType eventType, Object event,
+                      Long aggregateId) {
 
         try {
 
             OutboxEvent outbox = OutboxEvent.builder()
-                    .eventType(eventType.getValue())
-                    .aggregateId(aggregateId)
-                    .payload(objectMapper.writeValueAsString(event))
-                    .published(false)
-                    .createdAt(LocalDateTime.now())
-                    .build();
+                            .eventType(eventType.getValue())
+                            .aggregateId(aggregateId)
+                            .payload(objectMapper.writeValueAsString(event))
+                            .published(false)
+                            .createdAt(LocalDateTime.now())
+                            .build();
 
             repository.save(outbox);
 
