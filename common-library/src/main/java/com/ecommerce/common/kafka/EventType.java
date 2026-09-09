@@ -39,7 +39,9 @@ public enum EventType {
     SHIPMENT_FAILED("shipment-failed"),
     SHIPMENT_CANCELLED("shipment-cancelled"),
 
-    REVIEW_CREATED("review-created");
+    REVIEW_CREATED("review-created"),
+    REVIEW_UPDATED("review-updated"),
+    REVIEW_DELETED("review-deleted");
 
     private final String value;
 
@@ -146,6 +148,13 @@ public enum EventType {
 
             case REVIEW_CREATED ->
                     ReviewCreatedEvent.class;
+
+            case REVIEW_UPDATED ->
+                    ReviewUpdatedEvent.class;
+
+            case REVIEW_DELETED ->
+                    ReviewDeletedEvent.class;
+
         };
     }
 }
