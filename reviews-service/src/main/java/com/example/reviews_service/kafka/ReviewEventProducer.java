@@ -1,7 +1,6 @@
 package com.example.reviews_service.kafka;
 
-import com.ecommerce.common.events.ReviewCreatedEvent;
-import com.ecommerce.common.kafka.EventType;
+import com.ecommerce.common.events.ReviewEvent;
 import com.ecommerce.common.kafka.KafkaTopics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -15,12 +14,18 @@ import java.util.concurrent.CompletableFuture;
 @Component
 public class ReviewEventProducer {
 
-    private final KafkaTemplate<String, ReviewCreatedEvent> kafkaTemplate;
+    private static final String REVIEW_EVENTS_TOPIC =
+            KafkaTopics.REVIEW_EVENTS;
+
+    private final KafkaTemplate<String, ReviewEvent> kafkaTemplate;
 
     private final Counter publishedCounter;
 
-    public ReviewEventProducer(KafkaTemplate<String, ReviewCreatedEvent> kafkaTemplate,
-                               MeterRegistry meterRegistry) {
+    private final Counter failedCounter;
+
+    public ReviewEventProducer(
+            KafkaTemplate<String, ReviewEvent> kafkaTemplate,
+            MeterRegistry meterRegistry) {
 
         this.kafkaTemplate = kafkaTemplate;
 
@@ -30,38 +35,49 @@ public class ReviewEventProducer {
                 .description(
                         "Number of review events successfully published to Kafka"
                 )
+                .tag("topic", REVIEW_EVENTS_TOPIC)
+                .register(meterRegistry);
+
+        this.failedCounter = Counter.builder(
+                        "kafka.review.events.failed"
+                )
+                .description(
+                        "Number of review events that failed to publish to Kafka"
+                )
+                .tag("topic", REVIEW_EVENTS_TOPIC)
                 .register(meterRegistry);
     }
 
-    public CompletableFuture<?> publish(ReviewCreatedEvent event) {
+    public CompletableFuture<?> publish(ReviewEvent event) {
 
         String reviewId = event.getReviewId().toString();
 
-        String topic = resolveTopic(event.getEventType());
-
         log.debug(
-                "Publishing review event: eventType={}, reviewId={}, topic={}",
-                event.getEventType(),
+                "Publishing review event: " +
+                        "reviewId={}, eventType={}, topic={}",
                 reviewId,
-                topic
+                event.getEventType(),
+                REVIEW_EVENTS_TOPIC
         );
 
         return kafkaTemplate
                 .send(
-                        topic,
-                        reviewId,
+                        REVIEW_EVENTS_TOPIC,
+                        event.getProductId().toString(),
                         event
                 )
                 .whenComplete((result, throwable) -> {
 
                     if (throwable != null) {
 
+                        failedCounter.increment();
+
                         log.error(
                                 "Failed to publish review event: " +
-                                        "eventType={}, reviewId={}, topic={}",
-                                event.getEventType(),
+                                        "reviewId={}, eventType={}, topic={}",
                                 reviewId,
-                                topic,
+                                event.getEventType(),
+                                REVIEW_EVENTS_TOPIC,
                                 throwable
                         );
 
@@ -72,28 +88,14 @@ public class ReviewEventProducer {
 
                     log.debug(
                             "Successfully published review event: " +
-                                    "eventType={}, reviewId={}, topic={}, " +
+                                    "reviewId={}, eventType={}, topic={}, " +
                                     "partition={}, offset={}",
-                            event.getEventType(),
                             reviewId,
-                            topic,
+                            event.getEventType(),
+                            REVIEW_EVENTS_TOPIC,
                             result.getRecordMetadata().partition(),
                             result.getRecordMetadata().offset()
                     );
                 });
-    }
-
-    private String resolveTopic(EventType eventType) {
-
-        return switch (eventType) {
-
-            case REVIEW_CREATED ->
-                    KafkaTopics.REVIEW_CREATED;
-
-            default ->
-                    throw new IllegalArgumentException(
-                            "Unsupported review event type: " + eventType
-                    );
-        };
     }
 }
