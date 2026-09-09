@@ -7,13 +7,11 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-public class ReviewCreatedEvent extends DomainEvent {
+public class ReviewCreatedEvent extends ReviewEvent {
 
-    private Long reviewId;
-    private Long productId;
-    private Long userId;
-    private Long orderId;
     private Integer rating;
+
     private String title;
+
     private String comment;
 }
