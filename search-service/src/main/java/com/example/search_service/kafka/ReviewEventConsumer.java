@@ -1,6 +1,9 @@
 package com.example.search_service.kafka;
 
 import com.ecommerce.common.events.ReviewCreatedEvent;
+import com.ecommerce.common.events.ReviewDeletedEvent;
+import com.ecommerce.common.events.ReviewEvent;
+import com.ecommerce.common.events.ReviewUpdatedEvent;
 import com.ecommerce.common.exception.InvalidEventException;
 import com.ecommerce.common.exception.MissingEventIdException;
 import com.ecommerce.common.exception.MissingEventTypeException;
@@ -20,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile("!test")
 @RequiredArgsConstructor
-public class ReviewCreatedConsumer {
+public class ReviewEventConsumer {
 
     private final ProductIndexingService productIndexingService;
 
@@ -30,15 +33,15 @@ public class ReviewCreatedConsumer {
             dltTopicSuffix = "-dlt"
     )
     @KafkaListener(
-            topics = KafkaTopics.REVIEW_CREATED,
+            topics = KafkaTopics.REVIEW_EVENTS,
             groupId = "search-group"
     )
-    public void consume(ReviewCreatedEvent event) {
+    public void consume(ReviewEvent event) {
 
         validateEvent(event);
 
         log.info(
-                "Received ReviewCreatedEvent: " +
+                "Received review event: " +
                         "eventId={}, eventType={}, reviewId={}, productId={}",
                 event.getEventId(),
                 event.getEventType(),
@@ -46,31 +49,45 @@ public class ReviewCreatedConsumer {
                 event.getProductId()
         );
 
-        if (event.getEventType() != EventType.REVIEW_CREATED) {
-
-            log.warn(
-                    "Ignoring unexpected review event type: " +
-                            "eventId={}, eventType={}, reviewId={}",
-                    event.getEventId(),
-                    event.getEventType(),
-                    event.getReviewId()
-            );
-
-            return;
-        }
-
-        productIndexingService.indexReview(event);
+        handleEvent(event);
 
         log.info(
-                "ReviewCreatedEvent processed successfully: " +
-                        "eventId={}, reviewId={}, productId={}",
+                "Review event processed successfully: " +
+                        "eventId={}, eventType={}, reviewId={}, productId={}",
                 event.getEventId(),
+                event.getEventType(),
                 event.getReviewId(),
                 event.getProductId()
         );
     }
 
-    private void validateEvent(ReviewCreatedEvent event) {
+    private void handleEvent(ReviewEvent event) {
+
+        if (event.getEventType() == EventType.REVIEW_CREATED) {
+
+            productIndexingService.indexReview((ReviewCreatedEvent) event);
+
+        } else if (event.getEventType() == EventType.REVIEW_UPDATED) {
+
+            productIndexingService.updateReview((ReviewUpdatedEvent) event);
+
+        } else if (event.getEventType() == EventType.REVIEW_DELETED) {
+
+            productIndexingService.deleteReview((ReviewDeletedEvent) event);
+
+        } else {
+
+            log.warn(
+                    "Ignoring unsupported review event type: " +
+                            "eventId={}, eventType={}, reviewId={}",
+                    event.getEventId(),
+                    event.getEventType(),
+                    event.getReviewId()
+            );
+        }
+    }
+
+    private void validateEvent(ReviewEvent event) {
 
         if (event == null) {
             throw new InvalidEventException();
@@ -91,14 +108,10 @@ public class ReviewCreatedConsumer {
         if (event.getProductId() == null) {
             throw new InvalidEventException();
         }
-
-        if (event.getRating() == null) {
-            throw new InvalidEventException();
-        }
     }
 
     @DltHandler
-    public void handleDeadLetter(ReviewCreatedEvent event) {
+    public void handleDeadLetter(ReviewEvent event) {
 
         log.error(
                 "Review event moved to DLT after retries exhausted: " +
