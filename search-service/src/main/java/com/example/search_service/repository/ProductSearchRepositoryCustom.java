@@ -17,9 +17,25 @@ public interface ProductSearchRepositoryCustom {
             Pageable pageable
     );
 
+    void createReviewRating(
+            Long productId,
+            Long reviewId,
+            String eventId,
+            Integer rating
+    );
+
     void updateReviewRating(
             Long productId,
             Long reviewId,
+            String eventId,
+            Integer oldRating,
+            Integer newRating
+    );
+
+    void deleteReviewRating(
+            Long productId,
+            Long reviewId,
+            String eventId,
             Integer rating
     );
 }
