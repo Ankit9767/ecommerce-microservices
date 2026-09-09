@@ -7,6 +7,8 @@ import com.example.search_service.document.ReviewSearchDocument;
 import com.example.search_service.repository.ReviewSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -15,6 +17,15 @@ import org.springframework.stereotype.Service;
 public class ReviewIndexingService {
 
     private final ReviewSearchRepository reviewSearchRepository;
+
+    public Page<ReviewSearchDocument> getReviewsByProductId(Long productId,
+                                                            Pageable pageable) {
+
+        return reviewSearchRepository.findByProductId(
+                productId,
+                pageable
+        );
+    }
 
     public void indexReview(ReviewCreatedEvent event) {
 
