@@ -16,4 +16,10 @@ public interface ProductSearchRepositoryCustom {
             Boolean active,
             Pageable pageable
     );
+
+    void updateReviewRating(
+            Long productId,
+            Long reviewId,
+            Integer rating
+    );
 }

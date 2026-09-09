@@ -2,6 +2,9 @@ package com.example.search_service.repository;
 
 import com.example.search_service.document.ProductDocument;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.elasticsearch.core.query.ScriptType;
+import org.springframework.data.elasticsearch.core.query.UpdateQuery;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -17,7 +20,9 @@ import co.elastic.clients.json.JsonData;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -149,6 +154,56 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepositoryCusto
                 products,
                 pageable,
                 searchHits.getTotalHits()
+        );
+    }
+
+    @Override
+    public void updateReviewRating(Long productId, Long reviewId,
+                                   Integer rating) {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("reviewId", reviewId);
+        params.put("rating", rating);
+
+        String scriptSource = """
+        if (ctx._source.processedReviewIds == null) {
+            ctx._source.processedReviewIds = [];
+        }
+
+        if (ctx._source.processedReviewIds.contains(params.reviewId)) {
+            return;
+        }
+
+        if (ctx._source.ratingSum == null) {
+            ctx._source.ratingSum = 0.0;
+        }
+
+        if (ctx._source.reviewCount == null) {
+            ctx._source.reviewCount = 0;
+        }
+
+        ctx._source.ratingSum += params.rating;
+        ctx._source.reviewCount += 1;
+
+        ctx._source.averageRating =
+                ctx._source.ratingSum /
+                ctx._source.reviewCount;
+
+        ctx._source.processedReviewIds.add(params.reviewId);
+        """;
+
+        UpdateQuery updateQuery =
+                UpdateQuery.builder(productId.toString())
+                        .withScript(scriptSource)
+                        .withScriptType(ScriptType.INLINE)
+                        .withParams(params)
+                        .build();
+
+        elasticsearchOperations.update(
+                updateQuery,
+                elasticsearchOperations.getIndexCoordinatesFor(
+                        ProductDocument.class
+                )
         );
     }
 }
