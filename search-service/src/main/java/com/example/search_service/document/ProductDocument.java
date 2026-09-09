@@ -55,6 +55,6 @@ public class ProductDocument {
     @Field(type = FieldType.Double)
     private Double averageRating;
 
-    @Field(type = FieldType.Long)
-    private List<Long> processedReviewIds;
+    @Field(type = FieldType.Keyword)
+    private List<String> processedReviewEventIds;
 }
