@@ -158,45 +158,155 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepositoryCusto
     }
 
     @Override
-    public void updateReviewRating(Long productId, Long reviewId,
-                                   Integer rating) {
+    public void createReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer rating) {
 
         Map<String, Object> params = new HashMap<>();
-        params.put("reviewId", reviewId);
+        params.put("eventId", eventId);
         params.put("rating", rating);
-
-        String scriptSource = """
-        if (ctx._source.processedReviewIds == null) {
-            ctx._source.processedReviewIds = [];
-        }
-
-        if (ctx._source.processedReviewIds.contains(params.reviewId)) {
-            return;
-        }
-
-        if (ctx._source.ratingSum == null) {
-            ctx._source.ratingSum = 0.0;
-        }
-
-        if (ctx._source.reviewCount == null) {
-            ctx._source.reviewCount = 0;
-        }
-
-        ctx._source.ratingSum += params.rating;
-        ctx._source.reviewCount += 1;
-
-        ctx._source.averageRating =
-                ctx._source.ratingSum /
-                ctx._source.reviewCount;
-
-        ctx._source.processedReviewIds.add(params.reviewId);
-        """;
 
         UpdateQuery updateQuery =
                 UpdateQuery.builder(productId.toString())
-                        .withScript(scriptSource)
-                        .withScriptType(ScriptType.INLINE)
+                        .withScript("""
+                        if (ctx._source.processedReviewEventIds == null) {
+                            ctx._source.processedReviewEventIds = [];
+                        }
+
+                        if (ctx._source.processedReviewEventIds.contains(params.eventId)) {
+                            return;
+                        }
+
+                        if (ctx._source.ratingSum == null) {
+                            ctx._source.ratingSum = 0.0;
+                        }
+
+                        if (ctx._source.reviewCount == null) {
+                            ctx._source.reviewCount = 0;
+                        }
+
+                        ctx._source.ratingSum += params.rating;
+                        ctx._source.reviewCount += 1;
+
+                        ctx._source.averageRating =
+                                ctx._source.ratingSum /
+                                ctx._source.reviewCount;
+
+                        ctx._source.processedReviewEventIds.add(params.eventId);
+                        """)
                         .withParams(params)
+                        .withScriptType(ScriptType.INLINE)
+                        .build();
+
+        elasticsearchOperations.update(
+                updateQuery,
+                elasticsearchOperations.getIndexCoordinatesFor(
+                        ProductDocument.class
+                )
+        );
+    }
+
+    @Override
+    public void updateReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer oldRating,
+                                   Integer newRating) {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("eventId", eventId);
+        params.put("oldRating", oldRating);
+        params.put("newRating", newRating);
+
+        UpdateQuery updateQuery =
+                UpdateQuery.builder(productId.toString())
+                        .withScript("""
+                        if (ctx._source.processedReviewEventIds == null) {
+                            ctx._source.processedReviewEventIds = [];
+                        }
+
+                        if (ctx._source.processedReviewEventIds.contains(params.eventId)) {
+                            return;
+                        }
+
+                        if (ctx._source.ratingSum == null) {
+                            ctx._source.ratingSum = 0.0;
+                        }
+
+                        if (ctx._source.reviewCount == null) {
+                            ctx._source.reviewCount = 0;
+                        }
+
+                        ctx._source.ratingSum =
+                                ctx._source.ratingSum
+                                - params.oldRating
+                                + params.newRating;
+
+                        if (ctx._source.reviewCount > 0) {
+                            ctx._source.averageRating =
+                                    ctx._source.ratingSum /
+                                    ctx._source.reviewCount;
+                        } else {
+                            ctx._source.averageRating = 0.0;
+                        }
+
+                        ctx._source.processedReviewEventIds.add(params.eventId);
+                        """)
+                        .withParams(params)
+                        .withScriptType(ScriptType.INLINE)
+                        .build();
+
+        elasticsearchOperations.update(
+                updateQuery,
+                elasticsearchOperations.getIndexCoordinatesFor(
+                        ProductDocument.class
+                )
+        );
+    }
+
+    @Override
+    public void deleteReviewRating(Long productId, Long reviewId,
+                                   String eventId, Integer rating) {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("eventId", eventId);
+        params.put("rating", rating);
+
+        UpdateQuery updateQuery =
+                UpdateQuery.builder(productId.toString())
+                        .withScript("""
+                        if (ctx._source.processedReviewEventIds == null) {
+                            ctx._source.processedReviewEventIds = [];
+                        }
+
+                        if (ctx._source.processedReviewEventIds.contains(params.eventId)) {
+                            return;
+                        }
+
+                        if (ctx._source.ratingSum == null) {
+                            ctx._source.ratingSum = 0.0;
+                        }
+
+                        if (ctx._source.reviewCount == null) {
+                            ctx._source.reviewCount = 0;
+                        }
+
+                        ctx._source.ratingSum -= params.rating;
+
+                        if (ctx._source.reviewCount > 0) {
+                            ctx._source.reviewCount -= 1;
+                        }
+
+                        if (ctx._source.reviewCount > 0) {
+                            ctx._source.averageRating =
+                                    ctx._source.ratingSum /
+                                    ctx._source.reviewCount;
+                        } else {
+                            ctx._source.averageRating = 0.0;
+                            ctx._source.ratingSum = 0.0;
+                        }
+
+                        ctx._source.processedReviewEventIds.add(params.eventId);
+                        """)
+                        .withParams(params)
+                        .withScriptType(ScriptType.INLINE)
                         .build();
 
         elasticsearchOperations.update(
