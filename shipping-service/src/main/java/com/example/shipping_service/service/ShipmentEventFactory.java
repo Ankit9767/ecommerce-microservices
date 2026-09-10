@@ -8,6 +8,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class ShipmentEventFactory {
 
+    public ShipmentCreatedEvent buildShipmentCreatedEvent(Shipment shipment) {
+
+        return (ShipmentCreatedEvent) buildShipmentEvent(
+                shipment,
+                EventType.SHIPMENT_CREATED
+        );
+    }
+
     public ShipmentShippedEvent buildShipmentShippedEvent(Shipment shipment) {
 
         return (ShipmentShippedEvent) buildShipmentEvent(
@@ -61,6 +69,17 @@ public class ShipmentEventFactory {
                                             EventType eventType) {
 
         return switch (eventType) {
+
+            case SHIPMENT_CREATED ->
+                    ShipmentCreatedEvent.builder()
+                            .eventType(eventType)
+                            .shipmentId(shipment.getId())
+                            .orderId(shipment.getOrderId())
+                            .customerId(shipment.getCustomerId())
+                            .recipientEmail(shipment.getRecipientEmail())
+                            .carrier(shipment.getCarrier())
+                            .trackingNumber(shipment.getTrackingNumber())
+                            .build();
 
             case SHIPMENT_SHIPPED ->
                     ShipmentShippedEvent.builder()
