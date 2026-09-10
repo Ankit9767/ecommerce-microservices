@@ -1,14 +1,7 @@
 package com.example.shipping_service.service.impl;
 
-import com.ecommerce.common.events.OrderPaidEvent;
-import com.ecommerce.common.events.ShipmentCancelledEvent;
-import com.ecommerce.common.events.ShipmentDeliveredEvent;
-import com.ecommerce.common.events.ShipmentFailedEvent;
-import com.ecommerce.common.events.ShipmentInTransitEvent;
-import com.ecommerce.common.events.ShipmentOutForDeliveryEvent;
-import com.ecommerce.common.events.ShipmentShippedEvent;
+import com.ecommerce.common.events.*;
 import com.example.shipping_service.dto.ShipmentCreationResult;
-import com.example.shipping_service.dto.ShippingProviderResult;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
 import com.example.shipping_service.exception.InvalidShipmentStatusTransitionException;
@@ -67,34 +60,33 @@ public class ShipmentServiceImpl implements ShipmentService {
          */
         if (!result.created()) {
 
+            log.info(
+                    "Shipment already exists: " +
+                            "shipmentId={}, orderId={}, status={}",
+                    shipment.getId(),
+                    shipment.getOrderId(),
+                    shipment.getStatus()
+            );
+
             return shipment;
         }
 
-        ShippingProviderResult providerResult =
-                shippingProvider.ship(
-                        shipment.getId(),
-                        shipment.getOrderId(),
-                        shipment.getCustomerId()
+        ShipmentCreatedEvent createdEvent =
+                shipmentEventFactory.buildShipmentCreatedEvent(
+                        shipment
                 );
 
-        Shipment shipped =
-                markShipped(
-                        shipment.getId(),
-                        providerResult.carrier(),
-                        providerResult.trackingNumber()
-                );
+        outboxService.saveShipmentEvent(createdEvent);
 
         log.info(
-                "Shipment created and shipped successfully: " +
-                        "shipmentId={}, orderId={}, carrier={}, " +
-                        "trackingNumber={}",
-                shipped.getId(),
-                shipped.getOrderId(),
-                providerResult.carrier(),
-                providerResult.trackingNumber()
+                "Shipment created: " +
+                        "shipmentId={}, orderId={}, status={}",
+                shipment.getId(),
+                shipment.getOrderId(),
+                shipment.getStatus()
         );
 
-        return shipped;
+        return shipment;
     }
 
     @Override

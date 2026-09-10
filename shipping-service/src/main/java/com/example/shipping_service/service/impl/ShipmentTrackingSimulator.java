@@ -1,9 +1,11 @@
 package com.example.shipping_service.service.impl;
 
+import com.example.shipping_service.dto.ShippingProviderResult;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
 import com.example.shipping_service.repository.ShipmentRepository;
 import com.example.shipping_service.service.ShipmentService;
+import com.example.shipping_service.service.ShippingProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,9 @@ public class ShipmentTrackingSimulator {
     private final ShipmentRepository shipmentRepository;
 
     private final ShipmentService shipmentService;
+
+    private final ShippingProvider shippingProvider;
+
 
     /**
      * Simulates external carrier tracking updates.
@@ -34,6 +39,10 @@ public class ShipmentTrackingSimulator {
      */
     public void processPendingUpdates() {
 
+        if (processCreatedShipment()) {
+            return;
+        }
+
         if (processShippedShipment()) {
             return;
         }
@@ -43,6 +52,53 @@ public class ShipmentTrackingSimulator {
         }
 
         processDeliveryShipment();
+    }
+
+    private boolean processCreatedShipment() {
+
+        List<Shipment> shipments =
+                shipmentRepository.findByStatus(ShipmentStatus.CREATED);
+
+        if (shipments.isEmpty()) {
+            return false;
+        }
+
+        Shipment shipment = shipments.getFirst();
+
+        try {
+
+            ShippingProviderResult providerResult =
+                    shippingProvider.ship(
+                            shipment.getId(),
+                            shipment.getOrderId(),
+                            shipment.getCustomerId()
+                    );
+
+            shipmentService.markShipped(
+                    shipment.getId(),
+                    providerResult.carrier(),
+                    providerResult.trackingNumber()
+            );
+
+            log.info(
+                    "Mock carrier update: " +
+                            "shipmentId={} CREATED -> SHIPPED",
+                    shipment.getId()
+            );
+
+            return true;
+
+        } catch (Exception ex) {
+
+            log.error(
+                    "Failed to move shipmentId={} " +
+                            "from CREATED to SHIPPED",
+                    shipment.getId(),
+                    ex
+            );
+
+            return false;
+        }
     }
 
     private boolean processShippedShipment() {
