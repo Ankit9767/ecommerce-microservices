@@ -783,6 +783,198 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public OrderResponse handleShipmentCreated(ShipmentCreatedEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        if (order.getStatus() == OrderStatus.PROCESSING) {
+
+            return mapper.toResponse(order);
+        }
+
+        if (order.getStatus() == OrderStatus.DELIVERED ||
+                order.getStatus() == OrderStatus.CANCELLED) {
+
+            log.warn(
+                    "Ignoring SHIPMENT_CREATED for terminal order: " +
+                            "orderId={}, status={}, eventId={}",
+                    order.getId(),
+                    order.getStatus(),
+                    event.getEventId()
+            );
+
+            return mapper.toResponse(order);
+        }
+
+        transitionStatus(
+                order,
+                OrderStatus.PROCESSING
+        );
+
+        return orderPersistenceService.updateOrder(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse handleShipmentShipped(ShipmentShippedEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        if (order.getStatus() == OrderStatus.SHIPPED) {
+
+            return mapper.toResponse(order);
+        }
+
+        if (order.getStatus() == OrderStatus.DELIVERED ||
+                order.getStatus() == OrderStatus.CANCELLED) {
+
+            log.warn(
+                    "Ignoring SHIPMENT_SHIPPED for terminal order: " +
+                            "orderId={}, status={}, eventId={}",
+                    order.getId(),
+                    order.getStatus(),
+                    event.getEventId()
+            );
+
+            return mapper.toResponse(order);
+        }
+
+        transitionStatus(
+                order,
+                OrderStatus.SHIPPED
+        );
+
+        return orderPersistenceService.updateOrder(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse handleShipmentDelivered(ShipmentDeliveredEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+
+            return mapper.toResponse(order);
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+
+            log.warn(
+                    "Ignoring SHIPMENT_DELIVERED for cancelled order: " +
+                            "orderId={}, eventId={}",
+                    order.getId(),
+                    event.getEventId()
+            );
+
+            return mapper.toResponse(order);
+        }
+
+        transitionStatus(
+                order,
+                OrderStatus.DELIVERED
+        );
+
+        return orderPersistenceService.updateOrder(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse handleShipmentFailed(ShipmentFailedEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        log.warn(
+                "Shipment failed for order: " +
+                        "orderId={}, shipmentId={}, " +
+                        "currentStatus={}, eventId={}",
+                order.getId(),
+                event.getShipmentId(),
+                order.getStatus(),
+                event.getEventId()
+        );
+
+        return mapper.toResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse handleShipmentCancelled(ShipmentCancelledEvent event) {
+
+        Order order =
+                repository.findByIdWithItems(event.getOrderId())
+                        .orElseThrow(() -> {
+
+                            orderMetrics.orderNotFound();
+
+                            return new OrderNotFoundException(
+                                    event.getOrderId()
+                            );
+                        });
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+
+            return mapper.toResponse(order);
+        }
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+
+            log.warn(
+                    "Ignoring SHIPMENT_CANCELLED for delivered order: " +
+                            "orderId={}, eventId={}",
+                    order.getId(),
+                    event.getEventId()
+            );
+
+            return mapper.toResponse(order);
+        }
+
+        transitionStatus(
+                order,
+                OrderStatus.CANCELLED
+        );
+
+        return orderPersistenceService.updateOrder(order);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ReviewEligibilityResponse checkReviewEligibility(Long id, Long userId,
                                                             Long productId) {

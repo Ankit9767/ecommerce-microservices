@@ -3,7 +3,7 @@ package com.example.order_service.service;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.ReviewEligibilityResponse;
 import com.ecommerce.common.enums.OrderStatus;
-import com.ecommerce.common.events.PaymentEvent;
+import com.ecommerce.common.events.*;
 import com.example.order_service.dto.CreateOrderFromCartRequest;
 import com.example.order_service.dto.CreateOrderRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
@@ -36,5 +36,15 @@ public interface OrderService {
     OrderResponse handlePaymentFailed(PaymentEvent event);
 
     ReviewEligibilityResponse checkReviewEligibility(Long id, Long userId, Long productId);
+
+    OrderResponse handleShipmentCreated(ShipmentCreatedEvent event);
+
+    OrderResponse handleShipmentShipped(ShipmentShippedEvent event);
+
+    OrderResponse handleShipmentDelivered(ShipmentDeliveredEvent event);
+
+    OrderResponse handleShipmentFailed(ShipmentFailedEvent event);
+
+    OrderResponse handleShipmentCancelled(ShipmentCancelledEvent event);
 
 }
