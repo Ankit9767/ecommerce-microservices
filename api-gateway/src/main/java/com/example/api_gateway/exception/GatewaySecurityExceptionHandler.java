@@ -45,8 +45,7 @@ public class GatewaySecurityExceptionHandler implements ServerAuthenticationEntr
     }
 
     private Mono<Void> writeError(ServerWebExchange exchange,
-            HttpStatus status,
-            String message) {
+            HttpStatus status, String message) {
 
         if (exchange.getResponse().isCommitted()) {
             return Mono.empty();

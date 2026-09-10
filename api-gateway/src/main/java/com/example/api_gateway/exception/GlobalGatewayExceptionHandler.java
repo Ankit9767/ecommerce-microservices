@@ -23,8 +23,7 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Mono<Void> handle(ServerWebExchange exchange,
-            Throwable ex) {
+    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
 
         if (exchange.getResponse().isCommitted()) {
             return Mono.error(ex);
