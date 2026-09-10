@@ -35,14 +35,16 @@ public class OrderStatusLifecycle {
         allowedTransitions.put(
                 OrderStatus.PROCESSING,
                 EnumSet.of(
-                        OrderStatus.SHIPPED
+                        OrderStatus.SHIPPED,
+                        OrderStatus.CANCELLED
                 )
         );
 
         allowedTransitions.put(
                 OrderStatus.SHIPPED,
                 EnumSet.of(
-                        OrderStatus.DELIVERED
+                        OrderStatus.DELIVERED,
+                        OrderStatus.CANCELLED
                 )
         );
 
