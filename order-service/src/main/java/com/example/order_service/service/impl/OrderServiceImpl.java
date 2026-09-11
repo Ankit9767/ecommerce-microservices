@@ -683,7 +683,7 @@ public class OrderServiceImpl implements OrderService {
 
         try {
 
-            cart = cartClient.getCart();
+            cart = cartClient.getCartInternal(customerId);
 
         } catch (RemoteResourceNotFoundException ex) {
 
@@ -767,7 +767,7 @@ public class OrderServiceImpl implements OrderService {
 
             writeOrderCreatedToOutbox(order);
 
-            cartClient.clearCart();
+            cartClient.clearCartInternal(customerId);
 
             return savedOrder;
 
