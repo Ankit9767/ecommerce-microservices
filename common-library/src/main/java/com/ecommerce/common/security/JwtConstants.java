@@ -7,6 +7,8 @@ public final class JwtConstants {
 
     public static final String ROLE = "roles";
 
+    public static final String PERMISSIONS = "permissions";
+
     public static final String TOKEN_TYPE = "tokenType";
 
     public static final String ACCESS = "ACCESS";
