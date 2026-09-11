@@ -62,6 +62,22 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CartResponse getCartByCustomerId(Long customerId) {
+
+        Cart cart = cartRepository.findByCustomerId(customerId)
+                .orElseGet(() ->
+                        Cart.builder()
+                                .customerId(customerId)
+                                .build()
+                );
+
+        cartMetrics.cartViewed();
+
+        return cartMapper.toResponse(cart);
+    }
+
+    @Override
     public CartResponse addItem(AddCartItemRequest request,
                                 Authentication authentication) {
 
@@ -155,6 +171,12 @@ public class CartServiceImpl implements CartService {
     public CartResponse clearCart(Authentication authentication) {
 
         Long customerId = currentUser.getUserId(authentication);
+
+        return cartPersistenceService.clearCart(customerId);
+    }
+
+    @Override
+    public CartResponse clearCartByCustomerId(Long customerId) {
 
         return cartPersistenceService.clearCart(customerId);
     }

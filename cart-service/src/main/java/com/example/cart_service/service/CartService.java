@@ -21,4 +21,8 @@ public interface CartService {
     CartResponse clearCart(Authentication authentication);
 
     Page<CartResponse> getAllCarts(Pageable pageable);
+
+    CartResponse getCartByCustomerId(Long customerId);
+
+    CartResponse clearCartByCustomerId(Long customerId);
 }
