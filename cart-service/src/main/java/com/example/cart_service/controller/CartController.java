@@ -87,4 +87,26 @@ public class CartController {
                 cartService.getAllCarts(pageable)
         );
     }
+
+    // ============================================================
+    // INTERNAL SERVICE APIs
+    // ============================================================
+
+    @GetMapping("/internal")
+    @PreAuthorize("hasAuthority('ROLE_INTERNAL_SERVICE')")
+    public ResponseEntity<CartResponse> getCartInternal(@RequestParam Long customerId) {
+
+        return ResponseEntity.ok(
+                cartService.getCartByCustomerId(customerId)
+        );
+    }
+
+    @DeleteMapping("/internal")
+    @PreAuthorize("hasAuthority('ROLE_INTERNAL_SERVICE')")
+    public ResponseEntity<Void> clearCartInternal(@RequestParam Long customerId) {
+
+        cartService.clearCartByCustomerId(customerId);
+
+        return ResponseEntity.noContent().build();
+    }
 }
