@@ -17,53 +17,10 @@ public class FeignSecurityInterceptor implements RequestInterceptor {
     @Override
     public void apply(RequestTemplate template) {
 
-        ServletRequestAttributes attributes =
-                (ServletRequestAttributes)
-                        RequestContextHolder.getRequestAttributes();
-
-        if (attributes != null) {
-
-            HttpServletRequest request = attributes.getRequest();
-
-            copyHeader(
-                    request,
-                    template,
-                    GatewaySecurityHeaders.AUTHENTICATED_USER
-            );
-
-            copyHeader(
-                    request,
-                    template,
-                    GatewaySecurityHeaders.AUTHENTICATED_USER_ID
-            );
-
-            copyHeader(
-                    request,
-                    template,
-                    GatewaySecurityHeaders.AUTHENTICATED_USER_EMAIL
-            );
-
-            copyHeader(
-                    request,
-                    template,
-                    GatewaySecurityHeaders.USER_ROLES
-            );
-
-            copyHeader(
-                    request,
-                    template,
-                    "Authorization"
-            );
-
-            copyHeader(
-                    request,
-                    template,
-                    "X-Request-ID"
-            );
-
-            return;
-        }
-
+        /*
+         * Every Feign call from one backend service to another
+         * must carry the internal service token.
+         */
         if (internalServiceToken == null || internalServiceToken.isBlank()) {
 
             throw new IllegalStateException(
@@ -71,9 +28,50 @@ public class FeignSecurityInterceptor implements RequestInterceptor {
             );
         }
 
-        template.header(
-                "X-Service-Token",
-                internalServiceToken
+        template.header("X-Service-Token", internalServiceToken);
+
+        /*
+         * If this Feign call originated from an HTTP request,
+         * optionally propagate the original user's identity.
+         */
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes)
+                        RequestContextHolder.getRequestAttributes();
+
+        if (attributes == null) {
+            return;
+        }
+
+        HttpServletRequest request = attributes.getRequest();
+
+        copyHeader(
+                request,
+                template,
+                GatewaySecurityHeaders.AUTHENTICATED_USER
+        );
+
+        copyHeader(
+                request,
+                template,
+                GatewaySecurityHeaders.AUTHENTICATED_USER_ID
+        );
+
+        copyHeader(
+                request,
+                template,
+                GatewaySecurityHeaders.AUTHENTICATED_USER_EMAIL
+        );
+
+        copyHeader(
+                request,
+                template,
+                GatewaySecurityHeaders.USER_ROLES
+        );
+
+        copyHeader(
+                request,
+                template,
+                "X-Request-ID"
         );
     }
 
