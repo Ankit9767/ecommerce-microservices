@@ -21,7 +21,7 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CART_READ')")
     public ResponseEntity<CartResponse> getCart(Authentication authentication) {
 
         return ResponseEntity.ok(
@@ -30,7 +30,7 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CART_CREATE')")
     public ResponseEntity<CartResponse> addItem(@Valid @RequestBody AddCartItemRequest request,
                                                 Authentication authentication) {
 
@@ -43,7 +43,7 @@ public class CartController {
     }
 
     @PutMapping("/items/{productId}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CART_UPDATE')")
     public ResponseEntity<CartResponse> updateItem(@PathVariable Long productId,
                                                    @Valid @RequestBody UpdateCartItemRequest request,
                                                    Authentication authentication) {
@@ -58,7 +58,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{productId}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CART_DELETE')")
     public ResponseEntity<CartResponse> removeItem(@PathVariable Long productId,
                                                    Authentication authentication) {
 
@@ -71,7 +71,7 @@ public class CartController {
     }
 
     @DeleteMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CART_DELETE')")
     public ResponseEntity<CartResponse> clearCart(Authentication authentication) {
 
         return ResponseEntity.ok(
@@ -80,7 +80,7 @@ public class CartController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('CART_READ_ALL')")
     public ResponseEntity<Page<CartResponse>> getAllCarts(Pageable pageable) {
 
         return ResponseEntity.ok(
