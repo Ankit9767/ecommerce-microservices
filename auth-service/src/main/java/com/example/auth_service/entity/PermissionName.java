@@ -2,25 +2,65 @@ package com.example.auth_service.entity;
 
 public enum PermissionName {
 
+    // User
     USER_READ,
     USER_CREATE,
     USER_UPDATE,
     USER_DELETE,
 
+    // Product
     PRODUCT_READ,
     PRODUCT_CREATE,
     PRODUCT_UPDATE,
     PRODUCT_DELETE,
 
+    // Search
+    SEARCH_READ,
+
+    // Cart
+    CART_READ,
+    CART_READ_ALL,
+    CART_CREATE,
+    CART_UPDATE,
+    CART_DELETE,
+
+    // Order
     ORDER_READ,
     ORDER_CREATE,
     ORDER_UPDATE,
     ORDER_CANCEL,
     ORDER_VIEW_ALL,
 
+    // Payment
     PAYMENT_CREATE,
     PAYMENT_READ,
 
+    // Inventory
+    INVENTORY_READ,
+    INVENTORY_CREATE,
+    INVENTORY_UPDATE,
+    INVENTORY_DELETE,
+    INVENTORY_ADJUST,
+
+    // Review
+    REVIEW_READ,
+    REVIEW_CREATE,
+    REVIEW_UPDATE,
+    REVIEW_DELETE,
+    REVIEW_MODERATE,
+
+    // Shipping
+    SHIPMENT_READ,
+    SHIPMENT_CREATE,
+    SHIPMENT_UPDATE,
+    SHIPMENT_CANCEL,
+    SHIPMENT_TRACK,
+
+    // Notification
+    NOTIFICATION_READ,
+    NOTIFICATION_SEND,
+
+    // Session
     SESSION_READ,
     SESSION_REVOKE,
     SESSION_REVOKE_ALL
