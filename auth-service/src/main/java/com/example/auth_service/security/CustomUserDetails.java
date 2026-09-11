@@ -49,6 +49,18 @@ public class CustomUserDetails implements UserDetails {
         return authorities;
     }
 
+    public List<String> getPermissions() {
+
+        return user.getRoles()
+                .stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission ->
+                        permission.getPermissionName().name()
+                )
+                .distinct()
+                .toList();
+    }
+
     @Override
     public String getPassword() {
 

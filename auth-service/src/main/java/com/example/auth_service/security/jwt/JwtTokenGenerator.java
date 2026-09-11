@@ -23,15 +23,17 @@ public class JwtTokenGenerator {
 
         Map<String, Object> claims = new HashMap<>();
 
+        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+
+        var user = customUserDetails.getUser();
+
         List<String> roles =
                 userDetails.getAuthorities()
                         .stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList();
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
-
-        var user = customUserDetails.getUser();
+        List<String> permissions = customUserDetails.getPermissions();
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
@@ -40,6 +42,7 @@ public class JwtTokenGenerator {
                 .claim(JwtConstants.USER_ID, customUserDetails.getUser().getId())
                 .claim( JwtConstants.EMAIL, user.getEmail())
                 .claim(JwtConstants.ROLE, roles)
+                .claim(JwtConstants.PERMISSIONS, permissions)
                 .claim(JwtConstants.TOKEN_TYPE, JwtTokenType.ACCESS.name())
                 .issuedAt(new Date())
                 .expiration(new Date(
