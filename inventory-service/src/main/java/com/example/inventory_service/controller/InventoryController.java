@@ -17,7 +17,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @PostMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_CREATE')")
     public InventoryResponse createInventory(@Valid @RequestBody
                                                  CreateInventoryRequest request) {
 
@@ -25,7 +25,7 @@ public class InventoryController {
     }
 
     @GetMapping("/{productId}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_READ')")
     public InventoryResponse getInventory(
             @PathVariable Long productId) {
 
@@ -33,7 +33,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/increase")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_UPDATE')")
     public InventoryResponse increaseStock(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {
@@ -45,7 +45,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/decrease")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('INVENTORY_UPDATE')")
     public InventoryResponse decreaseStock(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {
@@ -57,7 +57,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/reserve")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasRole('ROLE_INTERNAL_SERVICE')")
     public InventoryResponse reserveStock(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {
@@ -69,7 +69,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/release")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasRole('ROLE_INTERNAL_SERVICE')")
     public InventoryResponse releaseStock(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {
@@ -81,7 +81,7 @@ public class InventoryController {
     }
 
     @PostMapping("/{productId}/confirm")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'INTERNAL_SERVICE')")
+    @PreAuthorize("hasRole('ROLE_INTERNAL_SERVICE')")
     public InventoryResponse confirmReservation(
             @PathVariable Long productId,
             @Valid @RequestBody InventoryQuantityRequest request) {
