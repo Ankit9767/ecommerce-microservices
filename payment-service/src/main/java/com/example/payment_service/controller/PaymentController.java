@@ -22,7 +22,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('PAYMENT_CREATE')")
     public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest request,
                                                          Authentication authentication) {
 
@@ -37,7 +37,7 @@ public class PaymentController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('PAYMENT_READ_ALL')")
     public ResponseEntity<Page<PaymentResponse>> getAllPayments(Pageable pageable) {
 
         return ResponseEntity.ok(
@@ -46,7 +46,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('PAYMENT_READ')")
     public ResponseEntity<PaymentResponse> getPayment(@PathVariable Long id,
                                                       Authentication authentication) {
 
@@ -59,7 +59,7 @@ public class PaymentController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('PAYMENT_READ')")
     public ResponseEntity<Page<PaymentResponse>> getMyPayments(Authentication authentication,
                                                                Pageable pageable) {
 
@@ -72,7 +72,7 @@ public class PaymentController {
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('PAYMENT_READ')")
     public ResponseEntity<Page<PaymentResponse>> getPaymentsByStatus(@PathVariable PaymentStatus status,
                                                                      Pageable pageable) {
 
