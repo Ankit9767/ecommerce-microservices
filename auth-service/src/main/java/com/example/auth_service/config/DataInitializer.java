@@ -92,7 +92,6 @@ public class DataInitializer implements CommandLineRunner {
                 PermissionName.ORDER_CANCEL,
 
                 // Payment
-                PermissionName.PAYMENT_CREATE,
                 PermissionName.PAYMENT_READ,
 
                 // Reviews
