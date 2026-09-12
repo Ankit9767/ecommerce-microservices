@@ -44,7 +44,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ORDER_VIEW_ALL')")
+    @PreAuthorize("hasAuthority('ORDER_READ_ALL')")
     public ResponseEntity<Page<OrderResponse>> getAllOrders(Pageable pageable) {
 
         return ResponseEntity.ok(
