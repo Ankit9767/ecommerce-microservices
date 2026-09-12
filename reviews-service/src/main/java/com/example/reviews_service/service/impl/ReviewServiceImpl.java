@@ -47,7 +47,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         try {
 
-            eligibility = orderClient.checkReviewEligibility(
+            eligibility = orderClient.checkReviewEligibilityInternal(
                     request.getOrderId(),
                     request.getProductId(),
                     userId
