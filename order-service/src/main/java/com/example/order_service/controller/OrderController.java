@@ -32,7 +32,7 @@ public class OrderController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_CREATE')")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request,
                                                      Authentication authentication) {
 
@@ -44,7 +44,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('ORDER_VIEW_ALL')")
     public ResponseEntity<Page<OrderResponse>> getAllOrders(Pageable pageable) {
 
         return ResponseEntity.ok(
@@ -53,7 +53,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER', 'INTERNAL_SERVICE')")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id,
                                                   Authentication authentication) {
 
@@ -62,8 +62,17 @@ public class OrderController {
         );
     }
 
+    @GetMapping("/internal")
+    @PreAuthorize("hasAuthority('ROLE_INTERNAL_SERVICE')")
+    public ResponseEntity<OrderResponse> getOrderInternal(@RequestParam Long orderId) {
+
+        return ResponseEntity.ok(
+                service.getOrderInternal(orderId)
+        );
+    }
+
     @GetMapping("/my")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getMyOrders(Authentication authentication,
                                                            Pageable pageable) {
 
@@ -76,7 +85,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('ORDER_UPDATE')")
     public ResponseEntity<OrderResponse> updateOrder(@PathVariable Long id,
             @Valid @RequestBody UpdateOrderRequest request) {
 
@@ -84,7 +93,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_CANCEL')")
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id,
                                                      Authentication authentication) {
 
@@ -94,7 +103,7 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<Page<OrderResponse>> getOrdersByStatus(@PathVariable OrderStatus status,
                                                                  Authentication authentication,
                                                                  Pageable pageable) {
@@ -109,7 +118,7 @@ public class OrderController {
     }
 
     @PostMapping("/from-cart")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_CREATE')")
     public ResponseEntity<OrderResponse> createOrderFromCart(
             @Valid @RequestBody CreateOrderFromCartRequest request,
             Authentication authentication) {
@@ -122,8 +131,24 @@ public class OrderController {
     }
 
     @GetMapping("/{id}/review-eligibility")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     public ResponseEntity<ReviewEligibilityResponse> checkReviewEligibility(
+            @PathVariable Long id,
+            @RequestParam Long productId,
+            @RequestParam Long userId) {
+
+        return ResponseEntity.ok(
+                service.checkReviewEligibility(
+                        id,
+                        userId,
+                        productId
+                )
+        );
+    }
+
+    @GetMapping("/internal/{id}/review-eligibility")
+    @PreAuthorize("hasAuthority('ROLE_INTERNAL_SERVICE')")
+    public ResponseEntity<ReviewEligibilityResponse> checkReviewEligibilityInternal(
             @PathVariable Long id,
             @RequestParam Long productId,
             @RequestParam Long userId) {
