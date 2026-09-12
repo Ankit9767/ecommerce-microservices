@@ -72,7 +72,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
 
-            order = orderClient.getOrder(request.orderId());
+            order = orderClient.getOrderInternal(request.orderId());
 
         } catch (RemoteResourceNotFoundException ex) {
 
@@ -100,7 +100,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
 
-            order = orderClient.getOrder(request.orderId());
+            order = orderClient.getOrderInternal(request.orderId());
 
         } catch (RemoteResourceNotFoundException ex) {
 
