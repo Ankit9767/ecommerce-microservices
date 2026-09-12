@@ -4,12 +4,14 @@ public enum PermissionName {
 
     // User
     USER_READ,
+    USER_READ_ALL,
     USER_CREATE,
     USER_UPDATE,
     USER_DELETE,
 
     // Product
     PRODUCT_READ,
+    PRODUCT_READ_ALL,
     PRODUCT_CREATE,
     PRODUCT_UPDATE,
     PRODUCT_DELETE,
@@ -45,6 +47,7 @@ public enum PermissionName {
 
     // Review
     REVIEW_READ,
+    REVIEW_READ_ALL,
     REVIEW_CREATE,
     REVIEW_UPDATE,
     REVIEW_DELETE,
@@ -52,6 +55,7 @@ public enum PermissionName {
 
     // Shipping
     SHIPMENT_READ,
+    SHIPMENT_READ_ALL,
     SHIPMENT_CREATE,
     SHIPMENT_UPDATE,
     SHIPMENT_CANCEL,
@@ -59,6 +63,7 @@ public enum PermissionName {
 
     // Notification
     NOTIFICATION_READ,
+    NOTIFICATION_READ_ALL,
     NOTIFICATION_SEND,
 
     // Session
