@@ -16,6 +16,13 @@ public enum PermissionName {
     PRODUCT_UPDATE,
     PRODUCT_DELETE,
 
+    // Category
+    CATEGORY_READ,
+    CATEGORY_READ_ALL,
+    CATEGORY_CREATE,
+    CATEGORY_UPDATE,
+    CATEGORY_DELETE,
+
     // Search
     SEARCH_READ,
 
