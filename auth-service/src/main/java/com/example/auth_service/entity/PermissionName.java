@@ -29,11 +29,12 @@ public enum PermissionName {
     ORDER_CREATE,
     ORDER_UPDATE,
     ORDER_CANCEL,
-    ORDER_VIEW_ALL,
+    ORDER_READ_ALL,
 
     // Payment
     PAYMENT_CREATE,
     PAYMENT_READ,
+    PAYMENT_READ_ALL,
 
     // Inventory
     INVENTORY_READ,
