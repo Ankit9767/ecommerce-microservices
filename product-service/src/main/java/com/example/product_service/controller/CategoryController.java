@@ -23,7 +23,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('CATEGORY_CREATE')")
     public ResponseEntity<CategoryResponse> createCategory(
             @Valid @RequestBody CreateCategoryRequest request) {
 
@@ -33,7 +33,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CATEGORY_READ_ALL')")
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
 
         return ResponseEntity.ok(
@@ -42,7 +42,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasAnyRole(authentication, 'ADMIN', 'CUSTOMER')")
+    @PreAuthorize("hasAuthority('CATEGORY_READ')")
     public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id) {
 
         return ResponseEntity.ok(
@@ -51,7 +51,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('CATEGORY_UPDATE')")
     public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id,
                                                            @Valid @RequestBody UpdateCategoryRequest request) {
         return ResponseEntity.ok(
@@ -60,7 +60,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@roleSecurity.hasRole(authentication, 'ADMIN')")
+    @PreAuthorize("hasAuthority('CATEGORY_DELETE')")
     public ResponseEntity<Void> deactivateCategory(@PathVariable Long id) {
 
         service.deactivateCategory(id);
