@@ -17,6 +17,8 @@ public interface OrderService {
 
     OrderResponse getOrder(Long id, Authentication authentication);
 
+    OrderResponse getOrderInternal(Long orderId);
+
     Page<OrderResponse> getAllOrders(Pageable pageable);
 
     Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable);

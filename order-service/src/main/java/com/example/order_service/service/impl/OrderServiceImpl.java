@@ -254,13 +254,10 @@ public class OrderServiceImpl implements OrderService {
                     return new OrderNotFoundException(id);
                 });
 
-        boolean internalService =
-                roleSecurity.hasRole(authentication, "INTERNAL_SERVICE");
-
         boolean admin =
                 roleSecurity.hasRole(authentication, "ADMIN");
 
-        if (!internalService && !admin) {
+        if (!admin) {
 
             Long currentUserId = currentUser.getUserId(authentication);
 
@@ -276,6 +273,25 @@ public class OrderServiceImpl implements OrderService {
 
         return mapper.toResponse(order);
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderInternal(Long orderId) {
+
+        Order order = repository
+                .findById(orderId)
+                .orElseThrow(() -> {
+                    orderMetrics.orderNotFound();
+
+                    return new OrderNotFoundException(orderId);
+                });
+
+        orderMetrics.orderViewed();
+
+        return mapper.toResponse(order);
+    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -1006,8 +1022,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        if (order.getStatus() != OrderStatus.PAID) {
-
+        if (order.getStatus() != OrderStatus.DELIVERED) {
             return new ReviewEligibilityResponse(
                     false,
                     "Order has not been delivered"
