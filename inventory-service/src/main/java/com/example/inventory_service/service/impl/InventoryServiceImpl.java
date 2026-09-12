@@ -55,7 +55,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         try {
 
-            product = productClient.getProduct(request.productId());
+            product = productClient.getProductInternal(request.productId());
 
         } catch (RemoteResourceNotFoundException ex) {
 
@@ -109,7 +109,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         try {
 
-            product = productClient.getProduct(productId);
+            product = productClient.getProductInternal(productId);
 
         } catch (RemoteResourceNotFoundException ex) {
 

@@ -177,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
 
             try {
 
-                product = productClient.getProduct(requestItem.getProductId());
+                product = productClient.getProductInternal(requestItem.getProductId());
 
             } catch (RemoteResourceNotFoundException ex) {
 
@@ -359,7 +359,7 @@ public class OrderServiceImpl implements OrderService {
 
             try {
 
-                product = productClient.getProduct(requestItem.getProductId());
+                product = productClient.getProductInternal(requestItem.getProductId());
 
             } catch (RemoteResourceNotFoundException ex) {
 
@@ -728,7 +728,7 @@ public class OrderServiceImpl implements OrderService {
 
             try {
 
-                product = productClient.getProduct(cartItem.productId());
+                product = productClient.getProductInternal(cartItem.productId());
 
             } catch (RemoteResourceNotFoundException ex) {
 

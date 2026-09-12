@@ -18,7 +18,7 @@ public class ProductServiceClient {
     )
     public ProductResponse getProduct(Long productId) {
 
-        return productClient.getProduct(productId);
+        return productClient.getProductInternal(productId);
     }
 
     private ProductResponse getProductFallback(Long productId,
