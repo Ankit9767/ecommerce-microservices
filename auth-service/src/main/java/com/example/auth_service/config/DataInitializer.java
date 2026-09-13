@@ -96,6 +96,7 @@ public class DataInitializer implements CommandLineRunner {
 
                 // Reviews
                 PermissionName.REVIEW_READ,
+                PermissionName.REVIEW_READ_ALL,
                 PermissionName.REVIEW_CREATE,
                 PermissionName.REVIEW_UPDATE,
                 PermissionName.REVIEW_DELETE,
