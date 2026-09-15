@@ -1,6 +1,7 @@
 package com.example.shipping_service.service.impl;
 
 import com.ecommerce.common.events.*;
+import com.ecommerce.common.security.CurrentUser;
 import com.example.shipping_service.dto.ShipmentCreationResult;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
@@ -13,6 +14,7 @@ import com.example.shipping_service.service.ShippingOutboxService;
 import com.example.shipping_service.service.ShippingProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,20 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     private final ShipmentEventFactory shipmentEventFactory;
 
+    private final CurrentUser currentUser;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Shipment trackShipmentByOrderId(Long orderId,
+                                           Authentication authentication) {
+
+        Long customerId = currentUser.getUserId(authentication);
+
+        return persistenceService.findByOrderIdAndCustomerId(
+                orderId,
+                customerId
+        );
+    }
 
     @Override
     @Transactional
