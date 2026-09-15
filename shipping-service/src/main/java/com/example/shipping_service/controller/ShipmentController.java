@@ -4,6 +4,8 @@ import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.service.ShipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +16,7 @@ public class ShipmentController {
     private final ShipmentService shipmentService;
 
     @GetMapping("/{shipmentId}")
+    @PreAuthorize("hasAuthority('SHIPMENT_READ')")
     public ResponseEntity<Shipment> getShipment(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
@@ -22,6 +25,7 @@ public class ShipmentController {
     }
 
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasAuthority('SHIPMENT_READ')")
     public ResponseEntity<Shipment> getShipmentByOrderId(@PathVariable Long orderId) {
 
         return ResponseEntity.ok(
@@ -29,7 +33,22 @@ public class ShipmentController {
         );
     }
 
+    @GetMapping("/track/order/{orderId}")
+    @PreAuthorize("hasAuthority('SHIPMENT_TRACK')")
+    public ResponseEntity<Shipment> trackShipmentByOrderId(@PathVariable Long orderId,
+                                                           Authentication authentication) {
+
+        return ResponseEntity.ok(
+                shipmentService.trackShipmentByOrderId(
+                        orderId,
+                        authentication
+                )
+        );
+    }
+
+
     @PostMapping("/{shipmentId}/in-transit")
+    @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
     public ResponseEntity<Shipment> markInTransit(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
@@ -46,6 +65,7 @@ public class ShipmentController {
     }
 
     @PostMapping("/{shipmentId}/deliver")
+    @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
     public ResponseEntity<Shipment> markDelivered(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
@@ -54,6 +74,7 @@ public class ShipmentController {
     }
 
     @PostMapping("/{shipmentId}/fail")
+    @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
     public ResponseEntity<Shipment> markFailed(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
@@ -62,6 +83,7 @@ public class ShipmentController {
     }
 
     @PostMapping("/{shipmentId}/cancel")
+    @PreAuthorize("hasAuthority('SHIPMENT_CANCEL')")
     public ResponseEntity<Shipment> cancelShipment(@PathVariable Long shipmentId) {
 
         return ResponseEntity.ok(
