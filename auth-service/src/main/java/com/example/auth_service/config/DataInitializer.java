@@ -102,7 +102,6 @@ public class DataInitializer implements CommandLineRunner {
                 PermissionName.REVIEW_DELETE,
 
                 // Shipping
-                PermissionName.SHIPMENT_READ,
                 PermissionName.SHIPMENT_TRACK,
 
                 // Notifications
