@@ -15,6 +15,22 @@ public class ShipmentPersistenceService {
 
     private final ShipmentRepository repository;
 
+    @Transactional(readOnly = true)
+    public Shipment findByOrderIdAndCustomerId(Long orderId,
+                                               Long customerId) {
+
+        return repository
+                .findByOrderIdAndCustomerId(
+                        orderId,
+                        customerId
+                )
+                .orElseThrow(() ->
+                        new ShipmentNotFoundException(
+                                orderId
+                        )
+                );
+    }
+
     @Transactional
     public ShipmentCreationResult createIfAbsent(Long orderId,
                                                  Long customerId,
