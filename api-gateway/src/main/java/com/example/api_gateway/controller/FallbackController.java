@@ -20,6 +20,13 @@ public class FallbackController {
         );
     }
 
+    @GetMapping("/fallback/cart")
+    public ResponseEntity<ErrorResponse> cartFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Cart service is currently unavailable"
+        );
+    }
+
     @GetMapping("/fallback/products")
     public ResponseEntity<ErrorResponse> productFallback(ServerWebExchange exchange) {
         return fallback(exchange,
@@ -34,6 +41,13 @@ public class FallbackController {
         );
     }
 
+    @GetMapping("/fallback/inventory")
+    public ResponseEntity<ErrorResponse> inventoryFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Inventory service is currently unavailable"
+        );
+    }
+
     @GetMapping("/fallback/payments")
     public ResponseEntity<ErrorResponse> paymentFallback(ServerWebExchange exchange) {
         return fallback(exchange,
@@ -41,8 +55,36 @@ public class FallbackController {
         );
     }
 
+    @GetMapping("/fallback/notifications")
+    public ResponseEntity<ErrorResponse> notificationFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Notification service is currently unavailable"
+        );
+    }
+
+    @GetMapping("/fallback/shipments")
+    public ResponseEntity<ErrorResponse> shipmentFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Shipment service is currently unavailable"
+        );
+    }
+
+    @GetMapping("/fallback/search")
+    public ResponseEntity<ErrorResponse> searchFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Search service is currently unavailable"
+        );
+    }
+
+    @GetMapping("/fallback/reviews")
+    public ResponseEntity<ErrorResponse> reviewsFallback(ServerWebExchange exchange) {
+        return fallback(exchange,
+                "Reviews service is currently unavailable"
+        );
+    }
+
     private ResponseEntity<ErrorResponse> fallback(ServerWebExchange exchange,
-            String message) {
+                                                   String message) {
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
