@@ -1,5 +1,6 @@
 package com.example.payment_service.mapper;
 
+import com.ecommerce.common.dto.PaymentCheckoutResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.example.payment_service.entity.Payment;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,21 @@ public class PaymentMapper {
                 payment.getFailureReason(),
                 payment.getCreatedAt(),
                 payment.getUpdatedAt()
+        );
+    }
+
+    public PaymentCheckoutResponse toCheckoutResponse(Payment payment,
+                                                      String providerKeyId) {
+
+        return new PaymentCheckoutResponse(
+                payment.getId(),
+                payment.getOrderId(),
+                payment.getProvider(),
+                payment.getProviderOrderId(),
+                providerKeyId,
+                payment.getAmount(),
+                payment.getCurrency(),
+                payment.getStatus()
         );
     }
 }
