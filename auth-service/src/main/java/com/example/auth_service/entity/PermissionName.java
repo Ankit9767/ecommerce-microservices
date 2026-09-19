@@ -42,6 +42,7 @@ public enum PermissionName {
 
     // Payment
     PAYMENT_CREATE,
+    PAYMENT_CHECKOUT,
     PAYMENT_READ,
     PAYMENT_READ_ALL,
 

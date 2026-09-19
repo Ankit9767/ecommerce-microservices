@@ -93,6 +93,7 @@ public class DataInitializer implements CommandLineRunner {
 
                 // Payment
                 PermissionName.PAYMENT_READ,
+                PermissionName.PAYMENT_CHECKOUT,
 
                 // Reviews
                 PermissionName.REVIEW_READ,
