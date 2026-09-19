@@ -85,6 +85,20 @@ public class Payment extends BaseEntity {
     private String provider;
 
     @Column(
+            name = "provider_order_id",
+            unique = true,
+            length = 255
+    )
+    private String providerOrderId;
+
+    @Column(
+            name = "provider_payment_id",
+            unique = true,
+            length = 255
+    )
+    private String providerPaymentId;
+
+    @Column(
             name = "provider_reference",
             unique = true,
             length = 255
