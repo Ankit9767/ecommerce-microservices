@@ -9,4 +9,10 @@ public interface PaymentProviderTransactionRepository
         extends JpaRepository<PaymentProviderTransaction, Long> {
 
     Optional<PaymentProviderTransaction> findByPaymentId(Long paymentId);
+
+    Optional<PaymentProviderTransaction> findByProviderOrderId(String providerOrderId);
+
+    Optional<PaymentProviderTransaction> findByProviderPaymentId(String providerPaymentId);
+
+    Optional<PaymentProviderTransaction> findByProviderReference(String providerReference);
 }

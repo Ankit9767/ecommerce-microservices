@@ -18,5 +18,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByProviderReference(String providerReference);
 
+    Optional<Payment> findByProviderPaymentId(String providerPaymentId);
+
+    Optional<Payment> findByProviderOrderId(String providerOrderId);
+
     boolean existsByOrderId(Long orderId);
 }
