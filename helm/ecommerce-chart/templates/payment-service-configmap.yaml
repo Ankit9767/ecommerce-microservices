@@ -26,3 +26,5 @@ data:
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
 
   SECURITY_CORS_ALLOWED_ORIGINS: {{ .Values.cors.allowedOrigin | quote }}
+
+  PAYMENT_PROVIDER: "RAZORPAY"
