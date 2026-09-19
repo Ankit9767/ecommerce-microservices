@@ -74,6 +74,11 @@ public class SecurityConfig {
                         .permitAll()
 
                         .pathMatchers(
+                                "/api/payments/webhook/razorpay"
+                        )
+                        .permitAll()
+
+                        .pathMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
