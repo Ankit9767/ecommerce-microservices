@@ -1,4 +1,4 @@
-package com.example.payment_service.service.impl;
+package com.example.payment_service.service.provider;
 
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.enums.PaymentStatus;
@@ -10,6 +10,7 @@ import com.example.payment_service.repository.PaymentProviderTransactionReposito
 import com.example.payment_service.service.PaymentProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,11 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(
+        name = "payment.provider",
+        havingValue = "MOCK",
+        matchIfMissing = true
+)
 @RequiredArgsConstructor
 public class MockPaymentProvider implements PaymentProvider {
 
@@ -56,12 +62,18 @@ public class MockPaymentProvider implements PaymentProvider {
             return toResponse(existing);
         }
 
+        String providerOrderId = "MOCK-ORDER-" + UUID.randomUUID();
+
+        String providerPaymentId = "MOCK-PAYMENT-" + UUID.randomUUID();
+
+        String providerReference = providerPaymentId;
+
         PaymentProviderTransaction transaction =
                 PaymentProviderTransaction.builder()
                         .paymentId(paymentId)
-                        .providerReference(
-                                generateProviderReference()
-                        )
+                        .providerOrderId(providerOrderId)
+                        .providerPaymentId(providerPaymentId)
+                        .providerReference(providerReference)
                         .status(PaymentStatus.PROCESSING)
                         .build();
 
@@ -150,15 +162,12 @@ public class MockPaymentProvider implements PaymentProvider {
             PaymentProviderTransaction transaction) {
 
         return new PaymentProviderResponse(
+                transaction.getProviderOrderId(),
+                transaction.getProviderPaymentId(),
                 transaction.getProviderReference(),
                 transaction.getStatus(),
                 null
         );
-    }
-
-    private String generateProviderReference() {
-
-        return "MOCK-" + UUID.randomUUID();
     }
 
     private void validateRequest(PaymentProviderRequest request) {
@@ -204,8 +213,20 @@ public class MockPaymentProvider implements PaymentProvider {
     @Override
     public PaymentProviderResponse verifyPayment(String providerReference) {
 
+        PaymentProviderTransaction transaction =
+                repository
+                        .findByProviderReference(providerReference)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Mock provider transaction not found: "
+                                                + providerReference
+                                )
+                        );
+
         return new PaymentProviderResponse(
-                providerReference,
+                transaction.getProviderOrderId(),
+                transaction.getProviderPaymentId(),
+                transaction.getProviderReference(),
                 PaymentStatus.SUCCESS,
                 null
         );
@@ -215,8 +236,20 @@ public class MockPaymentProvider implements PaymentProvider {
     public PaymentProviderResponse refundPayment(String providerReference,
                                                  BigDecimal amount) {
 
+        PaymentProviderTransaction transaction =
+                repository
+                        .findByProviderReference(providerReference)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Mock provider transaction not found: "
+                                                + providerReference
+                                )
+                        );
+
         return new PaymentProviderResponse(
-                providerReference,
+                transaction.getProviderOrderId(),
+                transaction.getProviderPaymentId(),
+                transaction.getProviderReference(),
                 PaymentStatus.REFUNDED,
                 null
         );
