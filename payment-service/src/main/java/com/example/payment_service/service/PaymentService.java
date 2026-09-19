@@ -1,5 +1,6 @@
 package com.example.payment_service.service;
 
+import com.ecommerce.common.dto.PaymentCheckoutResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.ecommerce.common.events.OrderCancelledEvent;
@@ -29,4 +30,9 @@ public interface PaymentService {
     void processOrderCreatedEvent(OrderEvent event);
 
     void processOrderCancelledEvent(OrderCancelledEvent event);
+
+    PaymentCheckoutResponse initializeCheckout(
+            Long paymentId,
+            Authentication authentication
+    );
 }

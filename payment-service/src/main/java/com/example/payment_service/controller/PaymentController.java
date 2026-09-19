@@ -1,5 +1,6 @@
 package com.example.payment_service.controller;
 
+import com.ecommerce.common.dto.PaymentCheckoutResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.dto.CreatePaymentRequest;
@@ -80,6 +81,18 @@ public class PaymentController {
                 paymentService.getPaymentsByStatus(
                         status,
                         pageable
+                )
+        );
+    }
+
+    @PostMapping("/{paymentId}/checkout")
+    @PreAuthorize("hasAuthority('PAYMENT_CHECKOUT')")
+    public ResponseEntity<PaymentCheckoutResponse> initializeCheckout(@PathVariable Long paymentId,
+                                                                      Authentication authentication) {
+        return ResponseEntity.ok(
+                paymentService.initializeCheckout(
+                        paymentId,
+                        authentication
                 )
         );
     }

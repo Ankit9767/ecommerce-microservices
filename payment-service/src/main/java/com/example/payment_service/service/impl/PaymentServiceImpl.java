@@ -1,6 +1,7 @@
 package com.example.payment_service.service.impl;
 
 import com.ecommerce.common.dto.OrderResponse;
+import com.ecommerce.common.dto.PaymentCheckoutResponse;
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.OrderStatus;
@@ -10,8 +11,10 @@ import com.ecommerce.common.events.OrderCreatedEvent;
 import com.ecommerce.common.events.OrderEvent;
 import com.ecommerce.common.exception.RemoteResourceNotFoundException;
 import com.ecommerce.common.kafka.EventType;
+import com.ecommerce.common.security.CurrentUser;
 import com.ecommerce.common.security.RoleSecurity;
 import com.example.payment_service.client.OrderClient;
+import com.example.payment_service.config.RazorpayProperties;
 import com.example.payment_service.dto.CreatePaymentRequest;
 import com.example.payment_service.dto.provider.PaymentProviderRequest;
 import com.example.payment_service.entity.Payment;
@@ -20,20 +23,15 @@ import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
 import com.example.payment_service.service.*;
-import com.ecommerce.common.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -61,6 +59,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentEventFactory paymentEventFactory;
 
     private final OutboxService outboxService;
+
+    private final RazorpayProperties razorpayProperties;
 
     @Override
     public PaymentResponse createPayment(CreatePaymentRequest request,
@@ -123,8 +123,13 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         /*
-         * Order is the source of truth for payment details.
+         * --------------------------------------------------
+         * ORDER PAYMENT DETAILS
+         *
+         * Order Service is the source of truth.
+         * --------------------------------------------------
          */
+
         if (order.getTotalAmount() == null) {
 
             throw new MissingPaymentDetailsException(
@@ -149,20 +154,14 @@ public class PaymentServiceImpl implements PaymentService {
             );
         }
 
-
         /*
          * --------------------------------------------------
          * TRANSACTION #1
          *
-         * Create PENDING payment.
-         *
-         * If payment already exists:
-         *      created = false
-         *
-         * If new:
-         *      created = true
+         * Create or retrieve the local PENDING payment.
          * --------------------------------------------------
          */
+
         PaymentPersistenceService.PaymentCreationResult creationResult =
                 paymentPersistenceService.createPendingPayment(
                         order,
@@ -171,43 +170,106 @@ public class PaymentServiceImpl implements PaymentService {
 
         PaymentResponse pendingPayment = creationResult.payment();
 
-
         /*
          * --------------------------------------------------
-         * BUSINESS IDEMPOTENCY
+         * EXISTING PAYMENT
          *
-         * Payment already exists.
-         *
-         * Do NOT create another provider payment.
+         * Never blindly create another provider transaction.
          * --------------------------------------------------
          */
+
         if (!creationResult.created()) {
 
+            Payment existingPayment =
+                    paymentRepository.findById(
+                            pendingPayment.id()
+                    ).orElseThrow(() ->
+                            new PaymentNotFoundException(
+                                    pendingPayment.id()
+                            )
+                    );
+
+            PaymentStatus status = existingPayment.getStatus();
+
             log.info(
-                    "Returning existing payment for order {}: " +
-                            "paymentId={}, status={}",
+                    "Payment already exists for order {}. " +
+                            "paymentId={}, status={}, provider={}, " +
+                            "providerOrderId={}, providerPaymentId={}",
                     order.getId(),
-                    pendingPayment.id(),
-                    pendingPayment.status()
+                    existingPayment.getId(),
+                    status,
+                    existingPayment.getProvider(),
+                    existingPayment.getProviderOrderId(),
+                    existingPayment.getProviderPaymentId()
             );
 
-            PaymentStatus status = pendingPayment.status();
+            /*
+             * --------------------------------------------------
+             * TERMINAL STATES
+             *
+             * Never create another provider transaction.
+             * --------------------------------------------------
+             */
 
             if (status == PaymentStatus.SUCCESS ||
-                    status == PaymentStatus.FAILED) {
+                    status == PaymentStatus.FAILED ||
+                    status == PaymentStatus.CANCELLED ||
+                    status == PaymentStatus.REFUNDED) {
 
-                return pendingPayment;
+                return paymentMapper.toResponse(existingPayment);
             }
-        }
 
+            /*
+             * --------------------------------------------------
+             * PROVIDER ORDER ALREADY EXISTS
+             *
+             * Razorpay order has already been created.
+             *
+             * Reuse it.
+             *
+             * This is important for idempotency.
+             * --------------------------------------------------
+             */
+
+            if (existingPayment.getProviderOrderId() != null &&
+                    !existingPayment.getProviderOrderId().isBlank()) {
+
+                log.info(
+                        "Provider order already exists for payment {}. " +
+                                "Reusing providerOrderId={}",
+                        existingPayment.getId(),
+                        existingPayment.getProviderOrderId()
+                );
+
+                return paymentMapper.toResponse(
+                        existingPayment
+                );
+            }
+
+            /*
+             * --------------------------------------------------
+             * PENDING WITHOUT PROVIDER ORDER
+             *
+             * The local payment exists, but provider order creation
+             * previously failed.
+             *
+             * It is safe to retry provider creation.
+             * --------------------------------------------------
+             */
+
+            log.info(
+                    "Payment {} is PENDING without a provider order. " +
+                            "Retrying provider order creation.",
+                    existingPayment.getId()
+            );
+        }
 
         /*
          * --------------------------------------------------
-         * NEW PAYMENT / PROCESSABLE PAYMENT
-         *
-         * External provider call.
+         * PROVIDER REQUEST
          * --------------------------------------------------
          */
+
         PaymentProviderRequest providerRequest =
                 new PaymentProviderRequest(
                         pendingPayment.id(),
@@ -229,32 +291,35 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (RuntimeException ex) {
 
             log.error(
-                    "Payment provider failed: paymentId={}, " +
-                            "orderId={}",
+                    "Payment provider failed: paymentId={}, orderId={}",
                     pendingPayment.id(),
                     pendingPayment.orderId(),
                     ex
             );
 
             /*
-             * Keep the payment as PENDING.
+             * Keep local payment as PENDING.
              *
-             * A retry can continue processing it.
-             *
-             * Do NOT delete it.
+             * The next attempt can retry provider creation.
              */
             throw ex;
         }
-
 
         /*
          * --------------------------------------------------
          * TRANSACTION #2
          *
-         * Update PENDING -> PROCESSING
-         * depending on provider response.
+         * Persist provider identifiers.
+         *
+         * For Razorpay order creation:
+         *
+         * providerOrderId   = order_xxx
+         * providerPaymentId = null
+         * providerReference = order_xxx
+         * status            = PENDING
          * --------------------------------------------------
          */
+
         return paymentPersistenceService.markPaymentProcessing(
                 pendingPayment.id(),
                 providerResponse
@@ -265,8 +330,8 @@ public class PaymentServiceImpl implements PaymentService {
     public void processOrderCreatedEvent(OrderEvent event) {
 
         /*
-         * Only newly-placed orders drive payment auto-creation. Order
-         * cancellations are handled by order-service and need no payment here.
+         * Only newly-created orders trigger automatic
+         * payment creation.
          */
         if (!(event instanceof OrderCreatedEvent)) {
             log.info("Ignoring non-created order event '{}'", event.getEventType());
@@ -292,6 +357,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (orderEvent.getTotalAmount() == null) {
+
             throw new MissingPaymentDetailsException(
                     orderEvent.getOrderId(),
                     "totalAmount"
@@ -408,19 +474,6 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private Authentication internalAuthentication(Long customerId) {
-
-        return new UsernamePasswordAuthenticationToken(
-                "internal-service",
-                null,
-                List.of(
-                        new SimpleGrantedAuthority(
-                                "ROLE_INTERNAL_SERVICE"
-                        )
-                )
-        );
-    }
-
     @Override
     @Transactional(readOnly = true)
     public PaymentResponse getPayment(Long id, Authentication authentication) {
@@ -433,6 +486,7 @@ public class PaymentServiceImpl implements PaymentService {
                         });
 
         if (roleSecurity.hasRole(authentication, "ADMIN")) {
+
             return paymentMapper.toResponse(payment);
         }
 
@@ -494,7 +548,9 @@ public class PaymentServiceImpl implements PaymentService {
                 paymentRepository.findById(paymentId)
                         .orElseThrow(() -> {
                             paymentMetrics.paymentNotFound();
-                            return new PaymentNotFoundException(paymentId);
+                            return new PaymentNotFoundException(
+                                    paymentId
+                            );
                         });
 
         transitionStatus(payment, targetStatus);
@@ -508,6 +564,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (ObjectOptimisticLockingFailureException ex) {
 
             paymentMetrics.concurrentModification();
+
             throw new PaymentConcurrentModificationException(
                     paymentId
             );
@@ -518,6 +575,10 @@ public class PaymentServiceImpl implements PaymentService {
                                   PaymentStatus targetStatus) {
 
         PaymentStatus currentStatus = payment.getStatus();
+
+        if (currentStatus == targetStatus) {
+            return;
+        }
 
         if (!statusLifecycle.canTransition(currentStatus,
                 targetStatus)) {
@@ -544,5 +605,100 @@ public class PaymentServiceImpl implements PaymentService {
 
             paymentMetrics.paymentCancelled();
         }
+    }
+
+    @Override
+    public PaymentCheckoutResponse initializeCheckout(Long paymentId,
+                                                      Authentication authentication) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> {
+                    paymentMetrics.paymentNotFound();
+                    return new PaymentNotFoundException(paymentId);
+                });
+
+        if (roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            return initializeCheckoutForPayment(payment);
+        }
+
+        Long currentUserId = currentUser.getUserId(authentication);
+
+        if (!payment.getCustomerId().equals(currentUserId)) {
+
+            throw new AccessDeniedException(
+                    "You are not authorized to initialize checkout for this payment"
+            );
+        }
+
+        return initializeCheckoutForPayment(payment);
+    }
+
+    private PaymentCheckoutResponse initializeCheckoutForPayment(Payment payment) {
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+
+            throw new IllegalStateException(
+                    "Checkout can only be initialized for a PENDING payment"
+            );
+        }
+
+        if (payment.getProviderOrderId() == null ||
+                payment.getProviderOrderId().isBlank()) {
+
+            log.info(
+                    "Provider order missing for payment {}. Reinitializing provider checkout.",
+                    payment.getId()
+            );
+
+            OrderResponse order;
+
+            try {
+
+                order = orderClient.getOrderInternal(payment.getOrderId());
+
+            } catch (RemoteResourceNotFoundException ex) {
+
+                throw new OrderNotFoundException(payment.getOrderId());
+            }
+
+            /*
+             * processPayment() detects the existing payment and creates
+             * a provider order only when providerOrderId is missing.
+             */
+            processPayment(order);
+
+            Long paymentId = payment.getId();
+
+            payment = paymentRepository
+                    .findById(paymentId)
+                    .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        }
+
+        if (payment.getProviderOrderId() == null ||
+                payment.getProviderOrderId().isBlank()) {
+
+            throw new IllegalStateException(
+                    "Payment provider order was not initialized"
+            );
+        }
+
+        String providerKeyId = null;
+
+        if ("RAZORPAY".equalsIgnoreCase(payment.getProvider())) {
+
+            providerKeyId = razorpayProperties.getKeyId();
+        }
+
+        return new PaymentCheckoutResponse(
+                payment.getId(),
+                payment.getOrderId(),
+                payment.getProvider(),
+                payment.getProviderOrderId(),
+                providerKeyId,
+                payment.getAmount(),
+                payment.getCurrency(),
+                payment.getStatus()
+        );
     }
 }
