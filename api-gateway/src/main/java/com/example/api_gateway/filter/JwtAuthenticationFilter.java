@@ -119,7 +119,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         return path.startsWith("/api/auth/")
                 || path.startsWith("/actuator/")
-                || path.startsWith("/eureka/");
+                || path.startsWith("/eureka/")
+                || path.equals("/api/payments/webhook/razorpay");
     }
 
     @Override

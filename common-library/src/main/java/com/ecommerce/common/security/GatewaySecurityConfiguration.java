@@ -58,6 +58,9 @@ public class GatewaySecurityConfiguration {
                         .requestMatchers("/actuator/**")
                         .permitAll()
 
+                        .requestMatchers("/api/payments/webhook/razorpay")
+                        .permitAll()
+
                         .anyRequest()
                         .authenticated()
                 );

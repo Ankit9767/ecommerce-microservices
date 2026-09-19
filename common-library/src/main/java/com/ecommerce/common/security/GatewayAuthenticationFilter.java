@@ -19,8 +19,10 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
 
-        return request.getRequestURI()
-                .startsWith("/actuator/");
+        String requestUri = request.getRequestURI();
+
+        return requestUri.startsWith("/actuator/")
+                || requestUri.equals("/api/payments/webhook/razorpay");
     }
 
     @Override
