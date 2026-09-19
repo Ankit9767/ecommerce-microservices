@@ -4,25 +4,45 @@ import com.ecommerce.common.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
         name = "payment_provider_transactions",
+        indexes = {
+                @Index(
+                        name = "idx_provider_transaction_payment_id",
+                        columnList = "payment_id"
+                ),
+                @Index(
+                        name = "idx_provider_transaction_order_id",
+                        columnList = "provider_order_id"
+                ),
+                @Index(
+                        name = "idx_provider_transaction_payment_ref",
+                        columnList = "provider_payment_id"
+                ),
+                @Index(
+                        name = "idx_provider_transaction_reference",
+                        columnList = "provider_reference"
+                )
+        },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_provider_transaction_payment_id",
                         columnNames = "payment_id"
                 ),
                 @UniqueConstraint(
+                        name = "uk_provider_transaction_order_id",
+                        columnNames = "provider_order_id"
+                ),
+                @UniqueConstraint(
+                        name = "uk_provider_transaction_payment_ref",
+                        columnNames = "provider_payment_id"
+                ),
+                @UniqueConstraint(
                         name = "uk_provider_transaction_reference",
                         columnNames = "provider_reference"
-                )
-        },
-        indexes = {
-                @Index(
-                        name = "idx_provider_transaction_payment_id",
-                        columnList = "payment_id"
                 )
         }
 )
@@ -45,9 +65,25 @@ public class PaymentProviderTransaction {
     private Long paymentId;
 
     @Column(
+            name = "provider_order_id",
+            nullable = false,
+            unique = true,
+            length = 255
+    )
+    private String providerOrderId;
+
+    @Column(
+            name = "provider_payment_id",
+            unique = true,
+            length = 255
+    )
+    private String providerPaymentId;
+
+    @Column(
             name = "provider_reference",
             nullable = false,
-            unique = true
+            unique = true,
+            length = 255
     )
     private String providerReference;
 
@@ -61,15 +97,8 @@ public class PaymentProviderTransaction {
 
     @Column(
             name = "created_at",
-            nullable = false,
-            updatable = false
+            nullable = false
     )
-    private Instant createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
