@@ -76,3 +76,6 @@ pagination:
 service:
   security:
     internal-token: test-internal-token
+
+payment:
+  provider: MOCK
