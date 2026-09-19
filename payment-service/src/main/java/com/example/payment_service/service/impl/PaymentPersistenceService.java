@@ -326,10 +326,7 @@ public class PaymentPersistenceService {
          * --------------------------------------------------
          */
 
-        transitionStatus(
-                payment,
-                providerResponse.status()
-        );
+        transitionStatus(payment, providerResponse.status());
 
         payment.setFailureReason(
                 providerResponse.failureReason()
@@ -337,10 +334,7 @@ public class PaymentPersistenceService {
 
         try {
 
-            Payment savedPayment =
-                    paymentRepository.saveAndFlush(
-                            payment
-                    );
+            Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
             log.info(
                     "Updated payment {}. status={}, " +
@@ -351,9 +345,7 @@ public class PaymentPersistenceService {
                     savedPayment.getProviderPaymentId()
             );
 
-            return paymentMapper.toResponse(
-                    savedPayment
-            );
+            return paymentMapper.toResponse(savedPayment);
 
         } catch (
                 ObjectOptimisticLockingFailureException ex
@@ -366,9 +358,7 @@ public class PaymentPersistenceService {
                     paymentId
             );
 
-            throw new PaymentConcurrencyException(
-                    paymentId
-            );
+            throw new PaymentConcurrencyException(paymentId);
         }
     }
 

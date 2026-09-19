@@ -216,8 +216,7 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
             return;
         }
 
-        PaymentStatus currentStatus =
-                payment.getStatus();
+        PaymentStatus currentStatus = payment.getStatus();
 
         /*
          * Razorpay webhook ordering is not guaranteed.
