@@ -5,7 +5,10 @@ import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.entity.Payment;
-import com.example.payment_service.exception.*;
+import com.example.payment_service.exception.InvalidPaymentProviderResponseException;
+import com.example.payment_service.exception.InvalidPaymentStatusTransitionException;
+import com.example.payment_service.exception.PaymentConcurrencyException;
+import com.example.payment_service.exception.PaymentNotFoundException;
 import com.example.payment_service.mapper.PaymentMapper;
 import com.example.payment_service.metrics.PaymentMetrics;
 import com.example.payment_service.repository.PaymentRepository;
@@ -45,10 +48,13 @@ public class PaymentPersistenceService {
 
             log.info(
                     "Payment already exists for order {}. " +
-                            "paymentId={}, status={}",
+                            "paymentId={}, status={}, providerOrderId={}, " +
+                            "providerPaymentId={}",
                     order.getId(),
                     existingPayment.getId(),
-                    existingPayment.getStatus()
+                    existingPayment.getStatus(),
+                    existingPayment.getProviderOrderId(),
+                    existingPayment.getProviderPaymentId()
             );
 
             return new PaymentCreationResult(
@@ -75,9 +81,11 @@ public class PaymentPersistenceService {
             paymentMetrics.paymentCreated();
 
             log.info(
-                    "Created new payment {} for order {}",
+                    "Created new payment {} for order {}. " +
+                            "provider={}",
                     savedPayment.getId(),
-                    order.getId()
+                    order.getId(),
+                    providerName
             );
 
             return new PaymentCreationResult(
@@ -88,14 +96,14 @@ public class PaymentPersistenceService {
         } catch (DataIntegrityViolationException ex) {
 
             /*
-             * Race condition:
+             * --------------------------------------------------
+             * CONCURRENT PAYMENT CREATION
              *
-             * Thread A -> inserts payment
-             * Thread B -> INSERT fails because of UNIQUE(order_id)
-             *
-             * Therefore try to retrieve the payment created by
-             * the other transaction.
+             * UNIQUE(order_id) prevents two payments for
+             * the same order.
+             * --------------------------------------------------
              */
+
             Payment concurrentPayment =
                     paymentRepository
                             .findByOrderId(order.getId())
@@ -107,9 +115,12 @@ public class PaymentPersistenceService {
 
                 log.info(
                         "Payment was created concurrently for order {}. " +
-                                "Returning payment {}.",
+                                "Returning payment {}. " +
+                                "status={}, providerOrderId={}",
                         order.getId(),
-                        concurrentPayment.getId()
+                        concurrentPayment.getId(),
+                        concurrentPayment.getStatus(),
+                        concurrentPayment.getProviderOrderId()
                 );
 
                 return new PaymentCreationResult(
@@ -135,6 +146,235 @@ public class PaymentPersistenceService {
     public PaymentResponse markPaymentProcessing(Long paymentId,
                                                  PaymentProviderResponse providerResponse) {
 
+        validateProviderResponse(paymentId, providerResponse);
+
+        Payment payment =
+                paymentRepository.findById(paymentId)
+                        .orElseThrow(() ->
+                                new PaymentNotFoundException(
+                                        paymentId
+                                )
+                        );
+
+        /*
+         * --------------------------------------------------
+         * PROVIDER ORDER ID
+         * --------------------------------------------------
+         *
+         * The provider order ID is created once.
+         *
+         * Example:
+         *
+         * order_ABC123
+         *
+         * Once stored, a different provider order ID must
+         * never silently overwrite it.
+         * --------------------------------------------------
+         */
+
+        if (providerResponse.providerOrderId() != null) {
+
+            String existingProviderOrderId =
+                    payment.getProviderOrderId();
+
+            if (existingProviderOrderId != null &&
+                    !existingProviderOrderId.isBlank() &&
+                    !existingProviderOrderId.equals(
+                            providerResponse.providerOrderId()
+                    )) {
+
+                log.error(
+                        "Provider order ID mismatch for payment {}. " +
+                                "existing={}, incoming={}",
+                        paymentId,
+                        existingProviderOrderId,
+                        providerResponse.providerOrderId()
+                );
+
+                throw new InvalidPaymentProviderResponseException(
+                        paymentId
+                );
+            }
+
+            payment.setProviderOrderId(
+                    providerResponse.providerOrderId()
+            );
+        }
+
+        /*
+         * --------------------------------------------------
+         * PROVIDER PAYMENT ID
+         * --------------------------------------------------
+         *
+         * Created later when the customer actually pays.
+         *
+         * Example:
+         *
+         * pay_XYZ123
+         * --------------------------------------------------
+         */
+
+        if (providerResponse.providerPaymentId() != null) {
+
+            String existingProviderPaymentId =
+                    payment.getProviderPaymentId();
+
+            if (existingProviderPaymentId != null &&
+                    !existingProviderPaymentId.isBlank() &&
+                    !existingProviderPaymentId.equals(
+                            providerResponse.providerPaymentId()
+                    )) {
+
+                log.error(
+                        "Provider payment ID mismatch for payment {}. " +
+                                "existing={}, incoming={}",
+                        paymentId,
+                        existingProviderPaymentId,
+                        providerResponse.providerPaymentId()
+                );
+
+                throw new InvalidPaymentProviderResponseException(
+                        paymentId
+                );
+            }
+
+            payment.setProviderPaymentId(
+                    providerResponse.providerPaymentId()
+            );
+        }
+
+        /*
+         * --------------------------------------------------
+         * PROVIDER REFERENCE
+         * --------------------------------------------------
+         *
+         * Initial state:
+         *
+         * order_ABC123
+         *
+         * After actual payment:
+         *
+         * pay_XYZ123
+         *
+         * Therefore changing the provider reference is
+         * intentional.
+         * --------------------------------------------------
+         */
+
+        if (payment.getProviderReference() != null &&
+                !payment.getProviderReference()
+                        .equals(providerResponse.providerReference())) {
+
+            log.info(
+                    "Provider reference changed for payment {}. " +
+                            "oldReference={}, newReference={}",
+                    paymentId,
+                    payment.getProviderReference(),
+                    providerResponse.providerReference()
+            );
+        }
+
+        payment.setProviderReference(
+                providerResponse.providerReference()
+        );
+
+        /*
+         * --------------------------------------------------
+         * STATUS
+         * --------------------------------------------------
+         */
+
+        if (payment.getStatus() == providerResponse.status()) {
+
+            if (providerResponse.failureReason() != null) {
+
+                payment.setFailureReason(
+                        providerResponse.failureReason()
+                );
+            }
+
+            try {
+
+                Payment savedPayment =
+                        paymentRepository.saveAndFlush(
+                                payment
+                        );
+
+                return paymentMapper.toResponse(savedPayment);
+
+            } catch (
+                    ObjectOptimisticLockingFailureException ex
+            ) {
+
+                paymentMetrics.concurrentModification();
+
+                log.warn(
+                        "Concurrent modification while updating " +
+                                "provider information for payment {}",
+                        paymentId
+                );
+
+                throw new PaymentConcurrencyException(
+                        paymentId
+                );
+            }
+        }
+
+        /*
+         * --------------------------------------------------
+         * STATUS TRANSITION
+         * --------------------------------------------------
+         */
+
+        transitionStatus(
+                payment,
+                providerResponse.status()
+        );
+
+        payment.setFailureReason(
+                providerResponse.failureReason()
+        );
+
+        try {
+
+            Payment savedPayment =
+                    paymentRepository.saveAndFlush(
+                            payment
+                    );
+
+            log.info(
+                    "Updated payment {}. status={}, " +
+                            "providerOrderId={}, providerPaymentId={}",
+                    savedPayment.getId(),
+                    savedPayment.getStatus(),
+                    savedPayment.getProviderOrderId(),
+                    savedPayment.getProviderPaymentId()
+            );
+
+            return paymentMapper.toResponse(
+                    savedPayment
+            );
+
+        } catch (
+                ObjectOptimisticLockingFailureException ex
+        ) {
+
+            paymentMetrics.concurrentModification();
+
+            log.warn(
+                    "Concurrent modification while updating payment {}",
+                    paymentId
+            );
+
+            throw new PaymentConcurrencyException(
+                    paymentId
+            );
+        }
+    }
+
+    private void validateProviderResponse(Long paymentId,
+                                          PaymentProviderResponse providerResponse) {
+
         if (providerResponse == null) {
 
             throw new InvalidPaymentProviderResponseException(
@@ -157,71 +397,15 @@ public class PaymentPersistenceService {
             );
         }
 
-        Payment payment =
-                paymentRepository.findById(paymentId)
-                        .orElseThrow(() ->
-                                new PaymentNotFoundException(paymentId)
-                        );
-
         /*
-         * --------------------------------------------------
-         * PROVIDER REFERENCE IDEMPOTENCY
-         * --------------------------------------------------
+         * For a provider-created order we need the provider
+         * order ID.
+         *
+         * For future webhook responses this validation can
+         * be handled according to the event type because a
+         * webhook may contain a payment ID as the primary
+         * identifier.
          */
-
-        if (payment.getProviderReference() != null &&
-                !payment.getProviderReference()
-                        .equals(providerResponse.providerReference())) {
-
-            throw new PaymentProviderReferenceMismatchException(
-                    paymentId,
-                    payment.getProviderReference(),
-                    providerResponse.providerReference()
-            );
-        }
-
-        if (payment.getStatus() == providerResponse.status()) {
-
-            /*
-             * Same status + same provider reference.
-             */
-            log.info(
-                    "Ignoring duplicate provider response: " +
-                            "paymentId={}, status={}, providerReference={}",
-                    paymentId,
-                    providerResponse.status(),
-                    providerResponse.providerReference()
-            );
-
-            return paymentMapper.toResponse(payment);
-        }
-
-        transitionStatus(
-                payment,
-                providerResponse.status()
-        );
-
-        payment.setProviderReference(providerResponse.providerReference());
-
-        try {
-
-            Payment savedPayment = paymentRepository.saveAndFlush(payment);
-
-            return paymentMapper.toResponse(savedPayment);
-
-        } catch (ObjectOptimisticLockingFailureException ex) {
-
-            paymentMetrics.concurrentModification();
-
-            log.warn(
-                    "Concurrent modification while updating payment {}",
-                    paymentId
-            );
-
-            throw new PaymentConcurrencyException(
-                    paymentId
-            );
-        }
     }
 
     private void transitionStatus(Payment payment,
