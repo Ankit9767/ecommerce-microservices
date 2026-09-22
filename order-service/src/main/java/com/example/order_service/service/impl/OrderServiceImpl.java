@@ -12,6 +12,7 @@ import com.example.order_service.client.ProductClient;
 import com.example.order_service.dto.CreateOrderFromCartRequest;
 import com.example.order_service.dto.CreateOrderItemRequest;
 import com.example.order_service.dto.CreateOrderRequest;
+import com.example.order_service.dto.ShippingAddressRequest;
 import com.example.order_service.dto.UpdateOrderRequest;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
@@ -68,7 +69,11 @@ public class OrderServiceImpl implements OrderService {
             RoleSecurity roleSecurity,
             CurrentUser currentUser,
             OrderStatusLifecycle statusLifecycle,
-            OrderMetrics orderMetrics, CartClient cartClient, OrderPersistenceService orderPersistenceService, OrderInventoryHelperService orderInventoryHelperService, OutboxService outboxService
+            OrderMetrics orderMetrics,
+            CartClient cartClient,
+            OrderPersistenceService orderPersistenceService,
+            OrderInventoryHelperService orderInventoryHelperService,
+            OutboxService outboxService
     ) {
         this.repository = repository;
         this.productClient = productClient;
@@ -132,6 +137,18 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
+        ShippingAddress shippingAddress =
+                ShippingAddress.builder()
+                        .recipientName(order.getShippingRecipientName())
+                        .phone(order.getShippingPhone())
+                        .addressLine1(order.getShippingAddressLine1())
+                        .addressLine2(order.getShippingAddressLine2())
+                        .city(order.getShippingCity())
+                        .state(order.getShippingState())
+                        .postalCode(order.getShippingPostalCode())
+                        .country(order.getShippingCountry())
+                        .build();
+
         OrderPaidEvent event =
                 OrderPaidEvent.builder()
                         .eventType(EventType.ORDER_PAID)
@@ -143,6 +160,7 @@ public class OrderServiceImpl implements OrderService {
                         .paymentMethod(order.getPaymentMethod())
                         .totalAmount(order.getTotalAmount())
                         .items(items)
+                        .shippingAddress(shippingAddress)
                         .build();
 
         outboxService.saveOrderPaidEvent(event);
@@ -168,6 +186,8 @@ public class OrderServiceImpl implements OrderService {
                 .currency(request.getCurrency())
                 .reservationId(UUID.randomUUID())
                 .build();
+
+        applyShippingAddress(order, request.getShippingAddress());
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -235,7 +255,10 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
 
-            orderInventoryHelperService.releaseInventory(order.getItems(), order.getReservationId());
+            orderInventoryHelperService.releaseInventory(
+                    order.getItems(),
+                    order.getReservationId()
+            );
 
             throw ex;
         }
@@ -274,7 +297,6 @@ public class OrderServiceImpl implements OrderService {
         return mapper.toResponse(order);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderInternal(Long orderId) {
@@ -291,7 +313,6 @@ public class OrderServiceImpl implements OrderService {
 
         return mapper.toResponse(order);
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -435,7 +456,8 @@ public class OrderServiceImpl implements OrderService {
              * Now release inventory that the new order
              * no longer requires.
              */
-            orderInventoryHelperService.releaseReducedInventory(existingItems,
+            orderInventoryHelperService.releaseReducedInventory(
+                    existingItems,
                     newItems,
                     existingOrder.getReservationId()
             );
@@ -452,7 +474,9 @@ public class OrderServiceImpl implements OrderService {
              *
              * The original reservation remains untouched.
              */
-            orderInventoryHelperService.releaseInventoryAdjustments(reservations);
+            orderInventoryHelperService.releaseInventoryAdjustments(
+                    reservations
+            );
 
             throw ex;
         }
@@ -496,7 +520,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = repository.save(order);
 
-        orderInventoryHelperService.releaseInventory(order.getItems(),
+        orderInventoryHelperService.releaseInventory(
+                order.getItems(),
                 order.getReservationId()
         );
 
@@ -506,8 +531,11 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (JsonProcessingException ex) {
 
-            log.error("Failed to write order-cancelled event to outbox for order {}",
-                    order.getId(), ex);
+            log.error(
+                    "Failed to write order-cancelled event to outbox for order {}",
+                    order.getId(),
+                    ex
+            );
         }
 
         orderMetrics.orderCancelled();
@@ -540,7 +568,8 @@ public class OrderServiceImpl implements OrderService {
                 OrderStatus.PAID
         );
 
-        OrderResponse response = orderPersistenceService.updateOrder(order);
+        OrderResponse response =
+                orderPersistenceService.updateOrder(order);
 
         writeOrderPaidToOutbox(order);
 
@@ -601,7 +630,8 @@ public class OrderServiceImpl implements OrderService {
         return mapper.toResponse(order);
     }
 
-    private void writeOrderCancelledToOutbox(Order order) throws JsonProcessingException {
+    private void writeOrderCancelledToOutbox(Order order)
+            throws JsonProcessingException {
 
         OrderCancelledEvent event =
                 OrderCancelledEvent.builder()
@@ -672,7 +702,8 @@ public class OrderServiceImpl implements OrderService {
         return result;
     }
 
-    private void validateNoDuplicateProducts(List<CreateOrderItemRequest> items) {
+    private void validateNoDuplicateProducts(
+            List<CreateOrderItemRequest> items) {
 
         Set<Long> productIds = new HashSet<>();
 
@@ -706,7 +737,9 @@ public class OrderServiceImpl implements OrderService {
             throw new EmptyCartException();
         }
 
-        if (cart == null || cart.items() == null || cart.items().isEmpty()) {
+        if (cart == null || cart.items() == null ||
+                cart.items().isEmpty()) {
+
             throw new EmptyCartException();
         }
 
@@ -720,6 +753,8 @@ public class OrderServiceImpl implements OrderService {
                 .reservationId(UUID.randomUUID())
                 .build();
 
+        applyShippingAddress(order, request.shippingAddress());
+
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (CartItemResponse cartItem : cart.items()) {
@@ -728,7 +763,9 @@ public class OrderServiceImpl implements OrderService {
 
             try {
 
-                product = productClient.getProductInternal(cartItem.productId());
+                product = productClient.getProductInternal(
+                                cartItem.productId()
+                        );
 
             } catch (RemoteResourceNotFoundException ex) {
 
@@ -796,6 +833,42 @@ public class OrderServiceImpl implements OrderService {
 
             throw ex;
         }
+    }
+
+    private void applyShippingAddress(Order order,
+                                      ShippingAddressRequest shippingAddress) {
+
+        order.setShippingRecipientName(
+                shippingAddress.getRecipientName()
+        );
+
+        order.setShippingPhone(
+                shippingAddress.getPhone()
+        );
+
+        order.setShippingAddressLine1(
+                shippingAddress.getAddressLine1()
+        );
+
+        order.setShippingAddressLine2(
+                shippingAddress.getAddressLine2()
+        );
+
+        order.setShippingCity(
+                shippingAddress.getCity()
+        );
+
+        order.setShippingState(
+                shippingAddress.getState()
+        );
+
+        order.setShippingPostalCode(
+                shippingAddress.getPostalCode()
+        );
+
+        order.setShippingCountry(
+                shippingAddress.getCountry()
+        );
     }
 
     @Override
