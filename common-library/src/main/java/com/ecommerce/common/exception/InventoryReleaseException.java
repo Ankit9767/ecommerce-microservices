@@ -23,4 +23,18 @@ public class InventoryReleaseException extends RuntimeException {
         this.quantity = quantity;
     }
 
+    public InventoryReleaseException(Long productId, Integer quantity,
+                                     Throwable cause) {
+
+        super(
+                "Failed to release inventory for product "
+                        + productId
+                        + " quantity "
+                        + quantity,
+                cause
+        );
+
+        this.productId = productId;
+        this.quantity = quantity;
+    }
 }

@@ -23,4 +23,18 @@ public class InventoryConfirmException extends RuntimeException {
         this.quantity = quantity;
     }
 
+    public InventoryConfirmException(Long productId, Integer quantity,
+                                     Throwable cause) {
+
+        super(
+                "Failed to confirm inventory for product "
+                        + productId
+                        + " quantity "
+                        + quantity,
+                cause
+        );
+
+        this.productId = productId;
+        this.quantity = quantity;
+    }
 }

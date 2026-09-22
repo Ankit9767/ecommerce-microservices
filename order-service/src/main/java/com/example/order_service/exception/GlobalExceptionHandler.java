@@ -1,7 +1,7 @@
 package com.example.order_service.exception;
 
 import com.ecommerce.common.dto.ErrorResponse;
-import com.ecommerce.common.exception.OutboxEventCreationException;
+import com.ecommerce.common.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -148,6 +148,114 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Order Creation Failed",
                 "Unable to create the order event.",
+                request,
+                null
+        );
+    }
+
+    @ExceptionHandler(InventoryReservationException.class)
+    public ResponseEntity<ErrorResponse> handleInventoryReservation(
+            InventoryReservationException ex,
+            HttpServletRequest request) {
+
+        return handleInventoryRemoteException(
+                ex,
+                ex.getCause(),
+                request,
+                "Inventory Reservation Failed"
+        );
+    }
+
+    @ExceptionHandler(InventoryConfirmException.class)
+    public ResponseEntity<ErrorResponse> handleInventoryConfirm(
+            InventoryConfirmException ex,
+            HttpServletRequest request) {
+
+        return handleInventoryRemoteException(
+                ex,
+                ex.getCause(),
+                request,
+                "Inventory Confirmation Failed"
+        );
+    }
+
+    @ExceptionHandler(InventoryReleaseException.class)
+    public ResponseEntity<ErrorResponse> handleInventoryRelease(
+            InventoryReleaseException ex,
+            HttpServletRequest request) {
+
+        return handleInventoryRemoteException(
+                ex,
+                ex.getCause(),
+                request,
+                "Inventory Release Failed"
+        );
+    }
+
+    private ResponseEntity<ErrorResponse> handleInventoryRemoteException(
+            RuntimeException originalException,
+            Throwable cause,
+            HttpServletRequest request,
+            String fallbackError) {
+
+        if (cause instanceof RemoteServiceException remoteException) {
+
+            HttpStatus status =
+                    HttpStatus.resolve(remoteException.getStatus());
+
+            if (status == null) {
+                status = HttpStatus.BAD_GATEWAY;
+            }
+
+            String error =
+                    remoteException.getRemoteError();
+
+            if (error == null || error.isBlank()) {
+                error = fallbackError;
+            }
+
+            String message =
+                    remoteException.getRemoteMessage();
+
+            if (message == null || message.isBlank()) {
+                message = originalException.getMessage();
+            }
+
+            return buildError(
+                    status,
+                    error,
+                    message,
+                    request,
+                    null
+            );
+        }
+
+        if (cause instanceof RemoteResourceNotFoundException remoteException) {
+
+            return buildError(
+                    HttpStatus.NOT_FOUND,
+                    "Resource Not Found",
+                    remoteException.getRemoteMessage(),
+                    request,
+                    null
+            );
+        }
+
+        if (cause instanceof RemoteServiceUnavailableException) {
+
+            return buildError(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Inventory Service Unavailable",
+                    cause.getMessage(),
+                    request,
+                    null
+            );
+        }
+
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                fallbackError,
+                originalException.getMessage(),
                 request,
                 null
         );
