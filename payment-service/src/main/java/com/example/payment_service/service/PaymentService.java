@@ -35,4 +35,10 @@ public interface PaymentService {
             Long paymentId,
             Authentication authentication
     );
+
+    PaymentResponse completeMockPayment(Long paymentId,
+                                        Authentication authentication);
+
+    PaymentResponse failMockPayment(Long paymentId,
+                                    Authentication authentication);
 }

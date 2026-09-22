@@ -96,4 +96,28 @@ public class PaymentController {
                 )
         );
     }
+
+    @PostMapping("/{paymentId}/mock/complete")
+    @PreAuthorize("hasAuthority('PAYMENT_CHECKOUT')")
+    public ResponseEntity<PaymentResponse> completeMockPayment(@PathVariable Long paymentId,
+                                                               Authentication authentication) {
+
+        return ResponseEntity.ok(
+                paymentService.completeMockPayment(
+                        paymentId, authentication
+                )
+        );
+    }
+
+    @PostMapping("/{paymentId}/mock/fail")
+    @PreAuthorize("hasAuthority('PAYMENT_CHECKOUT')")
+    public ResponseEntity<PaymentResponse> failMockPayment(@PathVariable Long paymentId,
+                                                           Authentication authentication) {
+
+        return ResponseEntity.ok(
+                paymentService.failMockPayment(
+                        paymentId, authentication
+                )
+        );
+    }
 }

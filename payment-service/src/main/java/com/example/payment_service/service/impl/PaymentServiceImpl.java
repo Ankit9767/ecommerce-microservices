@@ -701,4 +701,147 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.getStatus()
         );
     }
+
+    @Transactional
+    @Override
+    public PaymentResponse completeMockPayment(Long paymentId,
+                                               Authentication authentication) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new PaymentNotFoundException(paymentId)
+                );
+
+        if (!"MOCK".equalsIgnoreCase(payment.getProvider())) {
+            throw new IllegalStateException(
+                    "Payment is not using MOCK provider"
+            );
+        }
+
+        if (!roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            Long currentUserId = currentUser.getUserId(authentication);
+
+            if (!payment.getCustomerId().equals(currentUserId)) {
+                throw new AccessDeniedException(
+                        "You are not authorized to complete this payment"
+                );
+            }
+        }
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING payments can be completed"
+            );
+        }
+
+        if (payment.getProviderReference() == null ||
+                payment.getProviderReference().isBlank()) {
+
+            throw new IllegalStateException(
+                    "Mock provider reference is missing"
+            );
+        }
+
+        PaymentProviderResponse providerResponse =
+                paymentProvider.verifyPayment(
+                        payment.getProviderReference()
+                );
+
+        transitionStatus(payment, providerResponse.status());
+
+        payment.setProviderPaymentId(
+                providerResponse.providerPaymentId()
+        );
+
+        payment.setProviderReference(
+                providerResponse.providerReference()
+        );
+
+        Payment savedPayment;
+
+        try {
+
+            savedPayment = paymentRepository.saveAndFlush(payment);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            paymentMetrics.concurrentModification();
+
+            throw new PaymentConcurrentModificationException(
+                    paymentId
+            );
+        }
+
+        outboxService.savePaymentCompletedEvent(
+                paymentEventFactory.createPaymentEvent(
+                        EventType.PAYMENT_SUCCESSFUL,
+                        savedPayment
+                )
+        );
+
+        return paymentMapper.toResponse(savedPayment);
+    }
+
+    @Transactional
+    @Override
+    public PaymentResponse failMockPayment(Long paymentId,
+                                           Authentication authentication) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new PaymentNotFoundException(paymentId)
+                );
+
+        if (!"MOCK".equalsIgnoreCase(payment.getProvider())) {
+            throw new IllegalStateException(
+                    "Payment is not using MOCK provider"
+            );
+        }
+
+        if (!roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            Long currentUserId = currentUser.getUserId(authentication);
+
+            if (!payment.getCustomerId().equals(currentUserId)) {
+                throw new AccessDeniedException(
+                        "You are not authorized to fail this payment"
+                );
+            }
+        }
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING payments can be failed"
+            );
+        }
+
+        transitionStatus(payment, PaymentStatus.FAILED);
+
+        payment.setFailureReason("Mock payment failed");
+
+        Payment savedPayment;
+
+        try {
+
+            savedPayment = paymentRepository.saveAndFlush(payment);
+
+        } catch (ObjectOptimisticLockingFailureException ex) {
+
+            paymentMetrics.concurrentModification();
+
+            throw new PaymentConcurrentModificationException(
+                    paymentId
+            );
+        }
+
+        outboxService.savePaymentCompletedEvent(
+                paymentEventFactory.createPaymentEvent(
+                        EventType.PAYMENT_FAILED,
+                        savedPayment
+                )
+        );
+
+        return paymentMapper.toResponse(savedPayment);
+    }
 }

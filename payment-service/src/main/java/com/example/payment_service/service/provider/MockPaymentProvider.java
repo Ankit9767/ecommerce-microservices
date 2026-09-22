@@ -74,7 +74,7 @@ public class MockPaymentProvider implements PaymentProvider {
                         .providerOrderId(providerOrderId)
                         .providerPaymentId(providerPaymentId)
                         .providerReference(providerReference)
-                        .status(PaymentStatus.PROCESSING)
+                        .status(PaymentStatus.PENDING)
                         .build();
 
         try {
