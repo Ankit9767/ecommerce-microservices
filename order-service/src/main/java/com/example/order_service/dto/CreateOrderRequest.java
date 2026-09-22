@@ -1,7 +1,7 @@
 package com.example.order_service.dto;
 
-import com.ecommerce.common.enums.PaymentMethod;
 import com.ecommerce.common.enums.Currency;
+import com.ecommerce.common.enums.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -26,4 +26,8 @@ public class CreateOrderRequest {
 
     @NotNull(message = "Currency is required")
     private Currency currency;
+
+    @NotNull(message = "Shipping address is required")
+    @Valid
+    private ShippingAddressRequest shippingAddress;
 }
