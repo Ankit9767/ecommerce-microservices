@@ -1,6 +1,8 @@
 package com.example.shipping_service.controller;
 
+import com.example.shipping_service.dto.ShipmentResponse;
 import com.example.shipping_service.entity.Shipment;
+import com.example.shipping_service.mapper.ShipmentMapper;
 import com.example.shipping_service.service.ShipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,79 +17,112 @@ public class ShipmentController {
 
     private final ShipmentService shipmentService;
 
+    private final ShipmentMapper shipmentMapper;
+
     @GetMapping("/{shipmentId}")
     @PreAuthorize("hasAuthority('SHIPMENT_READ')")
-    public ResponseEntity<Shipment> getShipment(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> getShipment(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.getShipment(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.getShipment(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @GetMapping("/order/{orderId}")
     @PreAuthorize("hasAuthority('SHIPMENT_READ')")
-    public ResponseEntity<Shipment> getShipmentByOrderId(@PathVariable Long orderId) {
+    public ResponseEntity<ShipmentResponse> getShipmentByOrderId(
+            @PathVariable Long orderId) {
+
+        Shipment shipment =
+                shipmentService.getShipmentByOrderId(orderId);
 
         return ResponseEntity.ok(
-                shipmentService.getShipmentByOrderId(orderId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @GetMapping("/track/order/{orderId}")
     @PreAuthorize("hasAuthority('SHIPMENT_TRACK')")
-    public ResponseEntity<Shipment> trackShipmentByOrderId(@PathVariable Long orderId,
-                                                           Authentication authentication) {
+    public ResponseEntity<ShipmentResponse> trackShipmentByOrderId(
+            @PathVariable Long orderId,
+            Authentication authentication) {
 
-        return ResponseEntity.ok(
+        Shipment shipment =
                 shipmentService.trackShipmentByOrderId(
                         orderId,
                         authentication
-                )
+                );
+
+        return ResponseEntity.ok(
+                shipmentMapper.toResponse(shipment)
         );
     }
 
-
     @PostMapping("/{shipmentId}/in-transit")
     @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
-    public ResponseEntity<Shipment> markInTransit(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> markInTransit(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.markInTransit(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.markInTransit(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @PostMapping("/{shipmentId}/out-for-delivery")
-    public ResponseEntity<Shipment> markOutForDelivery(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> markOutForDelivery(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.markOutForDelivery(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.markOutForDelivery(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @PostMapping("/{shipmentId}/deliver")
     @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
-    public ResponseEntity<Shipment> markDelivered(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> markDelivered(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.markDelivered(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.markDelivered(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @PostMapping("/{shipmentId}/fail")
     @PreAuthorize("hasAuthority('SHIPMENT_UPDATE')")
-    public ResponseEntity<Shipment> markFailed(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> markFailed(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.markFailed(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.markFailed(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 
     @PostMapping("/{shipmentId}/cancel")
     @PreAuthorize("hasAuthority('SHIPMENT_CANCEL')")
-    public ResponseEntity<Shipment> cancelShipment(@PathVariable Long shipmentId) {
+    public ResponseEntity<ShipmentResponse> cancelShipment(
+            @PathVariable Long shipmentId) {
+
+        Shipment shipment =
+                shipmentService.cancelShipment(shipmentId);
 
         return ResponseEntity.ok(
-                shipmentService.cancelShipment(shipmentId)
+                shipmentMapper.toResponse(shipment)
         );
     }
 }
