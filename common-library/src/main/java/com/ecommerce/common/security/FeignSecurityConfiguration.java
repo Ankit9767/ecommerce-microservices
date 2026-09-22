@@ -1,5 +1,6 @@
 package com.ecommerce.common.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,9 @@ public class FeignSecurityConfiguration {
     }
 
     @Bean
-    public ErrorDecoder commonFeignErrorDecoder() {
-        return new FeignErrorDecoder();
+    public ErrorDecoder commonFeignErrorDecoder(
+            ObjectMapper objectMapper) {
+
+        return new FeignErrorDecoder(objectMapper);
     }
 }
