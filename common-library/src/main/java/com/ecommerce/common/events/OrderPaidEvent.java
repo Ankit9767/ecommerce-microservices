@@ -1,5 +1,6 @@
 package com.ecommerce.common.events;
 
+import com.ecommerce.common.dto.ShippingAddress;
 import com.ecommerce.common.enums.PaymentMethod;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,6 @@ public class OrderPaidEvent extends OrderEvent {
     private List<OrderItemDto> items;
 
     private String customerEmail;
+
+    private ShippingAddress shippingAddress;
 }

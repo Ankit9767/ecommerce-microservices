@@ -30,6 +30,8 @@ public class OrderResponse {
 
     private OrderStatus status;
 
+    private ShippingAddress shippingAddress;
+
     private List<OrderItemResponse> items;
 
     private LocalDateTime createdAt;
