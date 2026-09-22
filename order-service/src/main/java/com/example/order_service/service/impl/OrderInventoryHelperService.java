@@ -4,10 +4,10 @@ import com.ecommerce.common.dto.InventoryQuantityRequest;
 import com.ecommerce.common.exception.InventoryConfirmException;
 import com.ecommerce.common.exception.InventoryReleaseException;
 import com.ecommerce.common.exception.InventoryReservationException;
+import com.example.order_service.client.InventoryClient;
 import com.example.order_service.entity.Order;
 import com.example.order_service.entity.OrderItem;
 import com.example.order_service.metrics.OrderMetrics;
-import com.example.order_service.client.InventoryClient;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -67,7 +67,8 @@ public class OrderInventoryHelperService {
             releaseInventory(reservedItems, order.getReservationId());
 
             throw new InventoryReservationException(
-                    "Unable to reserve inventory for order"
+                    "Unable to reserve inventory for order",
+                    ex
             );
         }
     }
@@ -172,7 +173,8 @@ public class OrderInventoryHelperService {
             orderMetrics.inventoryReservationFailed();
 
             throw new InventoryReservationException(
-                    "Unable to reserve additional inventory for order"
+                    "Unable to reserve additional inventory for order",
+                    ex
             );
         }
     }
@@ -267,7 +269,8 @@ public class OrderInventoryHelperService {
 
                 throw new InventoryConfirmException(
                         item.getProductId(),
-                        item.getQuantity()
+                        item.getQuantity(),
+                        ex
                 );
             }
         }
