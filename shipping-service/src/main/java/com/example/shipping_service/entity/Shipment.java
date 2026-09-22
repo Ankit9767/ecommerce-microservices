@@ -11,32 +11,14 @@ import java.time.LocalDateTime;
 @Table(
         name = "shipments",
         indexes = {
-                @Index(
-                        name = "idx_shipment_order_id",
-                        columnList = "order_id"
-                ),
-                @Index(
-                        name = "idx_shipment_customer_id",
-                        columnList = "customer_id"
-                ),
-                @Index(
-                        name = "idx_shipment_status",
-                        columnList = "status"
-                ),
-                @Index(
-                        name = "idx_shipment_tracking_number",
-                        columnList = "tracking_number"
-                )
+                @Index(name = "idx_shipment_order_id", columnList = "order_id"),
+                @Index(name = "idx_shipment_customer_id", columnList = "customer_id"),
+                @Index(name = "idx_shipment_status", columnList = "status"),
+                @Index(name = "idx_shipment_tracking_number", columnList = "tracking_number")
         },
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_shipment_order_id",
-                        columnNames = "order_id"
-                ),
-                @UniqueConstraint(
-                        name = "uk_shipment_tracking_number",
-                        columnNames = "tracking_number"
-                )
+                @UniqueConstraint(name = "uk_shipment_order_id", columnNames = "order_id"),
+                @UniqueConstraint(name = "uk_shipment_tracking_number", columnNames = "tracking_number")
         }
 )
 @Getter
@@ -46,46 +28,54 @@ import java.time.LocalDateTime;
 @Builder
 public class Shipment extends BaseEntity {
 
-    @Column(
-            name = "order_id",
-            nullable = false,
-            unique = true
-    )
+    @Column(name = "order_id", nullable = false, unique = true)
     private Long orderId;
 
-    @Column(
-            name = "customer_id",
-            nullable = false
-    )
+    @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
-    @Column(
-            name = "recipient_email",
-            nullable = false,
-            length = 255
-    )
+    @Column(name = "recipient_email", nullable = false, length = 255)
     private String recipientEmail;
 
+    /*
+     * Immutable shipping-address snapshot copied from the OrderPaidEvent.
+     *
+     * The Shipment owns its own copy so fulfillment history does not depend
+     * on later changes to the customer's address or the order data.
+     */
+    @Column(name = "shipping_recipient_name", nullable = false, length = 100)
+    private String shippingRecipientName;
+
+    @Column(name = "shipping_phone", nullable = false, length = 30)
+    private String shippingPhone;
+
+    @Column(name = "shipping_address_line1", nullable = false, length = 200)
+    private String shippingAddressLine1;
+
+    @Column(name = "shipping_address_line2", length = 200)
+    private String shippingAddressLine2;
+
+    @Column(name = "shipping_city", nullable = false, length = 100)
+    private String shippingCity;
+
+    @Column(name = "shipping_state", nullable = false, length = 100)
+    private String shippingState;
+
+    @Column(name = "shipping_postal_code", nullable = false, length = 20)
+    private String shippingPostalCode;
+
+    @Column(name = "shipping_country", nullable = false, length = 2)
+    private String shippingCountry;
+
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "status",
-            nullable = false,
-            length = 30
-    )
+    @Column(name = "status", nullable = false, length = 30)
     @Builder.Default
     private ShipmentStatus status = ShipmentStatus.CREATED;
 
-    @Column(
-            name = "tracking_number",
-            unique = true,
-            length = 100
-    )
+    @Column(name = "tracking_number", unique = true, length = 100)
     private String trackingNumber;
 
-    @Column(
-            name = "carrier",
-            length = 100
-    )
+    @Column(name = "carrier", length = 100)
     private String carrier;
 
     @Column(name = "shipped_at")
@@ -95,20 +85,15 @@ public class Shipment extends BaseEntity {
     private LocalDateTime deliveredAt;
 
     @Version
-    @Column(
-            name = "version",
-            nullable = false
-    )
+    @Column(name = "version", nullable = false)
     @Builder.Default
     private Long version = 0L;
 
     @PrePersist
     public void initialize() {
-
         if (status == null) {
             status = ShipmentStatus.CREATED;
         }
-
         if (version == null) {
             version = 0L;
         }
