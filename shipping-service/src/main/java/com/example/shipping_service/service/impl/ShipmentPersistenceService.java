@@ -1,5 +1,6 @@
 package com.example.shipping_service.service.impl;
 
+import com.ecommerce.common.dto.ShippingAddress;
 import com.example.shipping_service.dto.ShipmentCreationResult;
 import com.example.shipping_service.entity.Shipment;
 import com.example.shipping_service.enums.ShipmentStatus;
@@ -34,10 +35,10 @@ public class ShipmentPersistenceService {
     @Transactional
     public ShipmentCreationResult createIfAbsent(Long orderId,
                                                  Long customerId,
-                                                 String recipientEmail) {
+                                                 String recipientEmail,
+                                                 ShippingAddress shippingAddress) {
 
         return repository.findByOrderId(orderId)
-
                 .map(shipment ->
                         new ShipmentCreationResult(
                                 shipment,
@@ -47,15 +48,20 @@ public class ShipmentPersistenceService {
 
                 .orElseGet(() -> {
 
-                    Shipment shipment =
-                            Shipment.builder()
-                                    .orderId(orderId)
-                                    .customerId(customerId)
-                                    .recipientEmail(recipientEmail)
-                                    .status(
-                                            ShipmentStatus.CREATED
-                                    )
-                                    .build();
+                    Shipment shipment = Shipment.builder()
+                            .orderId(orderId)
+                            .customerId(customerId)
+                            .recipientEmail(recipientEmail)
+                            .shippingRecipientName(shippingAddress.getRecipientName())
+                            .shippingPhone(shippingAddress.getPhone())
+                            .shippingAddressLine1(shippingAddress.getAddressLine1())
+                            .shippingAddressLine2(shippingAddress.getAddressLine2())
+                            .shippingCity(shippingAddress.getCity())
+                            .shippingState(shippingAddress.getState())
+                            .shippingPostalCode(shippingAddress.getPostalCode())
+                            .shippingCountry(shippingAddress.getCountry())
+                            .status(ShipmentStatus.CREATED)
+                            .build();
 
                     Shipment saved =
                             repository.saveAndFlush(
