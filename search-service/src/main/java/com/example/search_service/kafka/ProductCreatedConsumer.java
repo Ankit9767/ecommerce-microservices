@@ -1,9 +1,6 @@
 package com.example.search_service.kafka;
 
-import com.ecommerce.common.events.ProductCreatedEvent;
-import com.ecommerce.common.events.ProductDeletedEvent;
-import com.ecommerce.common.events.ProductEvent;
-import com.ecommerce.common.events.ProductUpdatedEvent;
+import com.ecommerce.common.events.*;
 import com.ecommerce.common.exception.InvalidEventException;
 import com.ecommerce.common.exception.MissingEventIdException;
 import com.ecommerce.common.exception.MissingProductIdException;
@@ -122,6 +119,33 @@ public class ProductCreatedConsumer {
                 log.info(
                         "Product deleted successfully from search index: productId={}",
                         productEvent.getProductId()
+                );
+            }
+
+            case PRODUCT_PRIMARY_IMAGE_CHANGED -> {
+
+                if (!(event instanceof ProductPrimaryImageChangedEvent imageEvent)) {
+
+                    log.error(
+                            "Invalid PRODUCT_PRIMARY_IMAGE_CHANGED event type: {}",
+                            event.getClass().getName()
+                    );
+                    throw new InvalidEventException();
+                }
+
+                log.info(
+                        "Processing PRODUCT_PRIMARY_IMAGE_CHANGED event: eventId={}, productId={}, imageId={}",
+                        imageEvent.getEventId(),
+                        imageEvent.getProductId(),
+                        imageEvent.getImageId()
+                );
+
+                productIndexingService.updatePrimaryImage(imageEvent);
+
+                log.info(
+                        "Primary image updated successfully in search index: productId={}, imageId={}",
+                        imageEvent.getProductId(),
+                        imageEvent.getImageId()
                 );
             }
 

@@ -26,6 +26,7 @@ public class ProductOutboxProducer implements OutboxProducer {
 
         return eventType == EventType.PRODUCT_CREATED
                 || eventType == EventType.PRODUCT_UPDATED
-                || eventType == EventType.PRODUCT_DELETED;
+                || eventType == EventType.PRODUCT_DELETED
+                || eventType == EventType.PRODUCT_PRIMARY_IMAGE_CHANGED;
     }
 }
