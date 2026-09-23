@@ -1,20 +1,12 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+
+import Header from "./Header";
 
 function Layout() {
   return (
     <div className="app">
-      <header className="site-header">
-        <div className="container header-content">
-          <Link className="brand" to="/">
-            EcommerceHub
-          </Link>
-
-          <nav className="main-navigation" aria-label="Main navigation">
-            <Link to="/">Home</Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="site-main">
         <Outlet />
