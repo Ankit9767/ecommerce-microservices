@@ -21,9 +21,22 @@ import java.math.BigDecimal;
         property = "eventType",
         visible = true)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = ProductCreatedEvent.class, name = "product-created"),
-        @JsonSubTypes.Type(value = ProductUpdatedEvent.class, name = "product-updated"),
-        @JsonSubTypes.Type(value = ProductDeletedEvent.class, name = "product-deleted")
+        @JsonSubTypes.Type(
+                value = ProductCreatedEvent.class,
+                name = "product-created"
+        ),
+        @JsonSubTypes.Type(
+                value = ProductUpdatedEvent.class,
+                name = "product-updated"
+        ),
+        @JsonSubTypes.Type(
+                value = ProductDeletedEvent.class,
+                name = "product-deleted"
+        ),
+        @JsonSubTypes.Type(
+                value = ProductPrimaryImageChangedEvent.class,
+                name = "product-primary-image-changed"
+        )
 })
 public abstract class ProductEvent extends DomainEvent {
 
