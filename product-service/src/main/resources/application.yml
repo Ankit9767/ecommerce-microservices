@@ -6,6 +6,11 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME}
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
   data:
     web:
       pageable:
@@ -107,3 +112,7 @@ pagination:
 service:
   security:
     internal-token: ${INTERNAL_SERVICE_TOKEN}
+
+app:
+  storage:
+    product-images-dir: ./storage/product-images
