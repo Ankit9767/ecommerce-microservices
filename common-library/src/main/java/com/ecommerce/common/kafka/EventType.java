@@ -23,6 +23,7 @@ public enum EventType {
     PRODUCT_CREATED("product-created"),
     PRODUCT_UPDATED("product-updated"),
     PRODUCT_DELETED("product-deleted"),
+    PRODUCT_PRIMARY_IMAGE_CHANGED("product-primary-image-changed"),
 
     USER_REGISTERED("user-registered"),
     USER_DELETED("user-deleted"),
@@ -109,6 +110,9 @@ public enum EventType {
 
             case PRODUCT_DELETED ->
                     ProductDeletedEvent.class;
+
+            case PRODUCT_PRIMARY_IMAGE_CHANGED ->
+                    ProductPrimaryImageChangedEvent.class;
 
             case USER_REGISTERED ->
                     UserRegisteredEvent.class;
