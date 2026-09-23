@@ -1,7 +1,6 @@
 package com.example.search_service.document;
 
 import lombok.*;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -45,6 +44,12 @@ public class ProductDocument {
 
     @Field(type = FieldType.Boolean)
     private Boolean active;
+
+    @Field(type = FieldType.Long)
+    private Long primaryImageId;
+
+    @Field(type = FieldType.Keyword)
+    private String primaryImageUrl;
 
     @Field(type = FieldType.Double)
     private Double ratingSum;
