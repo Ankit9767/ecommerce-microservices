@@ -2,6 +2,7 @@ package com.example.product_service.service.impl;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
 import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductPrimaryImageChangedEvent;
 import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.ecommerce.common.exception.OutboxEventCreationException;
 import com.ecommerce.common.kafka.EventType;
@@ -48,6 +49,17 @@ public class OutboxServiceImpl implements OutboxService {
 
         save(
                 EventType.PRODUCT_DELETED,
+                event,
+                event.getProductId()
+        );
+    }
+
+    @Override
+    public void saveProductPrimaryImageChangedEvent(
+            ProductPrimaryImageChangedEvent event) {
+
+        save(
+                EventType.PRODUCT_PRIMARY_IMAGE_CHANGED,
                 event,
                 event.getProductId()
         );

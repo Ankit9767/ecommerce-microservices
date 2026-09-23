@@ -2,6 +2,7 @@ package com.example.product_service.service;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
 import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductPrimaryImageChangedEvent;
 import com.ecommerce.common.events.ProductUpdatedEvent;
 
 public interface OutboxService {
@@ -11,4 +12,8 @@ public interface OutboxService {
     void saveProductUpdatedEvent(ProductUpdatedEvent event);
 
     void saveProductDeletedEvent(ProductDeletedEvent event);
+
+    void saveProductPrimaryImageChangedEvent(
+            ProductPrimaryImageChangedEvent event
+    );
 }
