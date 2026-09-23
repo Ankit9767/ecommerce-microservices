@@ -1,5 +1,6 @@
 package com.example.product_service.service.impl;
 
+import com.ecommerce.common.events.ProductPrimaryImageChangedEvent;
 import com.example.product_service.dto.ProductImageResponse;
 import com.example.product_service.entity.Product;
 import com.example.product_service.entity.ProductImage;
@@ -9,6 +10,7 @@ import com.example.product_service.exception.ProductImageStorageException;
 import com.example.product_service.exception.ProductNotFoundException;
 import com.example.product_service.repository.ProductImageRepository;
 import com.example.product_service.repository.ProductRepository;
+import com.example.product_service.service.OutboxService;
 import com.example.product_service.service.ProductImageService;
 import com.example.product_service.storage.ProductImageStorage;
 import com.example.product_service.storage.StoredProductImage;
@@ -37,14 +39,17 @@ public class ProductImageServiceImpl implements ProductImageService {
 
     private final ProductImageStorage productImageStorage;
 
+    private final OutboxService outboxService;
+
     public ProductImageServiceImpl(
             ProductRepository productRepository,
             ProductImageRepository productImageRepository,
-            ProductImageStorage productImageStorage) {
+            ProductImageStorage productImageStorage, OutboxService outboxService) {
 
         this.productRepository = productRepository;
         this.productImageRepository = productImageRepository;
         this.productImageStorage = productImageStorage;
+        this.outboxService = outboxService;
     }
 
     @Override
@@ -91,6 +96,20 @@ public class ProductImageServiceImpl implements ProductImageService {
 
             ProductImage saved =
                     productImageRepository.save(productImage);
+
+            if (makePrimary) {
+                outboxService.saveProductPrimaryImageChangedEvent(
+                        ProductPrimaryImageChangedEvent.of(
+                                productId,
+                                saved.getId(),
+                                "/api/products/"
+                                        + productId
+                                        + "/images/"
+                                        + saved.getId()
+                                        + "/content"
+                        )
+                );
+            }
 
             return toResponse(saved);
 
@@ -171,7 +190,8 @@ public class ProductImageServiceImpl implements ProductImageService {
 
         ProductImage image = findImage(productId, imageId);
 
-        boolean wasPrimary = Boolean.TRUE.equals(image.getPrimaryImage());
+        boolean wasPrimary =
+                Boolean.TRUE.equals(image.getPrimaryImage());
 
         String storageKey = image.getStorageKey();
 
@@ -190,32 +210,68 @@ public class ProductImageServiceImpl implements ProductImageService {
                     storageKey,
                     ex
             );
-
             throw ex;
         }
 
-        if (wasPrimary) {
-            productImageRepository
-                    .findFirstByProductIdOrderByDisplayOrderAscIdAsc(productId)
-                    .ifPresent(nextPrimary -> {
-                        nextPrimary.setPrimaryImage(true);
-                        productImageRepository.save(nextPrimary);
-                    });
+        if (!wasPrimary) {
+            return;
         }
+
+        productImageRepository
+                .findFirstByProductIdOrderByDisplayOrderAscIdAsc(productId)
+                .ifPresentOrElse(
+                        nextPrimary -> {
+                            nextPrimary.setPrimaryImage(true);
+
+                            ProductImage saved =
+                                    productImageRepository.save(nextPrimary);
+
+                            outboxService.saveProductPrimaryImageChangedEvent(
+                                    ProductPrimaryImageChangedEvent.of(
+                                            productId,
+                                            saved.getId(),
+                                            "/api/products/"
+                                                    + productId
+                                                    + "/images/"
+                                                    + saved.getId()
+                                                    + "/content"
+                                    )
+                            );
+                        },
+                        () -> outboxService.saveProductPrimaryImageChangedEvent(
+                                ProductPrimaryImageChangedEvent.of(
+                                        productId,
+                                        null,
+                                        null
+                                )
+                        )
+                );
     }
 
     @Override
     @Transactional
-    public ProductImageResponse setPrimaryImage(Long productId,
-                                                Long imageId) {
-
+    public ProductImageResponse setPrimaryImage(Long productId, Long imageId) {
         ProductImage image = findImage(productId, imageId);
 
         productImageRepository.clearPrimaryImages(productId);
 
         image.setPrimaryImage(true);
 
-        return toResponse(productImageRepository.save(image));
+        ProductImage saved = productImageRepository.save(image);
+
+        outboxService.saveProductPrimaryImageChangedEvent(
+                ProductPrimaryImageChangedEvent.of(
+                        productId,
+                        saved.getId(),
+                        "/api/products/"
+                                + productId
+                                + "/images/"
+                                + saved.getId()
+                                + "/content"
+                )
+        );
+
+        return toResponse(saved);
     }
 
     private ProductImage findImage(Long productId, Long imageId) {
