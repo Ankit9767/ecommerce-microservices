@@ -123,6 +123,48 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidProductImageException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidProductImage(
+            InvalidProductImageException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Invalid Product Image",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(ProductImageNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductImageNotFound(
+            ProductImageNotFoundException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                "Product Image Not Found",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(ProductImageStorageException.class)
+    public ResponseEntity<ErrorResponse> handleProductImageStorage(
+            ProductImageStorageException ex,
+            HttpServletRequest request) {
+
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Product Image Storage Error",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ResponseEntity<ErrorResponse> buildError(
             HttpStatus status,
             String error,
