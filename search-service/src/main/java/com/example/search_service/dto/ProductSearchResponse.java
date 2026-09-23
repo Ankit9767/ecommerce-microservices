@@ -16,11 +16,12 @@ public class ProductSearchResponse {
     private String category;
     private BigDecimal price;
     private Boolean active;
+    private Long primaryImageId;
+    private String primaryImageUrl;
     private Double averageRating;
     private Long reviewCount;
 
     public static ProductSearchResponse from(ProductDocument product) {
-
         return ProductSearchResponse.builder()
                 .productId(product.getProductId())
                 .name(product.getName())
@@ -28,6 +29,8 @@ public class ProductSearchResponse {
                 .category(product.getCategory())
                 .price(product.getPrice())
                 .active(product.getActive())
+                .primaryImageId(product.getPrimaryImageId())
+                .primaryImageUrl(product.getPrimaryImageUrl())
                 .averageRating(product.getAverageRating())
                 .reviewCount(product.getReviewCount())
                 .build();
