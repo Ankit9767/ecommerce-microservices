@@ -2,6 +2,7 @@ package com.example.search_service.service;
 
 import com.ecommerce.common.events.ProductCreatedEvent;
 import com.ecommerce.common.events.ProductDeletedEvent;
+import com.ecommerce.common.events.ProductPrimaryImageChangedEvent;
 import com.ecommerce.common.events.ProductUpdatedEvent;
 import com.example.search_service.document.ProductDocument;
 import com.example.search_service.repository.ProductSearchRepository;
@@ -95,6 +96,28 @@ public class ProductIndexingService {
                 "Product deleted from search index: productId={}",
                 event.getProductId()
         );
+    }
+
+    public void updatePrimaryImage(ProductPrimaryImageChangedEvent event) {
+
+        ProductDocument document =
+                productSearchRepository.findById(event.getProductId())
+                        .orElse(null);
+
+        if (document == null) {
+
+            log.warn(
+                    "Product document not found while updating primary image. productId={}",
+                    event.getProductId()
+            );
+            return;
+        }
+
+        document.setPrimaryImageId(event.getImageId());
+
+        document.setPrimaryImageUrl(event.getImageUrl());
+
+        productSearchRepository.save(document);
     }
 
     public void createReviewRating(Long productId, Long reviewId,
