@@ -2,17 +2,13 @@ import React from "react";
 
 function Home() {
   return (
-    <section className="home-page">
+    <section className="page">
       <div className="container">
-        <div className="hero">
-          <p className="eyebrow">Welcome to EcommerceHub</p>
+        <h1 className="page-title">Welcome to EcommerceHub</h1>
 
-          <h1>Everything you need, in one place.</h1>
-
-          <p className="hero-description">
-            Our frontend foundation is ready for the next ecommerce features.
-          </p>
-        </div>
+        <p className="page-description">
+          Discover products across multiple categories.
+        </p>
       </div>
     </section>
   );
