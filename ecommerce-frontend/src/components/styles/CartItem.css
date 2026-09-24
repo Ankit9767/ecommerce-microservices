@@ -1,0 +1,137 @@
+.cart-item {
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cart-item:first-child {
+  padding-top: 0;
+}
+
+.cart-item-image {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background);
+}
+
+.cart-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-item-image span {
+  color: var(--color-text-muted);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.cart-item-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-xl);
+}
+
+.cart-item-details {
+  min-width: 0;
+}
+
+.cart-item-category {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.cart-item-name {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.cart-item-price {
+  margin: var(--spacing-sm) 0 0;
+  font-weight: 600;
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.cart-item-total {
+  min-width: 90px;
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.cart-item-remove {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.cart-item-remove:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .cart-item {
+    align-items: flex-start;
+  }
+
+  .cart-item-image {
+    width: 90px;
+    height: 90px;
+  }
+
+  .cart-item-content {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .cart-item-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .cart-item-total {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .cart-item {
+    gap: var(--spacing-md);
+  }
+
+  .cart-item-image {
+    width: 72px;
+    height: 72px;
+  }
+
+  .cart-item-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cart-item-total {
+    margin-left: 0;
+    text-align: left;
+  }
+}
