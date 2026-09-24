@@ -48,6 +48,26 @@
   background: var(--color-primary);
 }
 
+.cart-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.cart-count {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
   .header-content {
     min-height: auto;

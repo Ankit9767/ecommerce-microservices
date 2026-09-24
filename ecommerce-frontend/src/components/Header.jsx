@@ -1,9 +1,13 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
 
+import { useCart } from "../context/CartContext";
+
 import "./styles/Header.css";
 
 function Header() {
+  const { cartItemCount } = useCart();
+
   return (
     <header className="site-header">
       <div className="container header-content">
@@ -11,11 +15,16 @@ function Header() {
           EcommerceHub
         </Link>
 
-        <nav className="main-navigation" aria-label="Main navigation">
+        <nav
+          className="main-navigation"
+          aria-label="Main navigation"
+        >
           <NavLink
             to="/"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active"
+                : "nav-link"
             }
           >
             Home
@@ -24,7 +33,9 @@ function Header() {
           <NavLink
             to="/products"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active"
+                : "nav-link"
             }
           >
             Products
@@ -33,7 +44,9 @@ function Header() {
           <NavLink
             to="/categories"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active"
+                : "nav-link"
             }
           >
             Categories
@@ -42,16 +55,26 @@ function Header() {
           <NavLink
             to="/cart"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active cart-nav-link"
+                : "nav-link cart-nav-link"
             }
           >
             Cart
+
+            {cartItemCount > 0 && (
+              <span className="cart-count">
+                {cartItemCount}
+              </span>
+            )}
           </NavLink>
 
           <NavLink
             to="/login"
             className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
+              isActive
+                ? "nav-link active"
+                : "nav-link"
             }
           >
             Login
