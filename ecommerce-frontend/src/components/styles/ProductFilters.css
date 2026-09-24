@@ -5,7 +5,6 @@
     minmax(160px, 1fr)
     minmax(180px, 1fr)
     minmax(150px, 1fr)
-    minmax(150px, 1fr)
     auto;
   gap: var(--spacing-md);
   align-items: end;
@@ -67,15 +66,9 @@
   background: var(--color-background);
 }
 
-@media (max-width: 1100px) {
-  .product-filters {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-  }
-
-  .product-search-group {
-    grid-column: span 2;
-  }
+.product-filter-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 @media (max-width: 768px) {
