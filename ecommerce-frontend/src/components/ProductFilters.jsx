@@ -7,14 +7,13 @@ function ProductFilters({
   category = "",
   minPrice = "",
   maxPrice = "",
-  minRating = "",
-  sortBy = "featured",
+  sortBy = "",
   categories = [],
+  categoriesLoading = false,
   onSearchChange,
   onCategoryChange,
   onMinPriceChange,
   onMaxPriceChange,
-  onMinRatingChange,
   onSortChange,
   onClear
 }) {
@@ -55,9 +54,12 @@ function ProductFilters({
           onChange={(event) =>
             onCategoryChange(event.target.value)
           }
+          disabled={categoriesLoading}
         >
           <option value="">
-            All Categories
+            {categoriesLoading
+              ? "Loading categories..."
+              : "All Categories"}
           </option>
 
           {categories.map((item) => (
@@ -78,6 +80,7 @@ function ProductFilters({
             className="product-filter-input"
             type="number"
             min="0"
+            step="0.01"
             value={minPrice}
             onChange={(event) =>
               onMinPriceChange(event.target.value)
@@ -94,6 +97,7 @@ function ProductFilters({
             className="product-filter-input"
             type="number"
             min="0"
+            step="0.01"
             value={maxPrice}
             onChange={(event) =>
               onMaxPriceChange(event.target.value)
@@ -102,36 +106,6 @@ function ProductFilters({
             aria-label="Maximum price"
           />
         </div>
-      </div>
-
-      <div className="product-filter-group">
-        <label
-          className="product-filter-label"
-          htmlFor="product-rating"
-        >
-          Rating
-        </label>
-
-        <select
-          id="product-rating"
-          className="product-filter-input"
-          value={minRating}
-          onChange={(event) =>
-            onMinRatingChange(event.target.value)
-          }
-        >
-          <option value="">
-            Any Rating
-          </option>
-
-          <option value="4">
-            4+ Stars
-          </option>
-
-          <option value="4.5">
-            4.5+ Stars
-          </option>
-        </select>
       </div>
 
       <div className="product-filter-group">
@@ -150,24 +124,36 @@ function ProductFilters({
             onSortChange(event.target.value)
           }
         >
-          <option value="featured">
-            Featured
+          <option value="">
+            Default
           </option>
 
-          <option value="price-low">
+          <option value="price,asc">
             Price: Low to High
           </option>
 
-          <option value="price-high">
+          <option value="price,desc">
             Price: High to Low
           </option>
 
-          <option value="rating">
-            Rating
+          <option value="name,asc">
+            Name: A-Z
           </option>
 
-          <option value="name">
-            Name
+          <option value="name,desc">
+            Name: Z-A
+          </option>
+
+          <option value="sku,asc">
+            SKU: A-Z
+          </option>
+
+          <option value="category,asc">
+            Category: A-Z
+          </option>
+
+          <option value="active,desc">
+            Active First
           </option>
         </select>
       </div>
