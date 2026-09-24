@@ -76,6 +76,12 @@ public class DataInitializer implements CommandLineRunner {
 
                 // Product
                 PermissionName.PRODUCT_READ,
+                PermissionName.PRODUCT_READ_ALL,
+
+
+                // Category
+                PermissionName.CATEGORY_READ,
+                PermissionName.CATEGORY_READ_ALL,
 
                 // Search
                 PermissionName.SEARCH_READ,

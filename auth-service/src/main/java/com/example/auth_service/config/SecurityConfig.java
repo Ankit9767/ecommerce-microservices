@@ -36,8 +36,6 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> {})
-
                 .headers(headers -> headers
                         .contentTypeOptions(contentTypeOptions -> {})
                         .frameOptions(frameOptions ->
