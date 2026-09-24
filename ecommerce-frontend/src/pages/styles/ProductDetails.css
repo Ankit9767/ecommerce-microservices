@@ -140,6 +140,19 @@
   margin-top: var(--spacing-sm);
 }
 
+.product-details-cart-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.product-details-cart-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: #a33a3a;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .product-details {
     grid-template-columns: 1fr;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import QuantitySelector from "../components/QuantitySelector";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { getProduct } from "../services/productService";
 
@@ -9,13 +10,19 @@ import "./styles/ProductDetails.css";
 
 function ProductDetails() {
   const { id } = useParams();
+
+  const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] =
+    useState(false);
+
   const [error, setError] = useState("");
+  const [cartError, setCartError] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
@@ -24,6 +31,7 @@ function ProductDetails() {
     async function loadProduct() {
       setIsLoading(true);
       setError("");
+      setCartError("");
       setProduct(null);
       setQuantity(1);
       setAddedToCart(false);
@@ -75,15 +83,35 @@ function ProductDetails() {
   const handleQuantityChange = (nextQuantity) => {
     setQuantity(nextQuantity);
     setAddedToCart(false);
+    setCartError("");
   };
 
-  const handleAddToCart = () => {
-    if (!product || quantity < 1) {
+  const handleAddToCart = async () => {
+    if (
+      !product ||
+      quantity < 1 ||
+      !isAuthenticated ||
+      isAddingToCart
+    ) {
       return;
     }
 
-    addToCart(product, quantity);
-    setAddedToCart(true);
+    setIsAddingToCart(true);
+    setAddedToCart(false);
+    setCartError("");
+
+    try {
+      await addToCart(product, quantity);
+
+      setAddedToCart(true);
+    } catch (requestError) {
+      setCartError(
+        requestError.message ||
+          "Unable to add the product to your cart."
+      );
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   if (isLoading) {
@@ -203,16 +231,31 @@ function ProductDetails() {
               <div className="product-details-purchase">
                 <QuantitySelector
                   quantity={quantity}
-                  onQuantityChange={handleQuantityChange}
+                  onQuantityChange={
+                    handleQuantityChange
+                  }
+                  disabled={isAddingToCart}
                 />
 
-                <button
-                  type="button"
-                  className="button product-details-cart-button"
-                  onClick={handleAddToCart}
-                >
-                  Add to Cart
-                </button>
+                {isAuthenticated ? (
+                  <button
+                    type="button"
+                    className="button product-details-cart-button"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    {isAddingToCart
+                      ? "Adding..."
+                      : "Add to Cart"}
+                  </button>
+                ) : (
+                  <Link
+                    className="button product-details-cart-button"
+                    to="/login"
+                  >
+                    Sign In to Add to Cart
+                  </Link>
+                )}
 
                 {addedToCart && (
                   <p
@@ -220,6 +263,15 @@ function ProductDetails() {
                     role="status"
                   >
                     Product added to cart.
+                  </p>
+                )}
+
+                {cartError && (
+                  <p
+                    className="product-details-cart-error"
+                    role="alert"
+                  >
+                    {cartError}
                   </p>
                 )}
               </div>
