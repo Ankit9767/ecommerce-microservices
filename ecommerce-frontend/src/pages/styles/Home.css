@@ -1,0 +1,225 @@
+.home-page {
+  overflow: hidden;
+}
+
+.home-hero {
+  padding: 96px 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.home-hero-content {
+  max-width: 760px;
+}
+
+.home-hero-eyebrow,
+.home-section-eyebrow {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-hero-title {
+  max-width: 800px;
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.home-hero-description {
+  max-width: 650px;
+  margin: var(--spacing-lg) 0 0;
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.home-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
+.home-secondary-button:hover {
+  background: var(--color-background);
+}
+
+.home-section {
+  padding: var(--spacing-3xl) 0;
+}
+
+.home-products-section {
+  background: var(--color-surface);
+}
+
+.home-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.home-section-link {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.home-section-link:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.featured-product-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-surface);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.featured-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.product-image-placeholder {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+}
+
+.product-image-placeholder span {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.featured-product-content {
+  padding: var(--spacing-md);
+}
+
+.featured-product-category {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.featured-product-content h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.featured-product-price {
+  margin: var(--spacing-sm) 0 0;
+  font-weight: 700;
+}
+
+.home-promotion {
+  padding: var(--spacing-3xl) 0;
+}
+
+.home-promotion-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.home-promotion-content h2 {
+  max-width: 650px;
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.home-promotion-content p:last-child {
+  max-width: 650px;
+  margin: var(--spacing-md) 0 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 64px 0;
+  }
+
+  .home-section {
+    padding: var(--spacing-2xl) 0;
+  }
+
+  .home-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-promotion-content {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero-title {
+    font-size: 2.5rem;
+  }
+
+  .home-hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-hero-actions .button,
+  .home-secondary-button {
+    width: 100%;
+  }
+}
