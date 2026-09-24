@@ -3,13 +3,13 @@ import React from "react";
 import "./styles/ProductFilters.css";
 
 function ProductFilters({
-  search,
-  category,
-  minPrice,
-  maxPrice,
-  minRating,
-  sortBy,
-  categories,
+  search = "",
+  category = "",
+  minPrice = "",
+  maxPrice = "",
+  minRating = "",
+  sortBy = "featured",
+  categories = [],
   onSearchChange,
   onCategoryChange,
   onMinPriceChange,
@@ -61,10 +61,7 @@ function ProductFilters({
           </option>
 
           {categories.map((item) => (
-            <option
-              key={item}
-              value={item}
-            >
+            <option key={item} value={item}>
               {item}
             </option>
           ))}
