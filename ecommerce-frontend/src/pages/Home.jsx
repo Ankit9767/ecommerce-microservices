@@ -31,25 +31,25 @@ const featuredProducts = [
   {
     id: "product-1",
     name: "Wireless Headphones",
-    price: "$79.99",
+    price: 79.99,
     category: "Electronics"
   },
   {
     id: "product-2",
     name: "Classic Sneakers",
-    price: "$64.99",
+    price: 64.99,
     category: "Fashion"
   },
   {
     id: "product-3",
     name: "Smart Watch",
-    price: "$129.99",
+    price: 129.99,
     category: "Electronics"
   },
   {
     id: "product-4",
     name: "Minimal Desk Lamp",
-    price: "$39.99",
+    price: 39.99,
     category: "Home & Living"
   }
 ];
