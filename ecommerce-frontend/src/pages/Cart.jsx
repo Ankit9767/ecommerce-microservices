@@ -1,44 +1,145 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 import CartItem from "../components/CartItem";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 import "./styles/Cart.css";
 
 function Cart() {
   const {
-    cartItems,
-    cartItemCount,
-    cartSubtotal,
+    items,
+    totalAmount,
+    totalItems,
+    isLoading,
+    isUpdating,
+    error,
     updateQuantity,
     removeFromCart,
-    clearCart
+    emptyCart
   } = useCart();
 
-  if (cartItems.length === 0) {
+  const { isAuthenticated } = useAuth();
+
+  const [actionError, setActionError] =
+    useState("");
+
+  const handleQuantityChange = async (
+    productId,
+    quantity
+  ) => {
+    setActionError("");
+
+    try {
+      await updateQuantity(
+        productId,
+        quantity
+      );
+    } catch (requestError) {
+      setActionError(
+        requestError.message ||
+          "Unable to update the cart."
+      );
+    }
+  };
+
+  const handleRemove = async (productId) => {
+    setActionError("");
+
+    try {
+      await removeFromCart(productId);
+    } catch (requestError) {
+      setActionError(
+        requestError.message ||
+          "Unable to remove the item."
+      );
+    }
+  };
+
+  const handleClearCart = async () => {
+    setActionError("");
+
+    try {
+      await emptyCart();
+    } catch (requestError) {
+      setActionError(
+        requestError.message ||
+          "Unable to clear the cart."
+      );
+    }
+  };
+
+  if (!isAuthenticated) {
     return (
-      <section className="cart-page">
+      <section className="page cart-page">
         <div className="container">
           <div className="cart-empty">
-            <p className="cart-eyebrow">
-              Your shopping cart
-            </p>
-
             <h1 className="page-title">
-              Your Cart Is Empty
+              Your Cart
             </h1>
 
-            <p className="cart-empty-description">
-              Add some products to your cart and they will
-              appear here.
+            <p>
+              Please sign in to view your cart.
+            </p>
+
+            <Link
+              className="button"
+              to="/login"
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <section className="page cart-page">
+        <div className="container">
+          <div className="cart-status">
+            <p>Loading your cart...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && items.length === 0) {
+    return (
+      <section className="page cart-page">
+        <div className="container">
+          <div
+            className="cart-status cart-status-error"
+            role="alert"
+          >
+            <p>{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <section className="page cart-page">
+        <div className="container">
+          <div className="cart-empty">
+            <h1 className="page-title">
+              Your Cart
+            </h1>
+
+            <p>
+              Your cart is currently empty.
             </p>
 
             <Link
               className="button"
               to="/products"
             >
-              Continue Shopping
+              Browse Products
             </Link>
           </div>
         </div>
@@ -47,43 +148,49 @@ function Cart() {
   }
 
   return (
-    <section className="cart-page">
+    <section className="page cart-page">
       <div className="container">
         <div className="cart-header">
           <div>
             <p className="cart-eyebrow">
-              Your shopping cart
+              EcommerceHub
             </p>
 
             <h1 className="page-title">
-              Cart
+              Your Cart
             </h1>
-
-            <p className="cart-item-count">
-              {cartItemCount}{" "}
-              {cartItemCount === 1
-                ? "item"
-                : "items"}
-            </p>
           </div>
 
-          <button
-            type="button"
-            className="cart-clear-button"
-            onClick={clearCart}
-          >
-            Clear Cart
-          </button>
+          <p className="cart-total-items">
+            {totalItems}{" "}
+            {totalItems === 1
+              ? "item"
+              : "items"}
+          </p>
         </div>
+
+        {(error || actionError) && (
+          <div
+            className="cart-status cart-status-error"
+            role="alert"
+          >
+            <p>
+              {actionError || error}
+            </p>
+          </div>
+        )}
 
         <div className="cart-layout">
           <div className="cart-items">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <CartItem
                 key={item.id}
                 item={item}
-                onQuantityChange={updateQuantity}
-                onRemove={removeFromCart}
+                onQuantityChange={
+                  handleQuantityChange
+                }
+                onRemove={handleRemove}
+                disabled={isUpdating}
               />
             ))}
           </div>
@@ -94,42 +201,24 @@ function Cart() {
             </h2>
 
             <div className="cart-summary-row">
-              <span>
-                Subtotal
-              </span>
-
-              <strong>
-                ${cartSubtotal.toFixed(2)}
-              </strong>
+              <span>Items</span>
+              <span>{totalItems}</span>
             </div>
 
-            <div className="cart-summary-row">
+            <div className="cart-summary-row cart-summary-total">
+              <span>Total</span>
               <span>
-                Shipping
+                ${Number(totalAmount).toFixed(2)}
               </span>
-
-              <span>
-                Calculated at checkout
-              </span>
-            </div>
-
-            <div className="cart-summary-divider" />
-
-            <div className="cart-summary-total">
-              <span>
-                Total
-              </span>
-
-              <strong>
-                ${cartSubtotal.toFixed(2)}
-              </strong>
             </div>
 
             <button
               type="button"
-              className="button cart-checkout-button"
+              className="button cart-clear-button"
+              onClick={handleClearCart}
+              disabled={isUpdating}
             >
-              Proceed to Checkout
+              Clear Cart
             </button>
 
             <Link
