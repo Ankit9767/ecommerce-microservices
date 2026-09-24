@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
 @Configuration
 public class RateLimitConfig {
 
-    @Value("${gateway.rate-limit.use-forwarded-for:false}")
+    @Value("${spring.cloud.gateway.rate-limit.use-forwarded-for:false}")
     private boolean useForwardedFor;
 
     @Bean
