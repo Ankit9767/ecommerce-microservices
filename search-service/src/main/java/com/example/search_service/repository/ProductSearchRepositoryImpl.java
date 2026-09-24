@@ -47,27 +47,49 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepositoryCusto
          */
         if (query != null && !query.isBlank()) {
 
+            String searchText = query.trim();
+
             mustQueries.add(
-                    QueryBuilders.multiMatch()
-                            .query(query)
-                            .fields(
-                                    "name^3",
-                                    "sku^4",
-                                    "category^2"
+                    QueryBuilders.bool()
+                            .should(
+                                    QueryBuilders.multiMatch()
+                                            .query(searchText)
+                                            .fields(
+                                                    "name^3",
+                                                    "sku^4",
+                                                    "category^2"
+                                            )
+                                            .fuzziness("AUTO")
+                                            .build()
+                                            ._toQuery()
                             )
-                            .fuzziness("AUTO")
+                            .should(
+                                    QueryBuilders.multiMatch()
+                                            .query(searchText)
+                                            .fields(
+                                                    "name^3",
+                                                    "sku^4",
+                                                    "category^2"
+                                            )
+                                            .type(
+                                                    co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType.BoolPrefix
+                                            )
+                                            .build()
+                                            ._toQuery()
+                            )
+                            .minimumShouldMatch("1")
                             .build()
                             ._toQuery()
             );
 
         } else {
-
             mustQueries.add(
                     QueryBuilders.matchAll()
                             .build()
                             ._toQuery()
             );
         }
+
 
         /*
          * Category filter
