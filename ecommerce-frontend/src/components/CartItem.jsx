@@ -7,56 +7,54 @@ import "./styles/CartItem.css";
 function CartItem({
   item,
   onQuantityChange,
-  onRemove
+  onRemove,
+  disabled = false
 }) {
-  const itemTotal = item.price * item.quantity;
+  const unitPrice = Number(item.unitPrice);
+  const lineTotal = Number(item.lineTotal);
 
   return (
     <article className="cart-item">
-      <div className="cart-item-image">
-        {item.image ? (
-          <img
-            src={item.image}
-            alt={item.name}
-          />
-        ) : (
-          <span>
-            {item.name.charAt(0)}
-          </span>
-        )}
-      </div>
-
       <div className="cart-item-content">
         <div className="cart-item-details">
-          <p className="cart-item-category">
-            {item.category}
-          </p>
-
           <h2 className="cart-item-name">
-            {item.name}
+            {item.productName}
           </h2>
 
-          <p className="cart-item-price">
-            ${item.price.toFixed(2)}
+          {item.sku && (
+            <p className="cart-item-sku">
+              SKU: {item.sku}
+            </p>
+          )}
+
+          <p className="cart-item-unit-price">
+            ${unitPrice.toFixed(2)} each
           </p>
         </div>
 
         <div className="cart-item-actions">
           <QuantitySelector
-            value={item.quantity}
-            onChange={(quantity) =>
-              onQuantityChange(item.id, quantity)
+            quantity={item.quantity}
+            onQuantityChange={(quantity) =>
+              onQuantityChange(
+                item.productId,
+                quantity
+              )
             }
+            disabled={disabled}
           />
 
-          <p className="cart-item-total">
-            ${itemTotal.toFixed(2)}
+          <p className="cart-item-line-total">
+            ${lineTotal.toFixed(2)}
           </p>
 
           <button
             type="button"
             className="cart-item-remove"
-            onClick={() => onRemove(item.id)}
+            onClick={() =>
+              onRemove(item.productId)
+            }
+            disabled={disabled}
           >
             Remove
           </button>
