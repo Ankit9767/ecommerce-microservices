@@ -17,9 +17,7 @@ function ProductCard({ product }) {
             alt={product.name}
           />
         ) : (
-          <span>
-            {product.name.charAt(0)}
-          </span>
+          <span>{product.name.charAt(0)}</span>
         )}
       </Link>
 
@@ -29,16 +27,14 @@ function ProductCard({ product }) {
         </p>
 
         <h2 className="product-card-name">
-          <Link
-            to={`/products/${product.id}`}
-          >
+          <Link to={`/products/${product.id}`}>
             {product.name}
           </Link>
         </h2>
 
         <div className="product-card-footer">
           <span className="product-card-price">
-            ${product.price.toFixed(2)}
+            ${Number(product.price).toFixed(2)}
           </span>
 
           {product.rating !== null &&
