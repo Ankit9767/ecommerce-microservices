@@ -18,9 +18,11 @@ function CategoryCard({ category }) {
           {category.name}
         </h2>
 
-        <p className="category-card-description">
-          {category.description}
-        </p>
+        {category.description && (
+          <p className="category-card-description">
+            {category.description}
+          </p>
+        )}
 
         <span className="category-card-link">
           View Products →

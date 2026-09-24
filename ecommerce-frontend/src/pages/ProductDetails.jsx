@@ -1,99 +1,141 @@
-import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import React, {
+  useEffect,
+  useState
+} from "react";
+import {
+  Link,
+  useParams
+} from "react-router-dom";
 
 import QuantitySelector from "../components/QuantitySelector";
 import { useCart } from "../context/CartContext";
+import { getProduct } from "../services/productService";
 
 import "./styles/ProductDetails.css";
 
-const products = [
-  {
-    id: "product-1",
-    name: "Wireless Headphones",
-    price: 79.99,
-    category: "Electronics",
-    rating: 4.8,
-    ratingCount: 124,
-    description:
-      "Enjoy clear sound, comfortable ear cushions, and reliable wireless connectivity for everyday listening."
-  },
-  {
-    id: "product-2",
-    name: "Classic Sneakers",
-    price: 64.99,
-    category: "Fashion",
-    rating: 4.6,
-    ratingCount: 89,
-    description:
-      "A versatile everyday sneaker designed for comfort, casual styling, and all-day wear."
-  },
-  {
-    id: "product-3",
-    name: "Smart Watch",
-    price: 129.99,
-    category: "Electronics",
-    rating: 4.7,
-    ratingCount: 216,
-    description:
-      "Stay connected throughout the day with useful smart features, notifications, and activity tracking."
-  },
-  {
-    id: "product-4",
-    name: "Minimal Desk Lamp",
-    price: 39.99,
-    category: "Home & Living",
-    rating: 4.5,
-    ratingCount: 67,
-    description:
-      "A clean and minimal desk lamp that provides comfortable lighting for work and study."
-  }
-];
-
 function ProductDetails() {
   const { id } = useParams();
-
-  const [quantity, setQuantity] = useState(1);
-
   const { addToCart } = useCart();
 
-  const product = products.find(
-    (item) => item.id === id
-  );
+  const [product, setProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
-  if (!product) {
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [error, setError] = useState("");
+
+  const [addedToCart, setAddedToCart] =
+    useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProduct() {
+      setIsLoading(true);
+      setError("");
+      setProduct(null);
+
+      try {
+        const response = await getProduct(id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProduct(response);
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setError(
+          requestError.message ||
+            "Unable to load product."
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+    setAddedToCart(true);
+  };
+
+  if (isLoading) {
     return (
-      <section className="page">
+      <section className="page product-details-page">
         <div className="container">
-          <h1 className="page-title">
-            Product Not Found
-          </h1>
-
-          <p className="page-description">
-            We couldn't find the product you're looking for.
-          </p>
-
-          <Link
-            className="button"
-            to="/products"
-          >
-            Back to Products
-          </Link>
+          <p>Loading product...</p>
         </div>
       </section>
     );
   }
 
-  const formattedPrice = `$${product.price.toFixed(2)}`;
+  if (error) {
+    return (
+      <section className="page product-details-page">
+        <div className="container">
+          <div className="product-details-error">
+            <h1 className="page-title">
+              Unable to load product
+            </h1>
 
-const handleAddToCart = () => {
-  addToCart(product, quantity);
-};
+            <p>{error}</p>
+
+            <Link
+              className="button"
+              to="/products"
+            >
+              Back to Products
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="page product-details-page">
+        <div className="container">
+          <div className="product-details-not-found">
+            <h1 className="page-title">
+              Product Not Found
+            </h1>
+
+            <p>
+              The product you're looking for
+              could not be found.
+            </p>
+
+            <Link
+              className="button"
+              to="/products"
+            >
+              Back to Products
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="product-details-page">
+    <section className="page product-details-page">
       <div className="container">
         <Link
-          className="product-details-back-link"
+          className="product-details-back"
           to="/products"
         >
           ← Back to Products
@@ -101,68 +143,60 @@ const handleAddToCart = () => {
 
         <div className="product-details">
           <div className="product-details-image">
-            <div
-              className="product-details-image-placeholder"
-              aria-label={product.name}
-            >
+            <div className="product-details-image-placeholder">
               {product.name.charAt(0)}
             </div>
           </div>
 
-          <div className="product-details-info">
+          <div className="product-details-content">
             <p className="product-details-category">
               {product.category}
             </p>
 
-            <h1 className="product-details-title">
+            <h1 className="page-title">
               {product.name}
             </h1>
 
-            <div className="product-details-rating">
-              <span className="product-details-rating-value">
-                ★ {product.rating}
-              </span>
-
-              <span className="product-details-rating-count">
-                ({product.ratingCount} reviews)
-              </span>
-            </div>
+            {product.sku && (
+              <p className="product-details-sku">
+                SKU: {product.sku}
+              </p>
+            )}
 
             <p className="product-details-price">
-              {formattedPrice}
+              ${Number(product.price).toFixed(2)}
             </p>
 
-            <p className="product-details-description">
-              {product.description}
-            </p>
+            {product.description && (
+              <p className="product-details-description">
+                {product.description}
+              </p>
+            )}
 
-            <div className="product-details-purchase">
-              <span className="product-details-quantity-label">
-                Quantity
-              </span>
-
+            <div className="product-details-actions">
               <QuantitySelector
                 value={quantity}
                 onChange={setQuantity}
+                min={1}
               />
 
-              <div className="product-details-actions">
-                <button
-                  type="button"
-                  className="button product-details-cart-button"
-                  onClick={handleAddToCart}
-                >
-                  Add to Cart
-                </button>
-
-                <button
-                  type="button"
-                  className="product-details-buy-button"
-                >
-                  Buy Now
-                </button>
-              </div>
+              <button
+                type="button"
+                className="button"
+                onClick={handleAddToCart}
+              >
+                Add to Cart
+              </button>
             </div>
+
+            {addedToCart && (
+              <p
+                className="product-details-success"
+                role="status"
+              >
+                Product added to cart.
+              </p>
+            )}
           </div>
         </div>
       </div>
