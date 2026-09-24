@@ -1,0 +1,33 @@
+.quantity-selector {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+}
+
+.quantity-button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.quantity-button:hover:not(:disabled) {
+  background: var(--color-background);
+}
+
+.quantity-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.quantity-value {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+}
