@@ -3,47 +3,49 @@ import React from "react";
 import "./styles/QuantitySelector.css";
 
 function QuantitySelector({
-  value,
-  onChange,
+  quantity,
+  onQuantityChange,
   min = 1,
-  max = 99
+  max = 99,
+  disabled = false
 }) {
-  const decrease = () => {
-    if (value > min) {
-      onChange(value - 1);
+  const handleDecrease = () => {
+    if (disabled || quantity <= min) {
+      return;
     }
+
+    onQuantityChange(quantity - 1);
   };
 
-  const increase = () => {
-    if (value < max) {
-      onChange(value + 1);
+  const handleIncrease = () => {
+    if (disabled || quantity >= max) {
+      return;
     }
+
+    onQuantityChange(quantity + 1);
   };
 
   return (
     <div className="quantity-selector">
       <button
         type="button"
-        className="quantity-button"
-        onClick={decrease}
-        disabled={value <= min}
+        className="quantity-selector-button"
+        onClick={handleDecrease}
+        disabled={disabled || quantity <= min}
         aria-label="Decrease quantity"
       >
         −
       </button>
 
-      <span
-        className="quantity-value"
-        aria-live="polite"
-      >
-        {value}
+      <span className="quantity-selector-value">
+        {quantity}
       </span>
 
       <button
         type="button"
-        className="quantity-button"
-        onClick={increase}
-        disabled={value >= max}
+        className="quantity-selector-button"
+        onClick={handleIncrease}
+        disabled={disabled || quantity >= max}
         aria-label="Increase quantity"
       >
         +
