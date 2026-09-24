@@ -17,7 +17,9 @@ function ProductCard({ product }) {
             alt={product.name}
           />
         ) : (
-          <span>{product.name.charAt(0)}</span>
+          <span>
+            {product.name.charAt(0)}
+          </span>
         )}
       </Link>
 
@@ -27,7 +29,9 @@ function ProductCard({ product }) {
         </p>
 
         <h2 className="product-card-name">
-          <Link to={`/products/${product.id}`}>
+          <Link
+            to={`/products/${product.id}`}
+          >
             {product.name}
           </Link>
         </h2>
@@ -37,11 +41,12 @@ function ProductCard({ product }) {
             ${product.price.toFixed(2)}
           </span>
 
-          {product.rating && (
-            <span className="product-card-rating">
-              ★ {product.rating}
-            </span>
-          )}
+          {product.rating !== null &&
+            product.rating !== undefined && (
+              <span className="product-card-rating">
+                ★ {Number(product.rating).toFixed(1)}
+              </span>
+            )}
         </div>
       </div>
     </article>
