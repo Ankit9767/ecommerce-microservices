@@ -1,11 +1,5 @@
-import React, {
-  useEffect,
-  useState
-} from "react";
-import {
-  Link,
-  useParams
-} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
 import QuantitySelector from "../components/QuantitySelector";
 import { useCart } from "../context/CartContext";
@@ -20,13 +14,9 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
-
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const [addedToCart, setAddedToCart] =
-    useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -35,6 +25,8 @@ function ProductDetails() {
       setIsLoading(true);
       setError("");
       setProduct(null);
+      setQuantity(1);
+      setAddedToCart(false);
 
       try {
         const response = await getProduct(id);
@@ -49,15 +41,28 @@ function ProductDetails() {
           return;
         }
 
-        setError(
-          requestError.message ||
-            "Unable to load product."
-        );
+        if (requestError.status === 404) {
+          setError("Product not found.");
+        } else {
+          setError(
+            requestError.message ||
+              "Unable to load product. Please try again."
+          );
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
         }
       }
+    }
+
+    if (!id) {
+      setIsLoading(false);
+      setError("Product ID is missing.");
+
+      return () => {
+        isMounted = false;
+      };
     }
 
     loadProduct();
@@ -67,7 +72,16 @@ function ProductDetails() {
     };
   }, [id]);
 
+  const handleQuantityChange = (nextQuantity) => {
+    setQuantity(nextQuantity);
+    setAddedToCart(false);
+  };
+
   const handleAddToCart = () => {
+    if (!product || quantity < 1) {
+      return;
+    }
+
     addToCart(product, quantity);
     setAddedToCart(true);
   };
@@ -76,7 +90,9 @@ function ProductDetails() {
     return (
       <section className="page product-details-page">
         <div className="container">
-          <p>Loading product...</p>
+          <div className="product-details-status">
+            <p>Loading product...</p>
+          </div>
         </div>
       </section>
     );
@@ -86,15 +102,14 @@ function ProductDetails() {
     return (
       <section className="page product-details-page">
         <div className="container">
-          <div className="product-details-error">
-            <h1 className="page-title">
-              Unable to load product
-            </h1>
-
+          <div
+            className="product-details-status product-details-status-error"
+            role="alert"
+          >
             <p>{error}</p>
 
             <Link
-              className="button"
+              className="button product-details-back-button"
               to="/products"
             >
               Back to Products
@@ -109,18 +124,11 @@ function ProductDetails() {
     return (
       <section className="page product-details-page">
         <div className="container">
-          <div className="product-details-not-found">
-            <h1 className="page-title">
-              Product Not Found
-            </h1>
-
-            <p>
-              The product you're looking for
-              could not be found.
-            </p>
+          <div className="product-details-status">
+            <p>Product not found.</p>
 
             <Link
-              className="button"
+              className="button product-details-back-button"
               to="/products"
             >
               Back to Products
@@ -131,11 +139,13 @@ function ProductDetails() {
     );
   }
 
+  const price = Number(product.price);
+
   return (
     <section className="page product-details-page">
       <div className="container">
         <Link
-          className="product-details-back"
+          className="product-details-back-link"
           to="/products"
         >
           ← Back to Products
@@ -143,17 +153,24 @@ function ProductDetails() {
 
         <div className="product-details">
           <div className="product-details-image">
-            <div className="product-details-image-placeholder">
-              {product.name.charAt(0)}
+            <div
+              className="product-details-image-placeholder"
+              aria-label={`${product.name} image placeholder`}
+            >
+              {product.name
+                ? product.name.charAt(0).toUpperCase()
+                : "P"}
             </div>
           </div>
 
           <div className="product-details-content">
-            <p className="product-details-category">
-              {product.category}
-            </p>
+            {product.category && (
+              <p className="product-details-category">
+                {product.category}
+              </p>
+            )}
 
-            <h1 className="page-title">
+            <h1 className="product-details-title">
               {product.name}
             </h1>
 
@@ -164,38 +181,48 @@ function ProductDetails() {
             )}
 
             <p className="product-details-price">
-              ${Number(product.price).toFixed(2)}
+              {Number.isFinite(price)
+                ? `$${price.toFixed(2)}`
+                : "Price unavailable"}
             </p>
 
             {product.description && (
-              <p className="product-details-description">
-                {product.description}
+              <div className="product-details-description">
+                <h2>Description</h2>
+                <p>{product.description}</p>
+              </div>
+            )}
+
+            {product.active === false && (
+              <p className="product-details-unavailable">
+                This product is currently unavailable.
               </p>
             )}
 
-            <div className="product-details-actions">
-              <QuantitySelector
-                value={quantity}
-                onChange={setQuantity}
-                min={1}
-              />
+            {product.active !== false && (
+              <div className="product-details-purchase">
+                <QuantitySelector
+                  quantity={quantity}
+                  onQuantityChange={handleQuantityChange}
+                />
 
-              <button
-                type="button"
-                className="button"
-                onClick={handleAddToCart}
-              >
-                Add to Cart
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="button product-details-cart-button"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </button>
 
-            {addedToCart && (
-              <p
-                className="product-details-success"
-                role="status"
-              >
-                Product added to cart.
-              </p>
+                {addedToCart && (
+                  <p
+                    className="product-details-cart-success"
+                    role="status"
+                  >
+                    Product added to cart.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
