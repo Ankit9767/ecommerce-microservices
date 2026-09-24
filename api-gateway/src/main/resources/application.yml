@@ -66,8 +66,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -87,8 +87,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -108,8 +108,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -130,8 +130,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -152,8 +152,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -174,8 +174,8 @@ spring:
           filters:
               - name: RequestRateLimiter
                 args:
-                  redis-rate-limiter.replenishRate: 2
-                  redis-rate-limiter.burstCapacity: 2
+                  redis-rate-limiter.replenishRate: 50
+                  redis-rate-limiter.burstCapacity: 100
                   key-resolver: "#{@ipKeyResolver}"
 
               - name: CircuitBreaker
@@ -196,8 +196,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -218,8 +218,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
@@ -241,8 +241,8 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 2
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@ipKeyResolver}"
 
             - name: CircuitBreaker
