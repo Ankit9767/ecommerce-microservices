@@ -1,188 +1,335 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import ProductGrid from "../components/ProductGrid";
 
+import { getCategory } from "../services/categoryService";
+import { searchProducts } from "../services/searchService";
+
 import "./styles/CategoryProducts.css";
 
-const categories = [
-  {
-    id: "electronics",
-    name: "Electronics",
-    description:
-      "Latest devices, gadgets, accessories, and everyday technology."
-  },
-  {
-    id: "fashion",
-    name: "Fashion",
-    description:
-      "Clothing, footwear, accessories, and styles for every occasion."
-  },
-  {
-    id: "home",
-    name: "Home & Living",
-    description:
-      "Furniture, lighting, kitchen essentials, and products for your home."
-  },
-  {
-    id: "beauty",
-    name: "Beauty",
-    description:
-      "Personal care, skincare, beauty essentials, and everyday wellness products."
-  }
-];
+const DEFAULT_PAGE_SIZE = 12;
 
-const products = [
-  {
-    id: "product-1",
-    name: "Wireless Headphones",
-    price: "$79.99",
-    category: "Electronics",
-    categoryId: "electronics",
-    rating: "4.8"
-  },
-  {
-    id: "product-2",
-    name: "Classic Sneakers",
-    price: "$64.99",
-    category: "Fashion",
-    categoryId: "fashion",
-    rating: "4.6"
-  },
-  {
-    id: "product-3",
-    name: "Smart Watch",
-    price: "$129.99",
-    category: "Electronics",
-    categoryId: "electronics",
-    rating: "4.7"
-  },
-  {
-    id: "product-4",
-    name: "Minimal Desk Lamp",
-    price: "$39.99",
-    category: "Home & Living",
-    categoryId: "home",
-    rating: "4.5"
-  },
-  {
-    id: "product-5",
-    name: "Cotton T-Shirt",
-    price: "$24.99",
-    category: "Fashion",
-    categoryId: "fashion",
-    rating: "4.4"
-  },
-  {
-    id: "product-6",
-    name: "Bluetooth Speaker",
-    price: "$59.99",
-    category: "Electronics",
-    categoryId: "electronics",
-    rating: "4.7"
-  },
-  {
-    id: "product-7",
-    name: "Leather Wallet",
-    price: "$34.99",
-    category: "Fashion",
-    categoryId: "fashion",
-    rating: "4.5"
-  },
-  {
-    id: "product-8",
-    name: "Ceramic Coffee Mug",
-    price: "$14.99",
-    category: "Home & Living",
-    categoryId: "home",
-    rating: "4.3"
-  },
-  {
-    id: "product-9",
-    name: "Face Care Set",
-    price: "$29.99",
-    category: "Beauty",
-    categoryId: "beauty",
-    rating: "4.6"
-  },
-  {
-    id: "product-10",
-    name: "Moisturizing Cream",
-    price: "$19.99",
-    category: "Beauty",
-    categoryId: "beauty",
-    rating: "4.5"
-  }
-];
+function mapProductSearchResult(product) {
+  return {
+    id: product.productId,
+    name: product.name,
+    sku: product.sku,
+    category: product.category,
+    price: Number(product.price),
+    image: product.primaryImageUrl,
+    rating: product.averageRating,
+    reviewCount: product.reviewCount,
+    active: product.active
+  };
+}
 
 function CategoryProducts() {
   const { id } = useParams();
 
-  const category = categories.find(
-    (item) => item.id === id
-  );
+  const [category, setCategory] = useState(null);
+  const [products, setProducts] = useState([]);
 
-  if (!category) {
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategoryProducts() {
+      setIsLoading(true);
+      setError("");
+      setCategory(null);
+      setProducts([]);
+      setPage(0);
+      setTotalElements(0);
+      setTotalPages(0);
+
+      try {
+        const categoryResponse = await getCategory(id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!categoryResponse) {
+          setError("Category not found.");
+          return;
+        }
+
+        if (categoryResponse.active === false) {
+          setError("This category is currently unavailable.");
+          return;
+        }
+
+        setCategory(categoryResponse);
+
+        const productResponse = await searchProducts({
+          category: categoryResponse.name,
+          active: true,
+          page: 0,
+          size: DEFAULT_PAGE_SIZE
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedProducts = (
+          productResponse?.content || []
+        ).map(mapProductSearchResult);
+
+        setProducts(mappedProducts);
+        setTotalElements(
+          productResponse?.totalElements || 0
+        );
+        setTotalPages(
+          productResponse?.totalPages || 0
+        );
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (requestError.status === 404) {
+          setError("Category not found.");
+        } else {
+          setError(
+            requestError.message ||
+              "Unable to load category products. Please try again."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    if (!id) {
+      setIsLoading(false);
+      setError("Category ID is missing.");
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    loadCategoryProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!category || page === 0) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadProductsPage() {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await searchProducts({
+          category: category.name,
+          active: true,
+          page,
+          size: DEFAULT_PAGE_SIZE
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedProducts = (
+          response?.content || []
+        ).map(mapProductSearchResult);
+
+        setProducts(mappedProducts);
+        setTotalElements(
+          response?.totalElements || 0
+        );
+        setTotalPages(
+          response?.totalPages || 0
+        );
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts([]);
+        setTotalElements(0);
+        setTotalPages(0);
+
+        setError(
+          requestError.message ||
+            "Unable to load category products. Please try again."
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProductsPage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [category, page]);
+
+  const handlePreviousPage = () => {
+    if (page <= 0) {
+      return;
+    }
+
+    setPage((currentPage) => currentPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (
+      totalPages === 0 ||
+      page >= totalPages - 1
+    ) {
+      return;
+    }
+
+    setPage((currentPage) => currentPage + 1);
+  };
+
+  if (isLoading && !category) {
     return (
-      <section className="page">
+      <section className="page category-products-page">
         <div className="container">
-          <h1 className="page-title">
-            Category Not Found
-          </h1>
-
-          <p className="page-description">
-            We couldn't find the category you're looking for.
-          </p>
-
-          <Link
-            className="button"
-            to="/categories"
-          >
-            Back to Categories
-          </Link>
+          <div className="category-products-status">
+            <p>Loading category...</p>
+          </div>
         </div>
       </section>
     );
   }
 
-  const categoryProducts = products.filter(
-    (product) => product.categoryId === category.id
-  );
+  if (error && !category) {
+    return (
+      <section className="page category-products-page">
+        <div className="container">
+          <div
+            className="category-products-status category-products-status-error"
+            role="alert"
+          >
+            <p>{error}</p>
 
-  return (
-    <section className="category-products-page">
-      <div className="container">
-        <div className="category-products-header">
-          <div>
             <Link
-              className="category-products-back-link"
+              className="button"
               to="/categories"
             >
-              ← Back to Categories
+              Back to Categories
             </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
-            <p className="category-products-eyebrow">
-              Category
-            </p>
+  if (!category) {
+    return null;
+  }
 
-            <h1 className="page-title">
-              {category.name}
-            </h1>
+  return (
+    <section className="page category-products-page">
+      <div className="container">
+        <Link
+          className="category-products-back-link"
+          to="/categories"
+        >
+          ← Back to Categories
+        </Link>
 
-            <p className="category-products-description">
+        <header className="category-products-header">
+          <p className="category-products-eyebrow">
+            Category
+          </p>
+
+          <h1 className="page-title">
+            {category.name}
+          </h1>
+
+          {category.description && (
+            <p className="page-description">
               {category.description}
             </p>
+          )}
+
+          {!isLoading && !error && (
+            <p className="category-products-count">
+              {totalElements}{" "}
+              {totalElements === 1
+                ? "product"
+                : "products"}
+            </p>
+          )}
+        </header>
+
+        {error && (
+          <div
+            className="category-products-status category-products-status-error"
+            role="alert"
+          >
+            <p>{error}</p>
           </div>
+        )}
 
-          <p className="category-products-count">
-            {categoryProducts.length}{" "}
-            {categoryProducts.length === 1
-              ? "product"
-              : "products"}
-          </p>
-        </div>
+        {isLoading && (
+          <div className="category-products-status">
+            <p>Loading products...</p>
+          </div>
+        )}
 
-        <ProductGrid products={categoryProducts} />
+        {!isLoading && !error && (
+          <>
+            <ProductGrid products={products} />
+
+            {totalPages > 1 && (
+              <nav
+                className="category-products-pagination"
+                aria-label="Category product pagination"
+              >
+                <button
+                  type="button"
+                  className="button"
+                  onClick={handlePreviousPage}
+                  disabled={page === 0}
+                >
+                  Previous
+                </button>
+
+                <span className="category-products-pagination-status">
+                  Page {page + 1} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  className="button"
+                  onClick={handleNextPage}
+                  disabled={
+                    page >= totalPages - 1
+                  }
+                >
+                  Next
+                </button>
+              </nav>
+            )}
+          </>
+        )}
       </div>
     </section>
   );
