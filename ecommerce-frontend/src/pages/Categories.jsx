@@ -1,20 +1,13 @@
-import React, {
-  useEffect,
-  useState
-} from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-import CategoryCard from "../components/CategoryCard";
 import { getCategories } from "../services/categoryService";
 
 import "./styles/Categories.css";
 
 function Categories() {
-  const [categories, setCategories] =
-    useState([]);
-
-  const [isLoading, setIsLoading] =
-    useState(true);
-
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -25,19 +18,31 @@ function Categories() {
       setError("");
 
       try {
-        const response =
-          await getCategories();
+        const response = await getCategories();
 
-        if (isMounted) {
-          setCategories(response || []);
+        if (!isMounted) {
+          return;
         }
+
+        const categoryList = Array.isArray(response)
+          ? response
+          : response?.content || [];
+
+        const activeCategories = categoryList.filter(
+          (category) => category.active !== false
+        );
+
+        setCategories(activeCategories);
       } catch (requestError) {
-        if (isMounted) {
-          setError(
-            requestError.message ||
-              "Unable to load categories."
-          );
+        if (!isMounted) {
+          return;
         }
+
+        setCategories([]);
+        setError(
+          requestError.message ||
+            "Unable to load categories. Please try again."
+        );
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -52,43 +57,80 @@ function Categories() {
     };
   }, []);
 
+  if (isLoading) {
+    return (
+      <section className="page categories-page">
+        <div className="container">
+          <div className="categories-status">
+            <p>Loading categories...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="page categories-page">
+        <div className="container">
+          <div
+            className="categories-status categories-status-error"
+            role="alert"
+          >
+            <p>{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="page categories-page">
       <div className="container">
-        <h1 className="page-title">
-          Categories
-        </h1>
-
-        <p className="page-description">
-          Browse products by category.
-        </p>
-
-        {isLoading && (
-          <p>Loading categories...</p>
-        )}
-
-        {!isLoading && error && (
-          <p
-            className="categories-error"
-            role="alert"
-          >
-            {error}
+        <header className="categories-header">
+          <p className="categories-eyebrow">
+            EcommerceHub
           </p>
-        )}
 
-        {!isLoading &&
-          !error &&
-          categories.length === 0 && (
-            <p>No categories found.</p>
-          )}
+          <h1 className="page-title">
+            Categories
+          </h1>
 
-        {!isLoading && !error && (
+          <p className="page-description">
+            Browse products by category.
+          </p>
+        </header>
+
+        {categories.length === 0 ? (
+          <div className="categories-status">
+            <p>No categories are currently available.</p>
+          </div>
+        ) : (
           <div className="categories-grid">
             {categories.map((category) => (
-              <CategoryCard
+              <article
+                className="category-card"
                 key={category.id}
-                category={category}
-              />
+              >
+                <div className="category-card-content">
+                  <h2 className="category-card-title">
+                    {category.name}
+                  </h2>
+
+                  {category.description && (
+                    <p className="category-card-description">
+                      {category.description}
+                    </p>
+                  )}
+
+                  <Link
+                    className="button category-card-link"
+                    to={`/categories/${category.id}`}
+                  >
+                    View Products
+                  </Link>
+                </div>
+              </article>
             ))}
           </div>
         )}
