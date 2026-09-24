@@ -1,0 +1,14 @@
+.not-found-page {
+  padding: var(--spacing-3xl) 0;
+}
+
+.not-found-page h1 {
+  margin: 0;
+  font-size: 5rem;
+  line-height: 1;
+}
+
+.not-found-page p {
+  margin: var(--spacing-md) 0 var(--spacing-lg);
+  color: var(--color-text-muted);
+}

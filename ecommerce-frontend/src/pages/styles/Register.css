@@ -1,0 +1,11 @@
+.register-name-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 520px) {
+  .register-name-fields {
+    grid-template-columns: 1fr;
+  }
+}

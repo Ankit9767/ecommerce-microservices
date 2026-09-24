@@ -1,0 +1,151 @@
+:root {
+  --font-family-base: Arial, Helvetica, sans-serif;
+
+  --color-background: #f7f7f7;
+  --color-surface: #ffffff;
+  --color-text: #222222;
+  --color-text-muted: #666666;
+  --color-border: #e5e5e5;
+  --color-primary: #222222;
+  --color-primary-text: #ffffff;
+
+  --container-width: 1200px;
+  --container-padding: 16px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: min(
+    var(--container-width),
+    calc(100% - (var(--container-padding) * 2))
+  );
+  margin: 0 auto;
+}
+
+.site-main {
+  flex: 1;
+}
+
+.site-footer {
+  padding: var(--spacing-lg) 0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.site-footer p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.page {
+  padding: var(--spacing-3xl) 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.page-description {
+  margin-top: var(--spacing-md);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: var(--border-radius-md);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 16px;
+  }
+
+  .page {
+    padding: var(--spacing-2xl) 0;
+  }
+}
