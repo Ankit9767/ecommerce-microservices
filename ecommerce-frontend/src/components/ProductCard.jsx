@@ -34,7 +34,7 @@ function ProductCard({ product }) {
 
         <div className="product-card-footer">
           <span className="product-card-price">
-            {product.price}
+            ${product.price.toFixed(2)}
           </span>
 
           {product.rating && (

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import QuantitySelector from "../components/QuantitySelector";
+import { useCart } from "../context/CartContext";
 
 import "./styles/ProductDetails.css";
 
@@ -52,7 +53,8 @@ function ProductDetails() {
   const { id } = useParams();
 
   const [quantity, setQuantity] = useState(1);
-  const [addedToCart, setAddedToCart] = useState(false);
+
+  const { addToCart } = useCart();
 
   const product = products.find(
     (item) => item.id === id
@@ -83,9 +85,9 @@ function ProductDetails() {
 
   const formattedPrice = `$${product.price.toFixed(2)}`;
 
-  const handleAddToCart = () => {
-    setAddedToCart(true);
-  };
+const handleAddToCart = () => {
+  addToCart(product, quantity);
+};
 
   return (
     <section className="product-details-page">
@@ -160,16 +162,6 @@ function ProductDetails() {
                   Buy Now
                 </button>
               </div>
-
-              {addedToCart && (
-                <p
-                  className="product-details-status"
-                  role="status"
-                >
-                  {quantity} item
-                  {quantity > 1 ? "s" : ""} added to your cart.
-                </p>
-              )}
             </div>
           </div>
         </div>
