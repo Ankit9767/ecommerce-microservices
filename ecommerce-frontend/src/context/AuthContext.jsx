@@ -6,8 +6,9 @@ import React, {
   useState
 } from "react";
 
+import { getAccessToken } from "../services/api";
+
 import {
-  getAccessToken,
   login as loginRequest,
   register as registerRequest,
   logout as logoutRequest
