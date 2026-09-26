@@ -1,15 +1,15 @@
 import { apiGet, apiPost } from "./api";
 
-/*
- * Customer/Admin depending on backend authorization.
- */
+function createPayment(orderId) {
+  return apiPost("/payments", {
+    orderId
+  });
+}
+
 function getPayment(paymentId) {
   return apiGet(`/payments/${paymentId}`);
 }
 
-/*
- * Customer payment history.
- */
 function getMyPayments({
   page = 0,
   size = 20,
@@ -27,9 +27,6 @@ function getMyPayments({
   return apiGet(`/payments/my?${params.toString()}`);
 }
 
-/*
- * Customer-accessible according to the supplied controller.
- */
 function getPaymentsByStatus(
   status,
   {
@@ -52,34 +49,28 @@ function getPaymentsByStatus(
   );
 }
 
-/*
- * Customer checkout operation.
- *
- * The payment itself has already been created automatically
- * by the Payment Service after the order-created event.
- */
 function initializeCheckout(paymentId) {
+  return apiPost(`/payments/${paymentId}/checkout`);
+}
+
+function completeMockPayment(paymentId) {
   return apiPost(
-    `/payments/${paymentId}/checkout`
+    `/payments/${paymentId}/mock/complete`
   );
 }
 
-/*
- * Do not expose createPayment here for the customer checkout flow.
- *
- * Payment creation happens automatically through:
- *
- * OrderCreatedEvent
- *      ↓
- * createPaymentInternal()
- *
- * Mock complete/fail endpoints are also intentionally omitted
- * from the customer flow because Razorpay is being used.
- */
+function failMockPayment(paymentId) {
+  return apiPost(
+    `/payments/${paymentId}/mock/fail`
+  );
+}
 
 export {
+  createPayment,
   getPayment,
   getMyPayments,
   getPaymentsByStatus,
-  initializeCheckout
+  initializeCheckout,
+  completeMockPayment,
+  failMockPayment
 };
