@@ -6,10 +6,7 @@ import {
 } from "./api";
 
 function createOrder(request) {
-  return apiPost(
-    "/orders",
-    request
-  );
+  return apiPost("/orders", request);
 }
 
 function createOrderFromCart({
@@ -17,20 +14,15 @@ function createOrderFromCart({
   paymentMethod,
   shippingAddress
 }) {
-  return apiPost(
-    "/orders/from-cart",
-    {
-      currency,
-      paymentMethod,
-      shippingAddress
-    }
-  );
+  return apiPost("/orders/from-cart", {
+    currency,
+    paymentMethod,
+    shippingAddress
+  });
 }
 
 function getOrder(orderId) {
-  return apiGet(
-    `/orders/${orderId}`
-  );
+  return apiGet(`/orders/${orderId}`);
 }
 
 function getMyOrders({
@@ -47,9 +39,7 @@ function getMyOrders({
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/orders/my?${params.toString()}`
-  );
+  return apiGet(`/orders/my?${params.toString()}`);
 }
 
 function getOrdersByStatus(
@@ -69,25 +59,15 @@ function getOrdersByStatus(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/orders/status/${status}?${params.toString()}`
-  );
+  return apiGet(`/orders/status/${status}?${params.toString()}`);
 }
 
-function updateOrder(
-  orderId,
-  request
-) {
-  return apiPut(
-    `/orders/${orderId}`,
-    request
-  );
+function updateOrder(orderId, request) {
+  return apiPut(`/orders/${orderId}`, request);
 }
 
 function cancelOrder(orderId) {
-  return apiDelete(
-    `/orders/${orderId}`
-  );
+  return apiDelete(`/orders/${orderId}`);
 }
 
 function checkReviewEligibility(
@@ -105,6 +85,9 @@ function checkReviewEligibility(
   );
 }
 
+/*
+ * Admin-only.
+ */
 function getAllOrders({
   page = 0,
   size = 20,
