@@ -222,6 +222,13 @@ function Cart() {
             </button>
 
             <Link
+              className="button cart-checkout-button"
+              to="/checkout"
+            >
+              Proceed to Checkout
+            </Link>
+
+            <Link
               className="cart-continue-link"
               to="/products"
             >
