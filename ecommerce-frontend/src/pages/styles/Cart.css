@@ -163,6 +163,11 @@
   color: #a33a3a;
 }
 
+.cart-checkout-button {
+  width: 100%;
+  margin-top: var(--spacing-md);
+}
+
 @media (max-width: 900px) {
   .cart-layout {
     grid-template-columns: 1fr;
