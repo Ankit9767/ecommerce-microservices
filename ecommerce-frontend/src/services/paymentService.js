@@ -24,7 +24,9 @@ function getMyPayments({
     params.set("sort", sort);
   }
 
-  return apiGet(`/payments/my?${params.toString()}`);
+  return apiGet(
+    `/payments/my?${params.toString()}`
+  );
 }
 
 function getPaymentsByStatus(
@@ -50,7 +52,9 @@ function getPaymentsByStatus(
 }
 
 function initializeCheckout(paymentId) {
-  return apiPost(`/payments/${paymentId}/checkout`);
+  return apiPost(
+    `/payments/${paymentId}/checkout`
+  );
 }
 
 function completeMockPayment(paymentId) {
