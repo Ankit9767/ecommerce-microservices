@@ -5,17 +5,24 @@ import {
   apiDelete
 } from "./api";
 
-function createReview(request) {
-  return apiPost(
-    "/reviews",
-    request
-  );
+function createReview({
+  productId,
+  orderId,
+  rating,
+  title,
+  comment
+}) {
+  return apiPost("/reviews", {
+    productId,
+    orderId,
+    rating,
+    title,
+    comment
+  });
 }
 
 function getReview(reviewId) {
-  return apiGet(
-    `/reviews/${reviewId}`
-  );
+  return apiGet(`/reviews/${reviewId}`);
 }
 
 function getProductReviews(
@@ -61,40 +68,24 @@ function getMyReviews({
 
 function updateReview(
   reviewId,
-  request
+  {
+    rating,
+    title,
+    comment
+  }
 ) {
   return apiPatch(
     `/reviews/${reviewId}`,
-    request
+    {
+      rating,
+      title,
+      comment
+    }
   );
 }
 
 function deleteReview(reviewId) {
-  return apiDelete(
-    `/reviews/${reviewId}`
-  );
-}
-
-function searchProductReviews(
-  productId,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
-  const params = new URLSearchParams();
-
-  params.set("page", page);
-  params.set("size", size);
-
-  if (sort) {
-    params.set("sort", sort);
-  }
-
-  return apiGet(
-    `/search/reviews/product/${productId}?${params.toString()}`
-  );
+  return apiDelete(`/reviews/${reviewId}`);
 }
 
 export {
@@ -103,6 +94,5 @@ export {
   getProductReviews,
   getMyReviews,
   updateReview,
-  deleteReview,
-  searchProductReviews
+  deleteReview
 };
