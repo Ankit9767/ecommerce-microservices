@@ -26,10 +26,82 @@ import {
   toRazorpayAmount
 } from "../services/razorpayService";
 
+import {
+  trackShipmentByOrderId
+} from "../services/shipmentService";
+
 import "./styles/OrderDetails.css";
 
 const PAYMENT_POLL_INTERVAL = 1500;
 const PAYMENT_POLL_ATTEMPTS = 20;
+
+const SHIPMENT_POLL_INTERVAL = 10000;
+
+const SHIPMENT_STEPS = [
+  {
+    status: "CREATED",
+    label: "Order Processing",
+    description: "Your shipment has been created."
+  },
+  {
+    status: "IN_TRANSIT",
+    label: "In Transit",
+    description: "Your shipment is on its way."
+  },
+  {
+    status: "OUT_FOR_DELIVERY",
+    label: "Out for Delivery",
+    description: "Your shipment is out for delivery."
+  },
+  {
+    status: "DELIVERED",
+    label: "Delivered",
+    description: "Your shipment has been delivered."
+  }
+];
+
+function formatShipmentDate(dateValue) {
+  if (!dateValue) {
+    return null;
+  }
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  return date.toLocaleString();
+}
+
+function getShipmentStepIndex(status) {
+  const normalizedStatus =
+    String(status || "").toUpperCase();
+
+  return SHIPMENT_STEPS.findIndex(
+    (step) => step.status === normalizedStatus
+  );
+}
+
+function getShipmentStatusLabel(status) {
+  const normalizedStatus =
+    String(status || "").toUpperCase();
+
+  const matchingStep = SHIPMENT_STEPS.find(
+    (step) => step.status === normalizedStatus
+  );
+
+  if (matchingStep) {
+    return matchingStep.label;
+  }
+
+  return normalizedStatus
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (character) =>
+      character.toUpperCase()
+    );
+}
 
 function OrderDetails() {
   const { id } = useParams();
@@ -41,6 +113,7 @@ function OrderDetails() {
 
   const [order, setOrder] = useState(null);
   const [payment, setPayment] = useState(null);
+  const [shipment, setShipment] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPaymentLoading, setIsPaymentLoading] =
@@ -49,6 +122,8 @@ function OrderDetails() {
     useState(false);
   const [isCancelling, setIsCancelling] =
     useState(false);
+  const [isShipmentLoading, setIsShipmentLoading] =
+    useState(false);
 
   const [error, setError] = useState("");
   const [paymentError, setPaymentError] =
@@ -56,6 +131,8 @@ function OrderDetails() {
   const [paymentMessage, setPaymentMessage] =
     useState("");
   const [cancelError, setCancelError] =
+    useState("");
+  const [shipmentError, setShipmentError] =
     useState("");
 
   /*
@@ -115,11 +192,136 @@ function OrderDetails() {
   ]);
 
   /*
+   * Load shipment tracking for this order.
+   *
+   * Shipment tracking is only requested after the
+   * payment/order is no longer pending.
+   */
+  const loadShipment = useCallback(
+    async (showLoading = true) => {
+      if (!isAuthenticated || !id) {
+        return null;
+      }
+
+      if (showLoading) {
+        setIsShipmentLoading(true);
+      }
+
+      setShipmentError("");
+
+      try {
+        const response =
+          await trackShipmentByOrderId(id);
+
+        setShipment(response);
+
+        return response;
+      } catch (requestError) {
+        if (requestError.status === 404) {
+          setShipment(null);
+          return null;
+        }
+
+        setShipmentError(
+          requestError.message ||
+            "Unable to load shipment tracking."
+        );
+
+        return null;
+      } finally {
+        if (showLoading) {
+          setIsShipmentLoading(false);
+        }
+      }
+    },
+    [id, isAuthenticated]
+  );
+
+  /*
+   * Shipment should NOT be tracked while payment
+   * is still pending.
+   *
+   * Once the order moves beyond PENDING_PAYMENT,
+   * load the actual shipment and refresh it while
+   * it is still active.
+   */
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !order ||
+      !id ||
+      order.status === "PENDING_PAYMENT"
+    ) {
+      return undefined;
+    }
+
+    let isMounted = true;
+    let intervalId = null;
+
+    async function loadInitialShipment() {
+      const response = await loadShipment(true);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (
+        response?.status === "DELIVERED" ||
+        response?.status === "CANCELLED" ||
+        response?.status === "FAILED"
+      ) {
+        return;
+      }
+
+      intervalId = window.setInterval(
+        async () => {
+          if (!isMounted) {
+            return;
+          }
+
+          const latestShipment =
+            await loadShipment(false);
+
+          if (
+            latestShipment?.status ===
+              "DELIVERED" ||
+            latestShipment?.status ===
+              "CANCELLED" ||
+            latestShipment?.status ===
+              "FAILED"
+          ) {
+            if (intervalId) {
+              window.clearInterval(
+                intervalId
+              );
+
+              intervalId = null;
+            }
+          }
+        },
+        SHIPMENT_POLL_INTERVAL
+      );
+    }
+
+    loadInitialShipment();
+
+    return () => {
+      isMounted = false;
+
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [
+    isAuthenticated,
+    order,
+    id,
+    loadShipment
+  ]);
+
+  /*
    * Find the payment created by the backend's
    * OrderCreatedEvent.
-   *
-   * There is no /payments/by-order/{id} endpoint,
-   * so we use the existing customer payment endpoint.
    */
   const findPaymentForOrder = useCallback(
     async () => {
@@ -147,9 +349,6 @@ function OrderDetails() {
   /*
    * The payment is created asynchronously by the backend
    * after the order-created event.
-   *
-   * Therefore it might not exist immediately after
-   * createOrderFromCart().
    */
   useEffect(() => {
     let isMounted = true;
@@ -231,7 +430,7 @@ function OrderDetails() {
    * After Razorpay returns control to the browser,
    * do NOT assume payment succeeded.
    *
-   * The backend Razorpay webhook is the source of truth.
+   * The backend webhook is the source of truth.
    */
   const waitForPaymentResult = useCallback(
     async (paymentId) => {
@@ -311,7 +510,7 @@ function OrderDetails() {
 
   /*
    * Start Razorpay checkout ONLY when the customer
-   * clicks the Complete Payment button.
+   * clicks Complete Payment.
    */
   const handleCompletePayment =
     useCallback(async () => {
@@ -360,12 +559,6 @@ function OrderDetails() {
             `Order #${id}`,
 
           onSuccess: async () => {
-            /*
-             * Razorpay's browser callback does NOT
-             * mark the payment as successful.
-             *
-             * The backend webhook does that.
-             */
             await waitForPaymentResult(
               payment.id
             );
@@ -512,6 +705,21 @@ function OrderDetails() {
       "DELIVERED"
     ].includes(order.status);
 
+  const shipmentStatus =
+    String(
+      shipment?.status || "CREATED"
+    ).toUpperCase();
+
+  const shipmentStepIndex =
+    getShipmentStepIndex(
+      shipmentStatus
+    );
+
+  const shipmentIsTerminal =
+    shipmentStatus === "DELIVERED" ||
+    shipmentStatus === "CANCELLED" ||
+    shipmentStatus === "FAILED";
+
   return (
     <main className="page">
       <div className="container">
@@ -542,7 +750,7 @@ function OrderDetails() {
 
         {isPaymentPending && (
           <section className="order-payment-section">
-            <div>
+            <div className="order-payment-content">
               <h2>Payment Required</h2>
 
               <p>
@@ -572,23 +780,303 @@ function OrderDetails() {
               )}
             </div>
 
-            <button
-              type="button"
-              className="button order-complete-payment-button"
-              onClick={handleCompletePayment}
-              disabled={
-                isPaymentLoading ||
-                isProcessingPayment ||
-                !payment?.id ||
-                payment?.status !== "PENDING"
-              }
-            >
-              {isProcessingPayment
-                ? "Processing Payment..."
-                : "Complete Payment"}
-            </button>
+            <div className="order-payment-action">
+              <button
+                type="button"
+                className="button order-complete-payment-button"
+                onClick={handleCompletePayment}
+                disabled={
+                  isPaymentLoading ||
+                  isProcessingPayment ||
+                  !payment?.id ||
+                  payment?.status !== "PENDING"
+                }
+              >
+                {isProcessingPayment
+                  ? "Processing Payment..."
+                  : "Complete Payment"}
+              </button>
+            </div>
           </section>
         )}
+
+        <section
+          className={`shipment-tracking-section ${
+            isPaymentPending
+              ? "shipment-payment-pending"
+              : ""
+          }`}
+        >
+          {isPaymentPending ? (
+            <>
+              <div className="shipment-tracking-header">
+                <div>
+                  <p className="shipment-eyebrow">
+                    Shipment Tracking
+                  </p>
+
+                  <h2>
+                    Payment Not Completed
+                  </h2>
+
+                  <p className="shipment-description">
+                    Your order has not been shipped
+                    because payment has not been
+                    completed.
+                  </p>
+                </div>
+
+                <div className="shipment-status-indicator shipment-status-awaiting-payment">
+                  <span className="shipment-status-dot" />
+                  <span>
+                    Awaiting Payment
+                  </span>
+                </div>
+              </div>
+
+              <div className="shipment-pending-notice">
+                <div className="shipment-pending-icon">
+                  !
+                </div>
+
+                <div>
+                  <strong>
+                    Order Not Shipped
+                  </strong>
+
+                  <p>
+                    Complete your payment first.
+                    Shipment tracking will become
+                    available after your payment is
+                    confirmed and the order enters
+                    fulfillment.
+                  </p>
+                </div>
+              </div>
+
+              <div className="shipment-progress shipment-progress-pending">
+                {SHIPMENT_STEPS.map(
+                  (step) => (
+                    <div
+                      className="shipment-step shipment-step-disabled"
+                      key={step.status}
+                    >
+                      <div className="shipment-step-marker">
+                        <span />
+                      </div>
+
+                      <div className="shipment-step-content">
+                        <strong>
+                          {step.label}
+                        </strong>
+
+                        <span>
+                          Waiting for payment
+                        </span>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="shipment-tracking-header">
+                <div>
+                  <p className="shipment-eyebrow">
+                    Shipment Tracking
+                  </p>
+
+                  <h2>
+                    {shipment
+                      ? getShipmentStatusLabel(
+                          shipment.status
+                        )
+                      : "Preparing Shipment"}
+                  </h2>
+
+                  <p className="shipment-description">
+                    {shipment
+                      ? shipmentIsTerminal
+                        ? shipmentStatus ===
+                          "DELIVERED"
+                          ? "Your shipment has reached its destination."
+                          : "Your shipment is no longer moving through the delivery process."
+                        : "Your shipment is progressing through the delivery process."
+                      : "Shipment tracking information is being prepared."}
+                  </p>
+                </div>
+
+                {shipment && (
+                  <div
+                    className={`shipment-status-indicator shipment-status-${shipmentStatus.toLowerCase()}`}
+                    aria-label={`Shipment status: ${getShipmentStatusLabel(
+                      shipment.status
+                    )}`}
+                  >
+                    <span className="shipment-status-dot" />
+
+                    <span>
+                      {getShipmentStatusLabel(
+                        shipment.status
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {isShipmentLoading && (
+                <div
+                  className="shipment-loading"
+                  aria-live="polite"
+                >
+                  <span className="shipment-loading-spinner" />
+
+                  <span>
+                    Loading shipment tracking...
+                  </span>
+                </div>
+              )}
+
+              {shipmentError && (
+                <p
+                  className="shipment-error"
+                  role="alert"
+                >
+                  {shipmentError}
+                </p>
+              )}
+
+              {shipment && (
+                <>
+                  <div className="shipment-progress">
+                    {SHIPMENT_STEPS.map(
+                      (step, index) => {
+                        const isCompleted =
+                          shipmentStepIndex >=
+                            0 &&
+                          index <=
+                            shipmentStepIndex;
+
+                        const isCurrent =
+                          shipmentStatus ===
+                          step.status;
+
+                        return (
+                          <div
+                            className={`shipment-step ${
+                              isCompleted
+                                ? "shipment-step-completed"
+                                : ""
+                            } ${
+                              isCurrent
+                                ? "shipment-step-current"
+                                : ""
+                            }`}
+                            key={step.status}
+                          >
+                            <div className="shipment-step-marker">
+                              {isCompleted
+                                ? "✓"
+                                : ""}
+                            </div>
+
+                            <div className="shipment-step-content">
+                              <strong>
+                                {step.label}
+                              </strong>
+
+                              <span>
+                                {step.description}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+
+                  <div className="shipment-information">
+                    {shipment.trackingNumber && (
+                      <div className="shipment-information-item">
+                        <span>
+                          Tracking Number
+                        </span>
+
+                        <strong>
+                          {
+                            shipment.trackingNumber
+                          }
+                        </strong>
+                      </div>
+                    )}
+
+                    {shipment.carrier && (
+                      <div className="shipment-information-item">
+                        <span>
+                          Carrier
+                        </span>
+
+                        <strong>
+                          {shipment.carrier}
+                        </strong>
+                      </div>
+                    )}
+
+                    {shipment.shippedAt && (
+                      <div className="shipment-information-item">
+                        <span>
+                          Shipped
+                        </span>
+
+                        <strong>
+                          {formatShipmentDate(
+                            shipment.shippedAt
+                          )}
+                        </strong>
+                      </div>
+                    )}
+
+                    {shipment.deliveredAt && (
+                      <div className="shipment-information-item">
+                        <span>
+                          Delivered
+                        </span>
+
+                        <strong>
+                          {formatShipmentDate(
+                            shipment.deliveredAt
+                          )}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+
+                  {!shipmentIsTerminal && (
+                    <p className="shipment-live-message">
+                      <span className="shipment-live-dot" />
+
+                      Shipment status updates
+                      automatically.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {!shipment &&
+                !isShipmentLoading &&
+                !shipmentError && (
+                  <div className="shipment-empty">
+                    <p>
+                      Shipment tracking will become
+                      available once your shipment
+                      has been created.
+                    </p>
+                  </div>
+                )}
+            </>
+          )}
+        </section>
 
         <div className="order-details-layout">
           <section className="order-details-main">
@@ -728,6 +1216,28 @@ function OrderDetails() {
 
                 <strong>
                   {payment.status}
+                </strong>
+              </div>
+            )}
+
+            {shipment && (
+              <div className="order-summary-row">
+                <span>Shipment Status</span>
+
+                <strong>
+                  {getShipmentStatusLabel(
+                    shipment.status
+                  )}
+                </strong>
+              </div>
+            )}
+
+            {isPaymentPending && (
+              <div className="order-summary-row">
+                <span>Shipment</span>
+
+                <strong>
+                  Not Shipped
                 </strong>
               </div>
             )}
