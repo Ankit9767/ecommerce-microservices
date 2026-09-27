@@ -1,11 +1,13 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
 
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 import "./styles/Header.css";
 
 function Header() {
+  const { isAuthenticated } = useAuth();
   const { cartItemCount } = useCart();
 
   return (
@@ -52,6 +54,19 @@ function Header() {
             Categories
           </NavLink>
 
+          {isAuthenticated && (
+            <NavLink
+              to="/orders"
+              className={({ isActive }) =>
+                isActive
+                  ? "nav-link active"
+                  : "nav-link"
+              }
+            >
+              Orders
+            </NavLink>
+          )}
+
           <NavLink
             to="/cart"
             className={({ isActive }) =>
@@ -60,25 +75,30 @@ function Header() {
                 : "nav-link cart-nav-link"
             }
           >
-            Cart
+            <span>Cart</span>
 
             {cartItemCount > 0 && (
-              <span className="cart-count">
+              <span
+                className="cart-count"
+                aria-label={`${cartItemCount} items in cart`}
+              >
                 {cartItemCount}
               </span>
             )}
           </NavLink>
 
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              isActive
-                ? "nav-link active"
-                : "nav-link"
-            }
-          >
-            Login
-          </NavLink>
+          {!isAuthenticated && (
+            <NavLink
+              to="/login"
+              className={({ isActive }) =>
+                isActive
+                  ? "nav-link active"
+                  : "nav-link"
+              }
+            >
+              Login
+            </NavLink>
+          )}
         </nav>
       </div>
     </header>
