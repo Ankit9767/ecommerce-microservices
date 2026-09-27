@@ -1,0 +1,131 @@
+.review-form {
+  margin-top: var(--spacing-lg);
+}
+
+.review-form-field {
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+}
+
+.review-form-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.review-form-input,
+.review-form-textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.review-form-input {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.review-form-textarea {
+  min-height: 140px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.review-form-input:focus,
+.review-form-textarea:focus {
+  outline: 2px solid var(--color-border);
+  outline-offset: 1px;
+}
+
+.review-rating-options {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.review-rating-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.review-rating-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.review-rating-option span:not(.sr-only) {
+  color: var(--color-border);
+  font-size: 1.25rem;
+}
+
+.review-rating-option-selected {
+  border-color: var(--color-text);
+}
+
+.review-rating-option-selected span:not(.sr-only) {
+  color: #e2a400;
+}
+
+.review-form-counter {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.review-form-error {
+  margin: 0 0 var(--spacing-lg);
+  color: #a33a3a;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.review-form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.review-form-cancel {
+  padding: 12px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.review-form-cancel:hover {
+  background: var(--color-background);
+}
+
+.review-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 600px) {
+  .review-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .review-form-actions .button,
+  .review-form-cancel {
+    width: 100%;
+  }
+}
