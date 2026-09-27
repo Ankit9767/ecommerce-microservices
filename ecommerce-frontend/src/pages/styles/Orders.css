@@ -80,6 +80,23 @@
   opacity: 0.5;
 }
 
+.order-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.order-card-actions .button {
+  margin-top: 0;
+}
+
+.order-view-button,
+.order-payment-button {
+  background: var(--color-primary);
+}
+
+
 @media (max-width: 600px) {
   .order-card-header,
   .order-card-details {
