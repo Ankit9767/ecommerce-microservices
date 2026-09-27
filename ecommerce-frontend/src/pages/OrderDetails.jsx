@@ -1,27 +1,66 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import React, {
+  useCallback,
+  useEffect,
+  useState
+} from "react";
+import {
+  Link,
+  useParams
+} from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+
 import {
   cancelOrder,
   getOrder
 } from "../services/orderService";
 
+import {
+  getMyPayments,
+  getPayment,
+  initializeCheckout
+} from "../services/paymentService";
+
+import {
+  openRazorpayCheckout,
+  toRazorpayAmount
+} from "../services/razorpayService";
+
 import "./styles/OrderDetails.css";
+
+const PAYMENT_POLL_INTERVAL = 1500;
+const PAYMENT_POLL_ATTEMPTS = 20;
 
 function OrderDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading
+  } = useAuth();
 
   const [order, setOrder] = useState(null);
+  const [payment, setPayment] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [isPaymentLoading, setIsPaymentLoading] =
+    useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] =
+    useState(false);
+  const [isCancelling, setIsCancelling] =
+    useState(false);
 
   const [error, setError] = useState("");
-  const [cancelError, setCancelError] = useState("");
+  const [paymentError, setPaymentError] =
+    useState("");
+  const [paymentMessage, setPaymentMessage] =
+    useState("");
+  const [cancelError, setCancelError] =
+    useState("");
 
+  /*
+   * Load the order.
+   */
   useEffect(() => {
     let isMounted = true;
 
@@ -69,8 +108,306 @@ function OrderDetails() {
     return () => {
       isMounted = false;
     };
-  }, [id, isAuthenticated, isAuthLoading]);
+  }, [
+    id,
+    isAuthenticated,
+    isAuthLoading
+  ]);
 
+  /*
+   * Find the payment created by the backend's
+   * OrderCreatedEvent.
+   *
+   * There is no /payments/by-order/{id} endpoint,
+   * so we use the existing customer payment endpoint.
+   */
+  const findPaymentForOrder = useCallback(
+    async () => {
+      const response = await getMyPayments({
+        page: 0,
+        size: 100
+      });
+
+      const payments = response?.content || [];
+
+      const matchingPayment = payments.find(
+        (item) =>
+          Number(item.orderId) === Number(id)
+      );
+
+      if (matchingPayment) {
+        setPayment(matchingPayment);
+      }
+
+      return matchingPayment || null;
+    },
+    [id]
+  );
+
+  /*
+   * The payment is created asynchronously by the backend
+   * after the order-created event.
+   *
+   * Therefore it might not exist immediately after
+   * createOrderFromCart().
+   */
+  useEffect(() => {
+    let isMounted = true;
+
+    async function discoverPayment() {
+      if (
+        !order ||
+        order.status !== "PENDING_PAYMENT"
+      ) {
+        return;
+      }
+
+      setIsPaymentLoading(true);
+      setPaymentError("");
+
+      for (
+        let attempt = 0;
+        attempt < PAYMENT_POLL_ATTEMPTS;
+        attempt += 1
+      ) {
+        try {
+          const foundPayment =
+            await findPaymentForOrder();
+
+          if (foundPayment) {
+            if (isMounted) {
+              setPayment(foundPayment);
+            }
+
+            return;
+          }
+        } catch (requestError) {
+          if (isMounted) {
+            setPaymentError(
+              requestError.message ||
+                "Unable to find the payment for this order."
+            );
+          }
+
+          return;
+        }
+
+        await new Promise((resolve) => {
+          setTimeout(
+            resolve,
+            PAYMENT_POLL_INTERVAL
+          );
+        });
+      }
+
+      if (isMounted) {
+        setPaymentError(
+          "Your payment is still being prepared. Please refresh the page and try again."
+        );
+      }
+    }
+
+    if (
+      isAuthenticated &&
+      order?.status === "PENDING_PAYMENT"
+    ) {
+      discoverPayment().finally(() => {
+        if (isMounted) {
+          setIsPaymentLoading(false);
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    order,
+    isAuthenticated,
+    findPaymentForOrder
+  ]);
+
+  /*
+   * After Razorpay returns control to the browser,
+   * do NOT assume payment succeeded.
+   *
+   * The backend Razorpay webhook is the source of truth.
+   */
+  const waitForPaymentResult = useCallback(
+    async (paymentId) => {
+      setPaymentMessage(
+        "Payment submitted. Waiting for confirmation..."
+      );
+
+      setPaymentError("");
+
+      for (
+        let attempt = 0;
+        attempt < PAYMENT_POLL_ATTEMPTS;
+        attempt += 1
+      ) {
+        try {
+          const latestPayment =
+            await getPayment(paymentId);
+
+          setPayment(latestPayment);
+
+          if (
+            latestPayment.status ===
+            "SUCCESS"
+          ) {
+            setPaymentMessage(
+              "Payment completed successfully."
+            );
+
+            try {
+              const latestOrder =
+                await getOrder(id);
+
+              setOrder(latestOrder);
+            } catch {
+              // Payment is already confirmed.
+            }
+
+            return latestPayment;
+          }
+
+          if (
+            latestPayment.status === "FAILED" ||
+            latestPayment.status === "CANCELLED"
+          ) {
+            setPaymentError(
+              latestPayment.failureReason ||
+                "Payment was not completed."
+            );
+
+            return latestPayment;
+          }
+        } catch (requestError) {
+          setPaymentError(
+            requestError.message ||
+              "Unable to check payment status."
+          );
+
+          return null;
+        }
+
+        await new Promise((resolve) => {
+          setTimeout(
+            resolve,
+            PAYMENT_POLL_INTERVAL
+          );
+        });
+      }
+
+      setPaymentMessage(
+        "Payment is still being processed. The order will update after the backend receives the payment confirmation."
+      );
+
+      return null;
+    },
+    [id]
+  );
+
+  /*
+   * Start Razorpay checkout ONLY when the customer
+   * clicks the Complete Payment button.
+   */
+  const handleCompletePayment =
+    useCallback(async () => {
+      if (
+        !payment?.id ||
+        payment.status !== "PENDING" ||
+        isProcessingPayment
+      ) {
+        return;
+      }
+
+      setIsProcessingPayment(true);
+      setPaymentError("");
+      setPaymentMessage("");
+
+      try {
+        const checkout =
+          await initializeCheckout(
+            payment.id
+          );
+
+        if (
+          !checkout?.providerKeyId ||
+          !checkout?.providerOrderId
+        ) {
+          throw new Error(
+            "Payment checkout information is incomplete."
+          );
+        }
+
+        await openRazorpayCheckout({
+          key: checkout.providerKeyId,
+
+          amount: toRazorpayAmount(
+            checkout.amount
+          ),
+
+          currency: checkout.currency,
+
+          orderId:
+            checkout.providerOrderId,
+
+          name: "EcommerceHub",
+
+          description:
+            `Order #${id}`,
+
+          onSuccess: async () => {
+            /*
+             * Razorpay's browser callback does NOT
+             * mark the payment as successful.
+             *
+             * The backend webhook does that.
+             */
+            await waitForPaymentResult(
+              payment.id
+            );
+
+            setIsProcessingPayment(false);
+          },
+
+          onFailure: (response) => {
+            setPaymentError(
+              response?.error?.description ||
+                "Razorpay reported that the payment failed."
+            );
+
+            setIsProcessingPayment(false);
+          },
+
+          onDismiss: () => {
+            setPaymentMessage(
+              "Payment window was closed. Your order is still awaiting payment."
+            );
+
+            setIsProcessingPayment(false);
+          }
+        });
+      } catch (requestError) {
+        setPaymentError(
+          requestError.message ||
+            "Unable to start the payment."
+        );
+
+        setIsProcessingPayment(false);
+      }
+    }, [
+      id,
+      payment,
+      isProcessingPayment,
+      waitForPaymentResult
+    ]);
+
+  /*
+   * Cancel order.
+   */
   const handleCancel = async () => {
     if (!order?.id || isCancelling) {
       return;
@@ -88,7 +425,10 @@ function OrderDetails() {
     setCancelError("");
 
     try {
-      const response = await cancelOrder(order.id);
+      const response = await cancelOrder(
+        order.id
+      );
+
       setOrder(response);
     } catch (requestError) {
       setCancelError(
@@ -162,6 +502,16 @@ function OrderDetails() {
     return null;
   }
 
+  const isPaymentPending =
+    order.status === "PENDING_PAYMENT";
+
+  const canCancel =
+    ![
+      "CANCELLED",
+      "SHIPPED",
+      "DELIVERED"
+    ].includes(order.status);
+
   return (
     <main className="page">
       <div className="container">
@@ -179,10 +529,66 @@ function OrderDetails() {
             </h1>
           </div>
 
-          <span className="order-details-status">
+          <span
+            className={`order-details-status ${
+              isPaymentPending
+                ? "order-details-status-pending"
+                : ""
+            }`}
+          >
             {order.status}
           </span>
         </div>
+
+        {isPaymentPending && (
+          <section className="order-payment-section">
+            <div>
+              <h2>Payment Required</h2>
+
+              <p>
+                Your order has been created, but
+                payment has not been completed yet.
+              </p>
+
+              {isPaymentLoading && (
+                <p className="order-payment-message">
+                  Preparing your payment...
+                </p>
+              )}
+
+              {paymentMessage && (
+                <p className="order-payment-message">
+                  {paymentMessage}
+                </p>
+              )}
+
+              {paymentError && (
+                <p
+                  className="order-payment-error"
+                  role="alert"
+                >
+                  {paymentError}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="button order-complete-payment-button"
+              onClick={handleCompletePayment}
+              disabled={
+                isPaymentLoading ||
+                isProcessingPayment ||
+                !payment?.id ||
+                payment?.status !== "PENDING"
+              }
+            >
+              {isProcessingPayment
+                ? "Processing Payment..."
+                : "Complete Payment"}
+            </button>
+          </section>
+        )}
 
         <div className="order-details-layout">
           <section className="order-details-main">
@@ -207,7 +613,8 @@ function OrderDetails() {
                       )}
 
                       <p>
-                        Quantity: {item.quantity}
+                        Quantity:{" "}
+                        {item.quantity}
                       </p>
                     </div>
 
@@ -237,34 +644,60 @@ function OrderDetails() {
 
               <address>
                 <strong>
-                  {order.shippingAddress?.recipientName}
+                  {
+                    order.shippingAddress
+                      ?.recipientName
+                  }
                 </strong>
 
                 <span>
-                  {order.shippingAddress?.phone}
+                  {
+                    order.shippingAddress
+                      ?.phone
+                  }
                 </span>
 
                 <span>
-                  {order.shippingAddress?.addressLine1}
+                  {
+                    order.shippingAddress
+                      ?.addressLine1
+                  }
                 </span>
 
-                {order.shippingAddress?.addressLine2 && (
+                {order.shippingAddress
+                  ?.addressLine2 && (
                   <span>
-                    {order.shippingAddress.addressLine2}
+                    {
+                      order.shippingAddress
+                        .addressLine2
+                    }
                   </span>
                 )}
 
                 <span>
-                  {order.shippingAddress?.city},{" "}
-                  {order.shippingAddress?.state}
+                  {
+                    order.shippingAddress
+                      ?.city
+                  }
+                  ,{" "}
+                  {
+                    order.shippingAddress
+                      ?.state
+                  }
                 </span>
 
                 <span>
-                  {order.shippingAddress?.postalCode}
+                  {
+                    order.shippingAddress
+                      ?.postalCode
+                  }
                 </span>
 
                 <span>
-                  {order.shippingAddress?.country}
+                  {
+                    order.shippingAddress
+                      ?.country
+                  }
                 </span>
               </address>
             </div>
@@ -275,18 +708,33 @@ function OrderDetails() {
 
             <div className="order-summary-row">
               <span>Status</span>
-              <strong>{order.status}</strong>
+
+              <strong>
+                {order.status}
+              </strong>
             </div>
 
             <div className="order-summary-row">
               <span>Payment Method</span>
+
               <strong>
                 {order.paymentMethod}
               </strong>
             </div>
 
+            {payment && (
+              <div className="order-summary-row">
+                <span>Payment Status</span>
+
+                <strong>
+                  {payment.status}
+                </strong>
+              </div>
+            )}
+
             <div className="order-summary-row order-summary-total">
               <span>Total</span>
+
               <strong>
                 {order.currency}{" "}
                 {Number(
@@ -304,16 +752,18 @@ function OrderDetails() {
               </p>
             )}
 
-            <button
-              type="button"
-              className="button order-cancel-button"
-              onClick={handleCancel}
-              disabled={isCancelling}
-            >
-              {isCancelling
-                ? "Cancelling..."
-                : "Cancel Order"}
-            </button>
+            {canCancel && (
+              <button
+                type="button"
+                className="button order-cancel-button"
+                onClick={handleCancel}
+                disabled={isCancelling}
+              >
+                {isCancelling
+                  ? "Cancelling..."
+                  : "Cancel Order"}
+              </button>
+            )}
           </aside>
         </div>
       </div>
