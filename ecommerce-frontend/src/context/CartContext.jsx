@@ -20,8 +20,10 @@ import { useAuth } from "./AuthContext";
 const CartContext = createContext(null);
 
 function CartProvider({ children }) {
-  const { isAuthenticated, isLoading: isAuthLoading } =
-    useAuth();
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading
+  } = useAuth();
 
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,14 +42,11 @@ function CartProvider({ children }) {
 
     try {
       const response = await getCart();
-
       setCart(response);
-
       return response;
     } catch (requestError) {
       setError(
-        requestError.message ||
-          "Unable to load your cart."
+        requestError.message || "Unable to load your cart."
       );
 
       throw requestError;
@@ -67,110 +66,113 @@ function CartProvider({ children }) {
       return;
     }
 
-    loadCart().catch(() => {
-      // Error is already stored in context state.
-    });
+    loadCart().catch(() => {});
   }, [
     isAuthenticated,
     isAuthLoading,
     loadCart
   ]);
 
-  const addToCart = async (product, quantity = 1) => {
-    if (!product?.id) {
-      throw new Error(
-        "A valid product is required to add an item to the cart."
-      );
-    }
+  const addToCart = useCallback(
+    async (product, quantity = 1) => {
+      if (!product?.id) {
+        throw new Error(
+          "A valid product is required to add an item to the cart."
+        );
+      }
 
-    setIsUpdating(true);
-    setError("");
+      setIsUpdating(true);
+      setError("");
 
-    try {
-      const response = await addCartItem(
-        product.id,
-        quantity
-      );
+      try {
+        const response = await addCartItem(
+          product.id,
+          quantity
+        );
 
-      setCart(response);
+        setCart(response);
 
-      return response;
-    } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to add the product to your cart."
-      );
+        return response;
+      } catch (requestError) {
+        setError(
+          requestError.message ||
+            "Unable to add the product to your cart."
+        );
 
-      throw requestError;
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+        throw requestError;
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    []
+  );
 
-  const updateQuantity = async (
-    productId,
-    quantity
-  ) => {
-    if (!productId) {
-      throw new Error(
-        "A valid product ID is required."
-      );
-    }
+  const updateQuantity = useCallback(
+    async (productId, quantity) => {
+      if (!productId) {
+        throw new Error(
+          "A valid product ID is required."
+        );
+      }
 
-    setIsUpdating(true);
-    setError("");
+      setIsUpdating(true);
+      setError("");
 
-    try {
-      const response = await updateCartItem(
-        productId,
-        quantity
-      );
+      try {
+        const response = await updateCartItem(
+          productId,
+          quantity
+        );
 
-      setCart(response);
+        setCart(response);
 
-      return response;
-    } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to update the cart item."
-      );
+        return response;
+      } catch (requestError) {
+        setError(
+          requestError.message ||
+            "Unable to update the cart item."
+        );
 
-      throw requestError;
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+        throw requestError;
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    []
+  );
 
-  const removeFromCart = async (productId) => {
-    if (!productId) {
-      throw new Error(
-        "A valid product ID is required."
-      );
-    }
+  const removeFromCart = useCallback(
+    async (productId) => {
+      if (!productId) {
+        throw new Error(
+          "A valid product ID is required."
+        );
+      }
 
-    setIsUpdating(true);
-    setError("");
+      setIsUpdating(true);
+      setError("");
 
-    try {
-      const response =
-        await removeCartItem(productId);
+      try {
+        const response = await removeCartItem(productId);
 
-      setCart(response);
+        setCart(response);
 
-      return response;
-    } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to remove the cart item."
-      );
+        return response;
+      } catch (requestError) {
+        setError(
+          requestError.message ||
+            "Unable to remove the cart item."
+        );
 
-      throw requestError;
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+        throw requestError;
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    []
+  );
 
-  const emptyCart = async () => {
+  const emptyCart = useCallback(async () => {
     setIsUpdating(true);
     setError("");
 
@@ -190,14 +192,26 @@ function CartProvider({ children }) {
     } finally {
       setIsUpdating(false);
     }
-  };
+  }, []);
+
+  /*
+   * cart.totalItems is the backend-provided total item count.
+   *
+   * Keep both names:
+   * - totalItems for cart pages
+   * - cartItemCount for the header
+   */
+  const totalItems = Number(cart?.totalItems || 0);
+
+  const cartItemCount = totalItems;
 
   const value = useMemo(
     () => ({
       cart,
       items: cart?.items || [],
       totalAmount: cart?.totalAmount || 0,
-      totalItems: cart?.totalItems || 0,
+      totalItems,
+      cartItemCount,
       isLoading,
       isUpdating,
       error,
@@ -209,10 +223,16 @@ function CartProvider({ children }) {
     }),
     [
       cart,
+      totalItems,
+      cartItemCount,
       isLoading,
       isUpdating,
       error,
-      loadCart
+      loadCart,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      emptyCart
     ]
   );
 
