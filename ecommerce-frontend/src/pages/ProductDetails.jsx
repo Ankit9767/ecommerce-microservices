@@ -6,6 +6,12 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { getProduct } from "../services/productService";
 
+import ReviewCard from "../components/ReviewCard";
+
+import {
+  getProductReviews
+} from "../services/reviewService";
+
 import "./styles/ProductDetails.css";
 
 function ProductDetails() {
@@ -25,10 +31,25 @@ function ProductDetails() {
   const [cartError, setCartError] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
 
+  const [reviews, setReviews] = useState([]);
+  const [isReviewsLoading, setIsReviewsLoading] =
+    useState(false);
+  const [reviewsError, setReviewsError] =
+    useState("");
+  const [reviewTotalElements, setReviewTotalElements] =
+    useState(0);
+
+  // Load product
   useEffect(() => {
     let isMounted = true;
 
     async function loadProduct() {
+      if (!id) {
+        setIsLoading(false);
+        setError("Product ID is missing.");
+        return;
+      }
+
       setIsLoading(true);
       setError("");
       setCartError("");
@@ -64,16 +85,58 @@ function ProductDetails() {
       }
     }
 
-    if (!id) {
-      setIsLoading(false);
-      setError("Product ID is missing.");
+    loadProduct();
 
-      return () => {
-        isMounted = false;
-      };
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  // Load reviews
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadReviews() {
+      if (!id) {
+        return;
+      }
+
+      setIsReviewsLoading(true);
+      setReviewsError("");
+
+      try {
+        const response =
+          await getProductReviews(id, {
+            page: 0,
+            size: 20,
+            sort: "createdAt,desc"
+          });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setReviews(response?.content || []);
+        setReviewTotalElements(
+          Number(response?.totalElements || 0)
+        );
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setReviewsError(
+          requestError.message ||
+            "Unable to load product reviews."
+        );
+      } finally {
+        if (isMounted) {
+          setIsReviewsLoading(false);
+        }
+      }
     }
 
-    loadProduct();
+    loadReviews();
 
     return () => {
       isMounted = false;
@@ -278,6 +341,68 @@ function ProductDetails() {
             )}
           </div>
         </div>
+        <section className="product-reviews-section">
+  <div className="product-reviews-header">
+    <div>
+      <p className="product-reviews-eyebrow">
+        Customer Reviews
+      </p>
+
+      <h2>
+        Reviews
+        {reviewTotalElements > 0 && (
+          <span className="product-reviews-count">
+            {reviewTotalElements}
+          </span>
+        )}
+      </h2>
+    </div>
+  </div>
+
+  {isReviewsLoading && (
+    <div
+      className="product-reviews-state"
+      aria-live="polite"
+    >
+      Loading reviews...
+    </div>
+  )}
+
+  {!isReviewsLoading && reviewsError && (
+    <div className="product-reviews-state">
+      <p
+        className="product-reviews-error"
+        role="alert"
+      >
+        {reviewsError}
+      </p>
+    </div>
+  )}
+
+  {!isReviewsLoading &&
+    !reviewsError &&
+    reviews.length === 0 && (
+      <div className="product-reviews-state">
+        <p>
+          No reviews yet. Be the first customer to
+          review this product after your purchase.
+        </p>
+      </div>
+    )}
+
+  {!isReviewsLoading &&
+    !reviewsError &&
+    reviews.length > 0 && (
+      <div className="product-reviews-list">
+        {reviews.map((review) => (
+          <ReviewCard
+            key={review.id}
+            review={review}
+          />
+        ))}
+      </div>
+    )}
+</section>
       </div>
     </section>
   );
