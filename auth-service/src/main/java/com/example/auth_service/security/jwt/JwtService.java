@@ -3,6 +3,8 @@ package com.example.auth_service.security.jwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -14,7 +16,11 @@ public class JwtService {
     private final JwtTokenValidator tokenValidator;
 
     public String generateAccessToken(UserDetails userDetails, String sessionId) {
-        return tokenGenerator.generateAccessToken(userDetails, sessionId);
+
+        return tokenGenerator.generateAccessToken(
+                userDetails,
+                sessionId
+        );
     }
 
     public String extractUsername(String token) {
@@ -33,7 +39,18 @@ public class JwtService {
         return tokenValidator.isTokenExpired(token);
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        return tokenValidator.isTokenValid(token, userDetails);
+    public boolean isTokenValid(String token,
+                                UserDetails userDetails) {
+        return tokenValidator.isTokenValid(token,
+                userDetails
+        );
+    }
+
+    public Date extractExpiration(String token) {
+        return tokenValidator.extractExpiration(token);
+    }
+
+    public String extractSessionId(String token) {
+        return tokenValidator.extractSessionId(token);
     }
 }
