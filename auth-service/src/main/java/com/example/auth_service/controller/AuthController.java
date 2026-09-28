@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @RestController
@@ -40,9 +42,9 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
-            @Valid
-            @RequestBody
+            @Valid @RequestBody
             RefreshTokenRequest request) {
+
         return ResponseEntity.ok(
                 authService.refreshToken(
                         request.getRefreshToken())
@@ -51,20 +53,31 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(
-            @Valid
-            @RequestBody
-            RefreshTokenRequest request) {
-        authService.logout(
-                request.getRefreshToken());
-        return ResponseEntity.ok(
-                "Logged out successfully"
-        );
+            @RequestHeader(HttpHeaders.AUTHORIZATION)
+            String authorizationHeader,
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        if (authorizationHeader == null ||
+                !authorizationHeader.startsWith("Bearer ")) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Access token is required"
+            );
+        }
+
+        String accessToken = authorizationHeader.substring(7);
+
+        authService.logout(request.getRefreshToken(), accessToken);
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionResponse>> getSessions( @RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                   String authorizationHeader) {
+
         String accessToken = authorizationHeader.replaceFirst("(?i)^Bearer\\s+", "");
+
         return ResponseEntity.ok(authService.getSessions(accessToken));
     }
 
@@ -72,6 +85,7 @@ public class AuthController {
     public ResponseEntity<String> logoutSession(@PathVariable Long id) {
 
         authService.logoutSession(id);
+
         return ResponseEntity.ok("Session revoked");
     }
 
@@ -79,6 +93,7 @@ public class AuthController {
     public ResponseEntity<String> logoutAllSessions() {
 
         authService.logoutAllSessions();
+
         return ResponseEntity.ok("All sessions revoked");
     }
 
