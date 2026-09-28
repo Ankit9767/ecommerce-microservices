@@ -8,22 +8,49 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AccessTokenJwtValidator implements OAuth2TokenValidator<Jwt> {
+public class AccessTokenJwtValidator
+        implements OAuth2TokenValidator<Jwt> {
 
     @Override
     public OAuth2TokenValidatorResult validate(Jwt jwt) {
 
-        String tokenType = jwt.getClaimAsString(JwtConstants.TOKEN_TYPE);
+        String tokenType =
+                jwt.getClaimAsString(
+                        JwtConstants.TOKEN_TYPE
+                );
 
         if (!JwtConstants.ACCESS.equals(tokenType)) {
 
-            OAuth2Error error = new OAuth2Error(
-                    "invalid_token",
-                    "Token is not an access token",
-                    null
-            );
+            OAuth2Error error =
+                    new OAuth2Error(
+                            "invalid_token",
+                            "Token is not an access token",
+                            null
+                    );
 
-            return OAuth2TokenValidatorResult.failure(error);
+            return OAuth2TokenValidatorResult.failure(
+                    error
+            );
+        }
+
+        String sessionId =
+                jwt.getClaimAsString(
+                        JwtConstants.SESSION_ID
+                );
+
+        if (sessionId == null ||
+                sessionId.isBlank()) {
+
+            OAuth2Error error =
+                    new OAuth2Error(
+                            "invalid_token",
+                            "Token does not contain a session identifier",
+                            null
+                    );
+
+            return OAuth2TokenValidatorResult.failure(
+                    error
+            );
         }
 
         return OAuth2TokenValidatorResult.success();
