@@ -14,6 +14,7 @@ import com.example.auth_service.security.refresh.TokenHashService;
 import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.service.SecurityAuditService;
 import com.example.auth_service.service.UserSessionService;
+import com.example.auth_service.session.SessionRevocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ public class UserSessionServiceImpl
     private final RefreshTokenGenerator refreshTokenGenerator;
 
     private final SecurityAuditService securityAuditService;
+
+    private final SessionRevocationService sessionRevocationService;
 
     @Override
     public String createSession(User user, SessionInfo sessionInfo) {
@@ -180,6 +183,11 @@ public class UserSessionServiceImpl
         sessions.forEach(session -> {
             session.setRevoked(true);
             session.setLastActivity(Instant.now());
+
+            sessionRevocationService.revoke(
+                    session.getSessionId(),
+                    session.getExpiryDate()
+            );
         });
 
         userSessionRepository.saveAll(sessions);
@@ -264,7 +272,13 @@ public class UserSessionServiceImpl
                 );
 
         session.setRevoked(true);
+
         userSessionRepository.save(session);
+
+        sessionRevocationService.revoke(
+                session.getSessionId(),
+                session.getExpiryDate()
+        );
 
         securityAuditService.record(
                 AuditEventType.SESSION_REVOKED,
@@ -283,27 +297,72 @@ public class UserSessionServiceImpl
 
     @Override
     @Transactional
-    public void updateLastActivity(String sessionId) {
+    public boolean updateLastActivity(String sessionId) {
 
-        userSessionRepository
+        return userSessionRepository
                 .findBySessionId(sessionId)
-                .ifPresent(session -> {
+                .map(session -> {
 
-                    if (!Boolean.TRUE.equals(
-                            session.getRevoked()
-                    )
-                            && !session.getExpiryDate()
-                            .isBefore(Instant.now())) {
-
-                        session.setLastActivity(
-                                Instant.now()
-                        );
-
-                        userSessionRepository.save(
-                                session
-                        );
+                    if (Boolean.TRUE.equals(session.getRevoked())
+                            || session.getExpiryDate().isBefore(Instant.now())) {
+                        return false;
                     }
-                });
+
+                    session.setLastActivity(Instant.now());
+                    userSessionRepository.save(session);
+
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public void revokeSession(String token, User user) {
+
+        String hash = tokenHashService.hash(token);
+
+        UserSession session = userSessionRepository
+                .findByTokenHash(hash)
+                .orElseThrow(() ->
+                        new BadCredentialsException("Invalid refresh token")
+                );
+
+        if (session.getUser() == null
+                || user == null
+                || !session.getUser().getId().equals(user.getId())) {
+
+            throw new BadCredentialsException("Invalid refresh token");
+        }
+
+        if (Boolean.TRUE.equals(session.getRevoked())) {
+            throw new BadCredentialsException("Refresh token already revoked");
+        }
+
+        session.setRevoked(true);
+
+        session.setLastActivity(Instant.now());
+
+        userSessionRepository.save(session);
+
+        sessionRevocationService.revoke(
+                session.getSessionId(),
+                session.getExpiryDate()
+        );
+
+        securityAuditService.record(
+                AuditEventType.SESSION_REVOKED,
+                user,
+                user.getUsername(),
+                session.getIpAddress(),
+                session.getDeviceName(),
+                session.getDeviceType(),
+                session.getBrowser(),
+                session.getOperatingSystem(),
+                session.getSessionId(),
+                true,
+                "User logged out"
+        );
     }
 
 }

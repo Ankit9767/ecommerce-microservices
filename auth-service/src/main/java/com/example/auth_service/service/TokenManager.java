@@ -16,4 +16,6 @@ public interface TokenManager {
 
     void logout(String refreshToken);
 
+    void logout(String refreshToken, User user, String accessToken);
+
 }

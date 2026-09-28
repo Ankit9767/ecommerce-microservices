@@ -20,6 +20,8 @@ public interface UserSessionService {
 
     void revokeSession(Long sessionId, User user);
 
-    void updateLastActivity(String sessionId);
+    boolean updateLastActivity(String sessionId);
+
+    void revokeSession(String token, User user);
 
 }

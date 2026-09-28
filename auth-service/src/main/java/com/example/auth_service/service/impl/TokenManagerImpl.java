@@ -10,8 +10,11 @@ import com.example.auth_service.security.jwt.JwtProperties;
 import com.example.auth_service.security.jwt.JwtService;
 import com.example.auth_service.service.UserSessionService;
 import com.example.auth_service.service.TokenManager;
+import com.example.auth_service.session.SessionRevocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,8 @@ public class TokenManagerImpl implements TokenManager {
     private final UserSessionService userSessionService;
 
     private final JwtProperties jwtProperties;
+
+    private final SessionRevocationService sessionRevocationService;
 
     @Override
     public AuthResponse generateTokens(User user, SessionInfo sessionInfo) {
@@ -119,5 +124,37 @@ public class TokenManagerImpl implements TokenManager {
     @Override
     public void logout(String refreshToken) {
         userSessionService.revokeSession(refreshToken);
+    }
+
+    @Override
+    public void logout(String refreshToken, User user,
+                       String accessToken) {
+
+        String sessionId =
+                jwtService.extractSessionId(
+                        accessToken
+                );
+
+        Instant accessTokenExpiration =
+                jwtService.extractExpiration(
+                        accessToken
+                ).toInstant();
+
+        /*
+         * Revoke the refresh-token session.
+         */
+        userSessionService.revokeSession(
+                refreshToken,
+                user
+        );
+
+        /*
+         * Immediately revoke all access tokens
+         * belonging to this login session.
+         */
+        sessionRevocationService.revoke(
+                sessionId,
+                accessTokenExpiration
+        );
     }
 }
