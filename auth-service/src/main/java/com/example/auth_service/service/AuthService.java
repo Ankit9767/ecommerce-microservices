@@ -5,6 +5,8 @@ import com.example.auth_service.dto.request.RegisterRequest;
 import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.dto.response.SessionResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.util.List;
 
 public interface AuthService {
@@ -15,7 +17,8 @@ public interface AuthService {
 
     AuthResponse refreshToken(String refreshToken);
 
-    void logout(String refreshToken);
+    @PreAuthorize("isAuthenticated()")
+    void logout(String refreshToken, String accessToken);
 
     List<SessionResponse> getSessions(String accessToken);
 

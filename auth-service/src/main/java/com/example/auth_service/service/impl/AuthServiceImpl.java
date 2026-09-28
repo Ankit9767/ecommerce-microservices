@@ -5,20 +5,19 @@ import com.example.auth_service.dto.request.RegisterRequest;
 import com.example.auth_service.dto.response.AuthResponse;
 import com.example.auth_service.dto.response.SessionResponse;
 import com.example.auth_service.dto.session.SessionInfo;
-import com.example.auth_service.entity.AuditEventType;
-import com.example.auth_service.entity.Role;
-import com.example.auth_service.entity.RoleName;
-import com.example.auth_service.entity.User;
+import com.example.auth_service.entity.*;
 import com.example.auth_service.exception.RoleNotFoundException;
 import com.example.auth_service.exception.UserAlreadyExistsException;
 import com.example.auth_service.repository.RoleRepository;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.security.CustomUserDetails;
 import com.example.auth_service.security.jwt.JwtTokenValidator;
 import com.example.auth_service.service.*;
 import com.example.auth_service.session.SessionContext;
 import com.example.auth_service.session.SessionContextExtractor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -345,11 +345,22 @@ public class AuthServiceImpl implements AuthService {
         return response;
     }
 
-    @PreAuthorize("@sessionSecurity.isOwner(#id, authentication.name)")
-    @Override
-    public void logout(String refreshToken) {
 
-        tokenManager.logout(refreshToken);
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public void logout(String refreshToken, String accessToken) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        User user = userDetails.getUser();
+
+        tokenManager.logout(refreshToken, user, accessToken);
 
         securityAuditService.record(
                 AuditEventType.LOGOUT,
@@ -376,7 +387,6 @@ public class AuthServiceImpl implements AuthService {
         return userSessionService.getSessions(user, sessionId);
     }
 
-    @PreAuthorize("@sessionSecurity.isOwner(#id, authentication.name)")
     @Override
     public void logoutSession(Long id) {
         userSessionService.revokeSession(id, getCurrentUser());
