@@ -2,6 +2,7 @@ package com.example.auth_service.security.jwt;
 
 import com.example.auth_service.security.CustomUserDetailsService;
 import com.example.auth_service.service.UserSessionService;
+import com.example.auth_service.session.SessionRevocationService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,11 +29,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserSessionService userSessionService;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+    private final SessionRevocationService sessionRevocationService;
 
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        String header =
+                request.getHeader(HttpHeaders.AUTHORIZATION);
 
         /*
          * No Bearer token.
@@ -47,6 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request,
                     response
             );
+
             return;
         }
 
@@ -54,22 +62,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
-            String username = jwtTokenValidator.extractUsername(token);
+            String username =
+                    jwtTokenValidator.extractUsername(token);
 
             if (username != null &&
                     SecurityContextHolder
                             .getContext()
                             .getAuthentication() == null) {
 
-
                 UserDetails userDetails =
-                        userDetailsService
-                                .loadUserByUsername(
-                                        username
-                                );
+                        userDetailsService.loadUserByUsername(
+                                username
+                        );
 
+                if (jwtTokenValidator.isTokenValid(
+                        token,
+                        userDetails
+                )) {
 
-                if (jwtTokenValidator.isTokenValid(token, userDetails)) {
+                    /*
+                     * Extract the session ID from
+                     * the access JWT.
+                     */
+                    String sessionId =
+                            jwtTokenValidator.extractSessionId(
+                                    token
+                            );
+
+                    /*
+                     * Every access token must contain
+                     * a session ID.
+                     */
+                    if (sessionId == null ||
+                            sessionId.isBlank()) {
+
+                        throw new JwtException(
+                                "Missing session identifier"
+                        );
+                    }
+
+                    /*
+                     * Check immediate session revocation.
+                     *
+                     * This happens BEFORE authentication
+                     * is placed into the SecurityContext.
+                     */
+                    if (sessionRevocationService.isRevoked(
+                            sessionId
+                    )) {
+
+                        throw new JwtException(
+                                "Session has been revoked"
+                        );
+                    }
 
                     /*
                      * Authenticate the request.
@@ -92,25 +137,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     authentication
                             );
 
-
                     /*
-                     * Extract the session ID from
-                     * the access JWT.
+                     * Update last activity only for
+                     * a valid, non-revoked session.
                      */
-                    String sessionId = jwtTokenValidator.extractSessionId(token);
-
-
-                    /*
-                     * Update last activity of the
-                     * corresponding user session.
-                     */
-                    if (sessionId != null) {
-
-                        userSessionService
-                                .updateLastActivity(
-                                        sessionId
-                                );
-                    }
+                    userSessionService.updateLastActivity(
+                            sessionId
+                    );
                 }
             }
 
@@ -135,7 +168,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
 
             return;
-
         }
 
         filterChain.doFilter(
