@@ -1,5 +1,9 @@
-import React from "react";
-import { Link, NavLink } from "react-router-dom";
+import React, { useState } from "react";
+import {
+  Link,
+  NavLink,
+  useNavigate
+} from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -7,13 +11,52 @@ import { useCart } from "../context/CartContext";
 import "./styles/Header.css";
 
 function Header() {
-  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const {
+    isAuthenticated,
+    logout
+  } = useAuth();
+
   const { cartItemCount } = useCart();
+
+  const [isLoggingOut, setIsLoggingOut] =
+    useState(false);
+
+  const [logoutError, setLogoutError] =
+    useState("");
+
+  const handleLogout = async () => {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      await logout();
+
+      navigate("/", {
+        replace: true
+      });
+    } catch (requestError) {
+      setLogoutError(
+        requestError.message ||
+          "Unable to log out. Please try again."
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <header className="site-header">
       <div className="container header-content">
-        <Link className="brand" to="/">
+        <Link
+          className="brand"
+          to="/"
+        >
           EcommerceHub
         </Link>
 
@@ -99,8 +142,31 @@ function Header() {
               Login
             </NavLink>
           )}
+
+          {isAuthenticated && (
+            <button
+              type="button"
+              className="nav-link logout-button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              aria-busy={isLoggingOut}
+            >
+              {isLoggingOut
+                ? "Logging out..."
+                : "Logout"}
+            </button>
+          )}
         </nav>
       </div>
+
+      {logoutError && (
+        <div
+          className="container header-error"
+          role="alert"
+        >
+          {logoutError}
+        </div>
+      )}
     </header>
   );
 }
