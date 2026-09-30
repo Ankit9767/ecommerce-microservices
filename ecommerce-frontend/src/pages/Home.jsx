@@ -1,60 +1,123 @@
-import React from "react";
+import React, {
+  useEffect,
+  useState
+} from "react";
 import { Link } from "react-router-dom";
+
 import ProductGrid from "../components/ProductGrid";
+
+import { searchProducts } from "../services/searchService";
+import { getCategories } from "../services/categoryService";
 
 import "./styles/Home.css";
 
-const featuredCategories = [
-  {
-    id: "electronics",
-    name: "Electronics",
-    description: "Latest devices and everyday technology."
-  },
-  {
-    id: "fashion",
-    name: "Fashion",
-    description: "Styles for every occasion."
-  },
-  {
-    id: "home",
-    name: "Home & Living",
-    description: "Make your space feel like home."
-  },
-  {
-    id: "beauty",
-    name: "Beauty",
-    description: "Personal care and beauty essentials."
-  }
-];
-
-const featuredProducts = [
-  {
-    id: "product-1",
-    name: "Wireless Headphones",
-    price: 79.99,
-    category: "Electronics"
-  },
-  {
-    id: "product-2",
-    name: "Classic Sneakers",
-    price: 64.99,
-    category: "Fashion"
-  },
-  {
-    id: "product-3",
-    name: "Smart Watch",
-    price: 129.99,
-    category: "Electronics"
-  },
-  {
-    id: "product-4",
-    name: "Minimal Desk Lamp",
-    price: 39.99,
-    category: "Home & Living"
-  }
-];
-
 function Home() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] =
+    useState([]);
+
+  const [isProductsLoading, setIsProductsLoading] =
+    useState(true);
+
+  const [isCategoriesLoading, setIsCategoriesLoading] =
+    useState(true);
+
+  const [productsError, setProductsError] =
+    useState("");
+
+  const [categoriesError, setCategoriesError] =
+    useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProducts() {
+      setIsProductsLoading(true);
+      setProductsError("");
+
+      try {
+        const response =
+          await searchProducts({
+            page: 0,
+            size: 8
+          });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts(
+          response?.content || []
+        );
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setProductsError(
+          requestError.message ||
+            "Unable to load products."
+        );
+      } finally {
+        if (isMounted) {
+          setIsProductsLoading(false);
+        }
+      }
+    }
+
+    loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      setIsCategoriesLoading(true);
+      setCategoriesError("");
+
+      try {
+        const response =
+          await getCategories();
+
+        if (!isMounted) {
+          return;
+        }
+
+        const categoryList =
+          Array.isArray(response)
+            ? response
+            : response?.content || [];
+
+        setCategories(
+          categoryList.slice(0, 4)
+        );
+      } catch (requestError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCategoriesError(
+          requestError.message ||
+            "Unable to load categories."
+        );
+      } finally {
+        if (isMounted) {
+          setIsCategoriesLoading(false);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="home-page">
       <section className="home-hero">
@@ -69,16 +132,23 @@ function Home() {
             </h1>
 
             <p className="home-hero-description">
-              Explore quality products across electronics, fashion,
-              home, beauty, and more.
+              Explore quality products across
+              electronics, fashion, home, beauty,
+              and more.
             </p>
 
             <div className="home-hero-actions">
-              <Link className="button" to="/products">
+              <Link
+                className="button"
+                to="/products"
+              >
                 Shop Products
               </Link>
 
-              <Link className="home-secondary-button" to="/categories">
+              <Link
+                className="home-secondary-button"
+                to="/categories"
+              >
                 Browse Categories
               </Link>
             </div>
@@ -99,28 +169,68 @@ function Home() {
               </h2>
             </div>
 
-            <Link className="home-section-link" to="/categories">
+            <Link
+              className="home-section-link"
+              to="/categories"
+            >
               View all
             </Link>
           </div>
 
-          <div className="category-grid">
-            {featuredCategories.map((category) => (
-              <Link
-                key={category.id}
-                className="category-card"
-                to={`/categories/${category.id}`}
-              >
-                <div className="category-card-icon">
-                  {category.name.charAt(0)}
-                </div>
+          {isCategoriesLoading && (
+            <div
+              className="home-state"
+              aria-live="polite"
+            >
+              Loading categories...
+            </div>
+          )}
 
-                <h3>{category.name}</h3>
+          {!isCategoriesLoading &&
+            categoriesError && (
+              <div className="home-state">
+                <p className="home-error">
+                  {categoriesError}
+                </p>
+              </div>
+            )}
 
-                <p>{category.description}</p>
-              </Link>
-            ))}
-          </div>
+          {!isCategoriesLoading &&
+            !categoriesError &&
+            categories.length === 0 && (
+              <div className="home-state">
+                <p>
+                  No categories are available
+                  right now.
+                </p>
+              </div>
+            )}
+
+          {!isCategoriesLoading &&
+            !categoriesError &&
+            categories.length > 0 && (
+              <div className="category-grid">
+                {categories.map(
+                  (category) => (
+                    <Link
+                      key={category.id}
+                      className="category-card"
+                      to={`/categories/${category.id}`}
+                    >
+                      <div className="category-card-icon">
+                        {String(
+                          category.name || "C"
+                        ).charAt(0)}
+                      </div>
+
+                      <h3>
+                        {category.name}
+                      </h3>
+                    </Link>
+                  )
+                )}
+              </div>
+            )}
         </div>
       </section>
 
@@ -129,20 +239,72 @@ function Home() {
           <div className="home-section-header">
             <div>
               <p className="home-section-eyebrow">
-                Featured
+                Discover
               </p>
 
               <h2 className="home-section-title">
-                Featured Products
+                Products
               </h2>
             </div>
 
-            <Link className="home-section-link" to="/products">
+            <Link
+              className="home-section-link"
+              to="/products"
+            >
               View all
             </Link>
           </div>
 
-          <ProductGrid products={featuredProducts} />
+          {isProductsLoading && (
+            <div
+              className="home-state"
+              aria-live="polite"
+            >
+              Loading products...
+            </div>
+          )}
+
+          {!isProductsLoading &&
+            productsError && (
+              <div className="home-state">
+                <p className="home-error">
+                  {productsError}
+                </p>
+
+                <Link
+                  className="button"
+                  to="/products"
+                >
+                  Browse Products
+                </Link>
+              </div>
+            )}
+
+          {!isProductsLoading &&
+            !productsError &&
+            products.length === 0 && (
+              <div className="home-state">
+                <p>
+                  No products are available
+                  right now.
+                </p>
+
+                <Link
+                  className="button"
+                  to="/products"
+                >
+                  Browse Products
+                </Link>
+              </div>
+            )}
+
+          {!isProductsLoading &&
+            !productsError &&
+            products.length > 0 && (
+              <ProductGrid
+                products={products}
+              />
+            )}
         </div>
       </section>
 
@@ -155,16 +317,21 @@ function Home() {
               </p>
 
               <h2>
-                Find something great for every part of your life.
+                Find something great for
+                every part of your life.
               </h2>
 
               <p>
-                Browse our growing collection and discover products
-                selected for everyday shopping.
+                Browse our growing collection
+                and discover products for
+                everyday shopping.
               </p>
             </div>
 
-            <Link className="button" to="/products">
+            <Link
+              className="button"
+              to="/products"
+            >
               Start Shopping
             </Link>
           </div>
