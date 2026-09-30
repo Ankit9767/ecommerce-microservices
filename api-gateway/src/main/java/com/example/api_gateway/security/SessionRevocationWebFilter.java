@@ -19,8 +19,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SessionRevocationWebFilter implements WebFilter {
 
-    private static final String KEY_PREFIX =
-            "revoked:session:";
+    private static final String KEY_PREFIX = "revoked:session:";
 
     private final ReactiveStringRedisTemplate redisTemplate;
 
@@ -31,11 +30,6 @@ public class SessionRevocationWebFilter implements WebFilter {
         return ReactiveSecurityContextHolder
                 .getContext()
                 .flatMap(context -> {
-
-                    if (context.getAuthentication() == null) {
-
-                        return chain.filter(exchange);
-                    }
 
                     if (!(context.getAuthentication()
                             instanceof JwtAuthenticationToken authentication)) {
@@ -56,27 +50,24 @@ public class SessionRevocationWebFilter implements WebFilter {
                     }
 
                     return redisTemplate
-                            .hasKey(
-                                    KEY_PREFIX + sessionId
-                            )
+                            .hasKey(KEY_PREFIX + sessionId)
                             .flatMap(revoked -> {
 
-                                if (Boolean.TRUE.equals(
-                                        revoked
-                                )) {
-
-                                    return unauthorized(
-                                            exchange
-                                    );
+                                if (Boolean.TRUE.equals(revoked)) {
+                                    return unauthorized(exchange);
                                 }
 
-                                return chain.filter(
-                                        exchange
-                                );
-                            });
+                                return chain.filter(exchange);
+                            })
+                            .onErrorResume(
+                                    error ->
+                                            redisUnavailable(exchange)
+                            );
                 })
                 .switchIfEmpty(
-                        chain.filter(exchange)
+                        Mono.defer(() ->
+                                chain.filter(exchange)
+                        )
                 );
     }
 
@@ -85,6 +76,17 @@ public class SessionRevocationWebFilter implements WebFilter {
         exchange.getResponse()
                 .setStatusCode(
                         HttpStatus.UNAUTHORIZED
+                );
+
+        return exchange.getResponse()
+                .setComplete();
+    }
+
+    private Mono<Void> redisUnavailable(ServerWebExchange exchange) {
+
+        exchange.getResponse()
+                .setStatusCode(
+                        HttpStatus.SERVICE_UNAVAILABLE
                 );
 
         return exchange.getResponse()
