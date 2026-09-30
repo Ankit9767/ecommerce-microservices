@@ -70,3 +70,30 @@
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
+
+.product-card-cart-button {
+  width: 100%;
+  margin-top: var(--spacing-md);
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--border-radius-md);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+.product-card-cart-button:hover {
+  opacity: 0.9;
+}
+
+.product-card-cart-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.product-card-error {
+  margin: var(--spacing-sm) 0 0;
+  color: #a33a3a;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
