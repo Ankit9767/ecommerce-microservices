@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -11,6 +12,68 @@ import "./styles/Products.css";
 
 const DEFAULT_PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4.5 4.5" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </svg>
+  );
+}
+
+function PackageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4 7.5 8 4.5 8-4.5" />
+      <path d="M12 12v9" />
+    </svg>
+  );
+}
+
+function ArrowIcon({ direction = "right" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="products-icon"
+    >
+      {direction === "left" ? (
+        <>
+          <path d="M19 12H5" />
+          <path d="m11 18-6-6 6-6" />
+        </>
+      ) : (
+        <>
+          <path d="M5 12h14" />
+          <path d="m13 6 6 6-6 6" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
+      <path d="M12 4 21 20H3L12 4Z" />
+      <path d="M12 9v5" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
 
 function mapProductSearchResult(product) {
   return {
@@ -27,8 +90,7 @@ function mapProductSearchResult(product) {
 }
 
 function Products() {
-  const [searchParams, setSearchParams] =
-    useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -56,9 +118,6 @@ function Products() {
       ? pageValue
       : 0;
 
-  /*
-   * Load categories.
-   */
   useEffect(() => {
     let isMounted = true;
 
@@ -107,9 +166,6 @@ function Products() {
     };
   }, []);
 
-  /*
-   * Debounced product search.
-   */
   useEffect(() => {
     let isMounted = true;
 
@@ -194,9 +250,7 @@ function Products() {
   ]);
 
   const updateSearchParams = (updates) => {
-    const nextParams = new URLSearchParams(
-      searchParams
-    );
+    const nextParams = new URLSearchParams(searchParams);
 
     Object.entries(updates).forEach(
       ([key, value]) => {
@@ -212,10 +266,6 @@ function Products() {
       }
     );
 
-    /*
-     * Any filter or sort change starts
-     * from the first page.
-     */
     nextParams.set("page", "0");
 
     setSearchParams(nextParams);
@@ -281,16 +331,6 @@ function Products() {
     setSearchParams(nextParams);
   };
 
-  /*
-   * ProductDocument.category is populated from
-   * ProductCreatedEvent.category.
-   *
-   * ProductServiceImpl creates that event from
-   * ProductResponse.category.
-   *
-   * Therefore the search filter uses the
-   * category name.
-   */
   const categoryOptions = categories.map(
     (item) => item.name
   );
@@ -298,60 +338,112 @@ function Products() {
   return (
     <section className="page products-page">
       <div className="container">
-        <div className="products-header">
+        <header className="products-header">
           <div className="products-header-content">
-            <p className="products-eyebrow">
-              EcommerceHub
-            </p>
+            <div className="products-title-row">
+              <div className="products-title-icon">
+                <PackageIcon />
+              </div>
 
-            <h1 className="page-title">
-              Products
-            </h1>
+              <div>
+                <p className="products-eyebrow">
+                  EcommerceHub
+                </p>
+
+                <h1 className="page-title">
+                  Products
+                </h1>
+              </div>
+            </div>
 
             <p className="products-description">
-              Browse products available in
-              EcommerceHub.
+              Discover products across our growing
+              collection and find something that fits
+              what you need.
             </p>
+
+            <div className="products-header-meta">
+              <span className="products-meta-item">
+                <GridIcon />
+                Browse the collection
+              </span>
+
+              <span className="products-meta-divider" />
+
+              <span className="products-meta-item">
+                <SearchIcon />
+                Search and filter
+              </span>
+            </div>
           </div>
 
-          {!isLoading && !error && (
-            <p className="products-result-count">
-              {totalElements}{" "}
-              {totalElements === 1
-                ? "product"
-                : "products"}
-            </p>
-          )}
+        </header>
+
+        <div className="products-filter-section">
+          <div className="products-filter-heading">
+            <div className="products-filter-heading-icon">
+              <SearchIcon />
+            </div>
+
+            <div>
+              <h2>Find what you're looking for</h2>
+              <p>
+                Search, filter, and sort the available
+                products.
+              </p>
+            </div>
+          </div>
+
+          <ProductFilters
+            search={search}
+            category={category}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            sortBy={sortBy}
+            categories={categoryOptions}
+            categoriesLoading={isCategoriesLoading}
+            onSearchChange={handleSearchChange}
+            onCategoryChange={handleCategoryChange}
+            onMinPriceChange={handleMinPriceChange}
+            onMaxPriceChange={handleMaxPriceChange}
+            onSortChange={handleSortChange}
+            onClear={handleClear}
+          />
         </div>
 
-        <ProductFilters
-          search={search}
-          category={category}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
-          sortBy={sortBy}
-          categories={categoryOptions}
-          categoriesLoading={isCategoriesLoading}
-          onSearchChange={handleSearchChange}
-          onCategoryChange={handleCategoryChange}
-          onMinPriceChange={handleMinPriceChange}
-          onMaxPriceChange={handleMaxPriceChange}
-          onSortChange={handleSortChange}
-          onClear={handleClear}
-        />
-
         {categoryError && (
-          <p
+          <div
             className="products-filter-error"
             role="alert"
           >
-            {categoryError}
-          </p>
+            <AlertIcon />
+            <p>{categoryError}</p>
+          </div>
         )}
 
         {isLoading && (
-          <div className="products-status">
-            <p>Loading products...</p>
+          <div
+            className="products-status products-loading-state"
+            aria-live="polite"
+          >
+            <div className="products-loading-icon">
+              <PackageIcon />
+            </div>
+
+            <div className="products-loading-content">
+              <strong>Loading products</strong>
+              <p>
+                We're finding products that match
+                your selection.
+              </p>
+            </div>
+
+            <div
+              className="products-loading-bar"
+              aria-hidden="true"
+            >
+              <span />
+            </div>
           </div>
         )}
 
@@ -360,22 +452,72 @@ function Products() {
             className="products-status products-status-error"
             role="alert"
           >
-            <p>{error}</p>
+            <div className="products-state-icon">
+              <AlertIcon />
+            </div>
+
+            <div>
+              <h2>Unable to load products</h2>
+              <p>{error}</p>
+            </div>
           </div>
         )}
 
         {!isLoading && !error && (
           <>
             <div className="products-results-header">
-              <p className="products-count">
-                {totalElements}{" "}
-                {totalElements === 1
-                  ? "product found"
-                  : "products found"}
-              </p>
+              <div className="products-results-title">
+                <span className="products-results-icon">
+                  <GridIcon />
+                </span>
+
+                <div>
+                  <p className="products-results-label">
+                    Product collection
+                  </p>
+
+                  <p className="products-count">
+                    {totalElements}{" "}
+                    {totalElements === 1
+                      ? "product found"
+                      : "products found"}
+                  </p>
+                </div>
+              </div>
+
+              {sortBy && (
+                <span className="products-active-sort">
+                  Sorted results
+                </span>
+              )}
             </div>
 
-            <ProductGrid products={products} />
+            {products.length > 0 ? (
+              <div className="products-grid-animation">
+                <ProductGrid products={products} />
+              </div>
+            ) : (
+              <div className="products-empty-state">
+                <div className="products-empty-icon">
+                  <SearchIcon />
+                </div>
+
+                <h2>No products found</h2>
+
+                <p>
+                  Try changing your search or filters
+                  to find more products.
+                </p>
+
+                <button
+                  type="button"
+                  className="products-clear-button"
+                  onClick={handleClear}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
 
             {totalPages > 1 && (
               <nav
@@ -384,22 +526,26 @@ function Products() {
               >
                 <button
                   type="button"
-                  className="button products-pagination-button"
+                  className="products-pagination-button"
                   onClick={() =>
                     handlePageChange(page - 1)
                   }
                   disabled={page === 0}
                 >
-                  Previous
+                  <ArrowIcon direction="left" />
+                  <span>Previous</span>
                 </button>
 
-                <span className="products-pagination-status">
-                  Page {page + 1} of {totalPages}
-                </span>
+                <div className="products-pagination-status">
+                  <span>Page</span>
+                  <strong>{page + 1}</strong>
+                  <span>of</span>
+                  <strong>{totalPages}</strong>
+                </div>
 
                 <button
                   type="button"
-                  className="button products-pagination-button"
+                  className="products-pagination-button"
                   onClick={() =>
                     handlePageChange(page + 1)
                   }
@@ -407,7 +553,8 @@ function Products() {
                     page >= totalPages - 1
                   }
                 >
-                  Next
+                  <span>Next</span>
+                  <ArrowIcon />
                 </button>
               </nav>
             )}
@@ -419,3 +566,4 @@ function Products() {
 }
 
 export default Products;
+
