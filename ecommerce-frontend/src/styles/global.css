@@ -9,8 +9,8 @@
   --color-primary: #222222;
   --color-primary-text: #ffffff;
 
-  --container-width: 1200px;
-  --container-padding: 16px;
+  /* Full-width layout */
+  --container-padding: 24px;
 
   --spacing-xs: 4px;
   --spacing-sm: 8px;
@@ -72,12 +72,13 @@ img {
   flex-direction: column;
 }
 
+/* Full-width container */
 .container {
-  width: min(
-    var(--container-width),
-    calc(100% - (var(--container-padding) * 2))
-  );
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
 }
 
 .site-main {
