@@ -8,6 +8,7 @@ import ProductGrid from "../components/ProductGrid";
 
 import { searchProducts } from "../services/searchService";
 import { getCategories } from "../services/categoryService";
+import CategoryCard from "../components/CategoryCard";
 
 import "./styles/Home.css";
 
@@ -209,26 +210,13 @@ function Home() {
           {!isCategoriesLoading &&
             !categoriesError &&
             categories.length > 0 && (
-              <div className="category-grid">
-                {categories.map(
-                  (category) => (
-                    <Link
-                      key={category.id}
-                      className="category-card"
-                      to={`/categories/${category.id}`}
-                    >
-                      <div className="category-card-icon">
-                        {String(
-                          category.name || "C"
-                        ).charAt(0)}
-                      </div>
-
-                      <h3>
-                        {category.name}
-                      </h3>
-                    </Link>
-                  )
-                )}
+              <div className="home-category-grid">
+                {categories.map((category) => (
+                  <CategoryCard
+                    key={category.id}
+                    category={category}
+                  />
+                ))}
               </div>
             )}
         </div>
