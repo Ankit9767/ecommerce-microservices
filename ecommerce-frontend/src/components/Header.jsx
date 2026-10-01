@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Link,
@@ -9,6 +10,106 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 import "./styles/Header.css";
+
+function HomeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+      <path d="M9.5 21v-7h5v7" />
+    </svg>
+  );
+}
+
+function ProductsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M4 9h16" />
+      <path d="M9 9v11" />
+    </svg>
+  );
+}
+
+function CategoriesIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </svg>
+  );
+}
+
+function OrdersIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <path d="M6 3h12v18H6z" />
+      <path d="M9 7h6" />
+      <path d="M9 11h6" />
+      <path d="M9 15h4" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <path d="M3 4h2l2.2 11h10.9l2-8H6" />
+      <circle cx="9" cy="19" r="1.5" />
+      <circle cx="17" cy="19" r="1.5" />
+    </svg>
+  );
+}
+
+function LoginIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <path d="M10 4H5v16h5" />
+      <path d="M13 8l4 4-4 4" />
+      <path d="M8 12h9" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <path d="M14 4h5v16h-5" />
+      <path d="M11 8l-4 4 4 4" />
+      <path d="M7 12h10" />
+    </svg>
+  );
+}
 
 function Header() {
   const navigate = useNavigate();
@@ -56,23 +157,39 @@ function Header() {
         <Link
           className="brand"
           to="/"
+          aria-label="EcommerceHub home"
         >
-          EcommerceHub
-        </Link>
+          <span className="brand-mark">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="brand-cart-icon"
+            >
+              <path d="M3 4h2l2.2 11h10.9l2-8H6" />
+              <circle cx="9" cy="19" r="1.5" />
+              <circle cx="17" cy="19" r="1.5" />
+            </svg>
+          </span>
 
+          <span className="brand-text">
+            EcommerceHub
+          </span>
+        </Link>
         <nav
           className="main-navigation"
           aria-label="Main navigation"
         >
           <NavLink
             to="/"
+            end
             className={({ isActive }) =>
               isActive
                 ? "nav-link active"
                 : "nav-link"
             }
           >
-            Home
+            <HomeIcon />
+            <span>Home</span>
           </NavLink>
 
           <NavLink
@@ -83,7 +200,8 @@ function Header() {
                 : "nav-link"
             }
           >
-            Products
+            <ProductsIcon />
+            <span>Products</span>
           </NavLink>
 
           <NavLink
@@ -94,7 +212,8 @@ function Header() {
                 : "nav-link"
             }
           >
-            Categories
+            <CategoriesIcon />
+            <span>Categories</span>
           </NavLink>
 
           {isAuthenticated && (
@@ -106,7 +225,8 @@ function Header() {
                   : "nav-link"
               }
             >
-              Orders
+              <OrdersIcon />
+              <span>Orders</span>
             </NavLink>
           )}
 
@@ -118,6 +238,8 @@ function Header() {
                 : "nav-link cart-nav-link"
             }
           >
+            <CartIcon />
+
             <span>Cart</span>
 
             {cartItemCount > 0 && (
@@ -139,7 +261,8 @@ function Header() {
                   : "nav-link"
               }
             >
-              Login
+              <LoginIcon />
+              <span>Login</span>
             </NavLink>
           )}
 
@@ -151,9 +274,13 @@ function Header() {
               disabled={isLoggingOut}
               aria-busy={isLoggingOut}
             >
-              {isLoggingOut
-                ? "Logging out..."
-                : "Logout"}
+              <LogoutIcon />
+
+              <span>
+                {isLoggingOut
+                  ? "Logging out..."
+                  : "Logout"}
+              </span>
             </button>
           )}
         </nav>
@@ -172,3 +299,4 @@ function Header() {
 }
 
 export default Header;
+
