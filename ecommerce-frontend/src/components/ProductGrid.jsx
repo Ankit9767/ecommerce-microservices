@@ -14,9 +14,9 @@ function ProductGrid({ products }) {
 
   return (
     <div className="product-grid">
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductCard
-          key={product.id}
+          key={product.id ?? index}
           product={product}
         />
       ))}
