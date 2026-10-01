@@ -1,99 +1,476 @@
+
 .product-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  height: 100%;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
+  border-radius: 14px;
   background: var(--color-surface);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.035);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 
 .product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  border-color: #d7d7d7;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.08),
+    0 3px 8px rgba(0, 0, 0, 0.04);
 }
 
+.product-card--pressed {
+  transform: translateY(0) scale(0.985);
+}
+
+/* =========================================
+   Product Image
+========================================= */
+
 .product-card-image {
-  aspect-ratio: 1 / 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 1 / 0.86;
   overflow: hidden;
-  background: var(--color-background);
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      #ffffff 0%,
+      var(--color-background) 72%
+    );
 }
 
 .product-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 300ms ease;
 }
 
-.product-card-image span {
+.product-card:hover .product-card-image img {
+  transform: scale(1.045);
+}
+
+.product-card-image span:not(.product-card-cart-state) {
   color: var(--color-text-muted);
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
 }
 
+/* =========================================
+   Content
+========================================= */
+
 .product-card-content {
-  padding: var(--spacing-md);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 13px;
 }
 
 .product-card-category {
-  margin: 0 0 var(--spacing-xs);
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
+  overflow: hidden;
+  margin: 0 0 5px;
+  color: #777777;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
 }
 
 .product-card-name {
+  min-height: 40px;
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.4;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
-.product-card-name a:hover {
-  text-decoration: underline;
+/* =========================================
+   Product Name Link
+========================================= */
+
+.product-card-name a {
+  position: relative;
+  display: inline;
+  color: var(--color-text);
+  text-decoration: none;
+  background-image: linear-gradient(
+    to right,
+    currentColor,
+    currentColor
+  );
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1.5px;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease,
+    background-size 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms ease;
 }
+
+/*
+ * Animated underline.
+ * The underline grows from left to right.
+ */
+.product-card-name a:hover {
+  color: #444444;
+  text-decoration: none;
+  background-size: 100% 1.5px;
+}
+
+/*
+ * Small press effect when clicking the product name.
+ */
+.product-card-name a:active {
+  opacity: 0.7;
+}
+
+/*
+ * Keyboard accessibility.
+ */
+.product-card-name a:focus-visible {
+  outline: none;
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+/*
+ * When the whole card is hovered, subtly emphasize
+ * the product name without forcing the underline.
+ */
+.product-card:hover .product-card-name a {
+  color: #333333;
+}
+
+/*
+ * Only show the underline when the name itself is hovered.
+ */
+.product-card:hover .product-card-name a:hover {
+  color: #222222;
+  background-size: 100% 1.5px;
+}
+
+/* =========================================
+   Price and Rating
+========================================= */
 
 .product-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .product-card-price {
-  font-weight: 700;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .product-card-rating {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #707070;
+  font-size: 0.73rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
+
+.product-card-rating span {
+  color: #555555;
+  transition:
+    transform 180ms ease,
+    color 180ms ease;
+}
+
+.product-card:hover .product-card-rating span {
+  color: #333333;
+  transform: scale(1.12) rotate(4deg);
+}
+
+/* =========================================
+   Action Area
+========================================= */
+
+.product-card-action {
+  position: relative;
+  min-height: 40px;
+  margin-top: 12px;
+  animation:
+    product-card-action-enter
+    260ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.product-card-action--quantity {
+  display: flex;
+  align-items: center;
+}
+
+.product-card-cart-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+}
+
+/* =========================================
+   Remove From Cart
+========================================= */
+
+.product-card-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: #666666;
+  cursor: pointer;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.035);
+  transition:
+    transform 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.product-card-remove-button svg {
+  width: 16px;
+  height: 16px;
+  transition:
+    transform 180ms ease,
+    color 180ms ease;
+}
+
+.product-card-remove-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #d7bcbc;
+  background: #fff8f8;
+  color: #a33a3a;
+  box-shadow: 0 7px 15px rgba(120, 40, 40, 0.1);
+}
+
+.product-card-remove-button:hover:not(:disabled) svg {
+  transform: scale(1.08) rotate(-3deg);
+}
+
+.product-card-remove-button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.92);
+  box-shadow: 0 2px 5px rgba(120, 40, 40, 0.08);
+}
+
+.product-card-remove-button:focus-visible {
+  outline: none;
+  border-color: #a33a3a;
+  box-shadow:
+    0 0 0 3px rgba(163, 58, 58, 0.1),
+    0 6px 14px rgba(120, 40, 40, 0.08);
+}
+
+.product-card-remove-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* =========================================
+   Add To Cart
+========================================= */
 
 .product-card-cart-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   width: 100%;
-  margin-top: var(--spacing-md);
-  padding: 10px 14px;
-  border: 0;
-  border-radius: var(--border-radius-md);
-  background: var(--color-primary);
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-text);
+  border-radius: 9px;
+  background: var(--color-text);
   color: var(--color-primary-text);
-  font-weight: 600;
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.product-card-cart-button:hover {
-  opacity: 0.9;
+.product-card-cart-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-card-cart-icon svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 180ms ease;
+}
+
+.product-card-cart-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #333333;
+  border-color: #333333;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.13);
+}
+
+.product-card-cart-button:hover:not(:disabled)
+  .product-card-cart-icon svg {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.product-card-cart-button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.975);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.product-card-cart-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.08),
+    0 6px 15px rgba(0, 0, 0, 0.1);
 }
 
 .product-card-cart-button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.58;
 }
 
+/* =========================================
+   Error
+========================================= */
+
 .product-card-error {
-  margin: var(--spacing-sm) 0 0;
+  margin: 8px 0 0;
   color: #a33a3a;
-  font-size: 0.8125rem;
+  font-size: 0.72rem;
   line-height: 1.4;
+  animation:
+    product-card-error-enter
+    220ms ease
+    both;
 }
+
+/* =========================================
+   Animations
+========================================= */
+
+@keyframes product-card-action-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes product-card-error-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   Responsive
+========================================= */
+
+@media (max-width: 520px) {
+  .product-card-content {
+    padding: 12px;
+  }
+
+  .product-card-name {
+    font-size: 0.9rem;
+  }
+
+  .product-card-price {
+    font-size: 0.86rem;
+  }
+
+  .product-card-cart-button {
+    min-height: 39px;
+  }
+
+  .product-card-cart-controls {
+    grid-template-columns: minmax(0, 1fr) 38px;
+    gap: 6px;
+  }
+
+  .product-card-remove-button {
+    width: 38px;
+    height: 39px;
+  }
+}
+
+/* =========================================
+   Reduced Motion
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card,
+  .product-card-image img,
+  .product-card-name a,
+  .product-card-cart-button,
+  .product-card-cart-icon svg,
+  .product-card-rating span,
+  .product-card-action,
+  .product-card-cart-state,
+  .product-card-remove-button,
+  .product-card-remove-button svg,
+  .product-card-error {
+    animation: none;
+    transition: none;
+  }
+
+  .product-card:hover {
+    transform: none;
+  }
+
+  .product-card:hover .product-card-image img {
+    transform: none;
+  }
+
+  .product-card-name a {
+    background-size: 0 0;
+  }
+
+  .product-card-name a:hover {
+    background-size: 100% 1.5px;
+  }
+}
+
