@@ -1,78 +1,296 @@
 .site-header {
-  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  background: rgba(255, 255, 255, 0.94);
+
   border-bottom: 1px solid var(--color-border);
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.05);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .header-content {
-  min-height: 64px;
+  min-height: 68px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  gap: var(--spacing-xl);
 }
 
+/* Brand */
+
 .brand {
-  font-size: 1.25rem;
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  color: var(--color-text);
+
+  font-size: 1.2rem;
   font-weight: 700;
+
+  white-space: nowrap;
+
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
 }
+
+.brand:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 9px;
+
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.08);
+
+  transition:
+    transform 250ms ease,
+    border-radius 250ms ease,
+    box-shadow 250ms ease;
+}
+
+.brand-cart-icon {
+  width: 19px;
+  height: 19px;
+
+  fill: none;
+
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  transform: rotate(-8deg);
+
+  transition:
+    transform 250ms ease,
+    stroke-width 250ms ease;
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-5deg) scale(1.08);
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.14);
+}
+
+.brand:hover .brand-cart-icon {
+  transform: rotate(-16deg) translateY(-1px);
+  stroke-width: 2.1;
+}
+
+/* Navigation */
 
 .main-navigation {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: 6px;
 }
 
 .nav-link {
   position: relative;
-  padding: var(--spacing-sm) 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 9px 11px;
+
+  border-radius: 9px;
+
   color: var(--color-text-muted);
-  font-size: 0.95rem;
+
+  font-size: 0.92rem;
   font-weight: 500;
+
+  white-space: nowrap;
+
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
 }
+
+/*
+ * Hover:
+ * No underline here.
+ * Only background, icon movement and slight lift.
+ */
 
 .nav-link:hover {
   color: var(--color-text);
+
+  background: rgba(0, 0, 0, 0.045);
+
+  transform: translateY(-1px);
 }
+
+/* Active navigation item */
 
 .nav-link.active {
   color: var(--color-text);
   font-weight: 700;
+
+  background: rgba(0, 0, 0, 0.045);
 }
+
+/*
+ * Underline ONLY for selected route.
+ */
 
 .nav-link.active::after {
   content: "";
+
   position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
+
+  left: 11px;
+  right: 11px;
+  bottom: 1px;
+
   height: 2px;
+
+  border-radius: 999px;
+
   background: var(--color-primary);
+
+  transform: scaleX(1);
+  transform-origin: center;
+
+  animation: active-nav-enter 220ms ease both;
 }
 
+@keyframes active-nav-enter {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Icons */
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+
+  flex-shrink: 0;
+
+  fill: none;
+
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  transition:
+    transform 200ms ease,
+    stroke-width 200ms ease;
+}
+
+.nav-link:hover .nav-icon {
+  transform: translateY(-1px) scale(1.08);
+  stroke-width: 2;
+}
+
+.nav-link.active .nav-icon {
+  stroke-width: 2;
+}
+
+/* Cart */
+
 .cart-nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  gap: 7px;
 }
 
 .cart-count {
   min-width: 20px;
   height: 20px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   padding: 0 5px;
+
   border-radius: 999px;
+
   background: var(--color-primary);
   color: var(--color-primary-text);
-  font-size: 0.7rem;
+
+  font-size: 0.68rem;
   font-weight: 700;
+  line-height: 1;
+
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
+
+.cart-nav-link:hover .cart-count {
+  transform: translateY(-2px) scale(1.1);
+
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15);
+
+  animation: cart-badge-pulse 650ms ease;
+}
+
+@keyframes cart-badge-pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.16);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+/* Logout */
 
 .logout-button {
   appearance: none;
+
   margin: 0;
+
   border: 0;
+
   background: transparent;
+
   font: inherit;
 }
 
@@ -80,33 +298,66 @@
   color: var(--color-text);
 }
 
+.logout-button:hover .nav-icon {
+  transform: translateX(2px);
+}
+
 .logout-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
+.logout-button:disabled .nav-icon {
+  animation: logout-loading 800ms linear infinite;
+}
+
+@keyframes logout-loading {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Header error */
+
 .header-error {
   padding-top: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
+
   color: #a33a3a;
+
   font-size: 0.875rem;
   font-weight: 600;
 }
 
+/* Mobile */
+
 @media (max-width: 768px) {
   .header-content {
     min-height: auto;
-    padding: var(--spacing-md) 0;
+
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+
     flex-direction: column;
     align-items: flex-start;
+
     gap: var(--spacing-md);
   }
 
   .main-navigation {
     width: 100%;
-    gap: 18px;
+
+    gap: 4px;
+
     overflow-x: auto;
+
     padding-bottom: var(--spacing-xs);
+
+    scrollbar-width: none;
+  }
+
+  .main-navigation::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-link {
@@ -114,8 +365,8 @@
   }
 
   .logout-button {
-    width: 100%;
     justify-content: flex-start;
+
     text-align: left;
   }
 
@@ -124,3 +375,31 @@
     padding-bottom: var(--spacing-sm);
   }
 }
+
+/* Reduced motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .brand,
+  .brand-mark,
+  .nav-link,
+  .nav-icon,
+  .cart-count {
+    transition: none;
+  }
+
+  .nav-link.active::after,
+  .cart-nav-link:hover .cart-count,
+  .logout-button:disabled .nav-icon {
+    animation: none;
+  }
+
+  .brand:hover,
+  .brand:hover .brand-mark,
+  .nav-link:hover,
+  .nav-link:hover .nav-icon,
+  .cart-nav-link:hover .cart-count,
+  .logout-button:hover .nav-icon {
+    transform: none;
+  }
+}
+
