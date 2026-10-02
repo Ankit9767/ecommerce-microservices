@@ -1,9 +1,53 @@
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getCategories } from "../services/categoryService";
 
 import "./styles/Categories.css";
+
+function CategoryIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="categories-icon"
+    >
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="categories-icon"
+    >
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="categories-icon"
+    >
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
 
 function Categories() {
   const [categories, setCategories] = useState([]);
@@ -61,7 +105,16 @@ function Categories() {
     return (
       <section className="page categories-page">
         <div className="container">
-          <div className="categories-status">
+          <div className="categories-loading">
+            <div className="categories-loading-icon">
+              <CategoryIcon />
+            </div>
+
+            <div className="categories-loading-text">
+              <span />
+              <span />
+            </div>
+
             <p>Loading categories...</p>
           </div>
         </div>
@@ -77,7 +130,14 @@ function Categories() {
             className="categories-status categories-status-error"
             role="alert"
           >
-            <p>{error}</p>
+            <div className="categories-status-error-icon">
+              !
+            </div>
+
+            <div>
+              <h2>Unable to load categories</h2>
+              <p>{error}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -88,49 +148,97 @@ function Categories() {
     <section className="page categories-page">
       <div className="container">
         <header className="categories-header">
-          <p className="categories-eyebrow">
-            EcommerceHub
-          </p>
+          <div className="categories-header-content">
+            <div className="categories-title-row">
+              <div className="categories-title-icon">
+                <CategoryIcon />
+              </div>
 
-          <h1 className="page-title">
-            Categories
-          </h1>
+              <div>
+                <p className="categories-eyebrow">
+                  EcommerceHub
+                </p>
 
-          <p className="page-description">
-            Browse products by category.
-          </p>
+                <h1 className="page-title">
+                  Categories
+                </h1>
+              </div>
+            </div>
+
+            <p className="categories-description">
+              Explore our collection through thoughtfully
+              organized categories and discover products
+              that fit what you need.
+            </p>
+
+            <div className="categories-header-meta">
+              <span className="categories-meta-item">
+                <GridIcon />
+                Browse categories
+              </span>
+
+              <span className="categories-meta-divider" />
+
+              <span className="categories-meta-item">
+                <CategoryIcon />
+                Explore products
+              </span>
+            </div>
+          </div>
         </header>
 
         {categories.length === 0 ? (
-          <div className="categories-status">
-            <p>No categories are currently available.</p>
+          <div className="categories-empty">
+            <div className="categories-empty-icon">
+              <CategoryIcon />
+            </div>
+
+            <h2>No categories available</h2>
+
+            <p>
+              No categories are currently available.
+            </p>
           </div>
         ) : (
           <div className="categories-grid">
-            {categories.map((category) => (
-              <article
+            {categories.map((category, index) => (
+              <Link
                 className="category-card"
                 key={category.id}
+                to={`/categories/${category.id}`}
+                style={{
+                  "--category-delay": `${index * 75}ms`
+                }}
               >
-                <div className="category-card-content">
-                  <h2 className="category-card-title">
-                    {category.name}
-                  </h2>
-
-                  {category.description && (
-                    <p className="category-card-description">
-                      {category.description}
-                    </p>
-                  )}
-
-                  <Link
-                    className="button category-card-link"
-                    to={`/categories/${category.id}`}
-                  >
-                    View Products
-                  </Link>
+                <div className="category-card-background">
+                  <span />
+                  <span />
                 </div>
-              </article>
+
+                <div className="category-card-main">
+                  <div className="category-card-icon">
+                    <CategoryIcon />
+                  </div>
+
+                  <div className="category-card-title-wrap">
+                    <h2 className="category-card-title">
+                      {category.name}
+                    </h2>
+
+                    {category.description && (
+                      <p className="category-card-description">
+                        {category.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="category-card-footer">
+                  <span>Explore Products</span>
+
+                  <ArrowIcon />
+                </div>
+              </Link>
             ))}
           </div>
         )}
@@ -140,3 +248,4 @@ function Categories() {
 }
 
 export default Categories;
+
