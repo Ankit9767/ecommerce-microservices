@@ -54,17 +54,16 @@ function CategoriesIcon() {
   );
 }
 
-function OrdersIcon() {
+function PackageIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
       className="nav-icon"
     >
-      <path d="M6 3h12v18H6z" />
-      <path d="M9 7h6" />
-      <path d="M9 11h6" />
-      <path d="M9 15h4" />
+      <path d="M12 2 22 7v10l-10 5L2 17V7l10-5Z" />
+      <path d="M2 7l10 5.5L22 7" />
+      <path d="M12 12.5V22" />
     </svg>
   );
 }
@@ -225,7 +224,7 @@ function Header() {
                   : "nav-link"
               }
             >
-              <OrdersIcon />
+              <PackageIcon />
               <span>Orders</span>
             </NavLink>
           )}
