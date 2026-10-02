@@ -33,12 +33,16 @@ function GridIcon() {
   );
 }
 
-function PackageIcon() {
+function ProductsIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
-      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-      <path d="m4 7.5 8 4.5 8-4.5" />
-      <path d="M12 12v9" />
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="products-icon"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M4 9h16" />
+      <path d="M9 9v11" />
     </svg>
   );
 }
@@ -342,7 +346,7 @@ function Products() {
           <div className="products-header-content">
             <div className="products-title-row">
               <div className="products-title-icon">
-                <PackageIcon />
+                <ProductsIcon />
               </div>
 
               <div>
@@ -364,7 +368,7 @@ function Products() {
 
             <div className="products-header-meta">
               <span className="products-meta-item">
-                <GridIcon />
+                <ProductsIcon />
                 Browse the collection
               </span>
 
@@ -427,7 +431,7 @@ function Products() {
             aria-live="polite"
           >
             <div className="products-loading-icon">
-              <PackageIcon />
+              <ProductsIcon />
             </div>
 
             <div className="products-loading-content">
@@ -468,7 +472,7 @@ function Products() {
             <div className="products-results-header">
               <div className="products-results-title">
                 <span className="products-results-icon">
-                  <GridIcon />
+                  <ProductsIcon />
                 </span>
 
                 <div>
