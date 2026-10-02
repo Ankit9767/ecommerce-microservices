@@ -7,34 +7,21 @@ import { getMyOrders } from "../services/orderService";
 
 import "./styles/Orders.css";
 
-function OrdersIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="nav-icon"
-    >
-      <path d="M6 3h12v18H6z" />
-      <path d="M9 7h6" />
-      <path d="M9 11h6" />
-      <path d="M9 15h4" />
-    </svg>
-  );
-}
-
 function PackageIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className="orders-icon"
+      className="products-icon"
     >
-      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-      <path d="m4 7.5 8 4.5 8-4.5" />
-      <path d="M12 12v9" />
+      <path d="M12 1 23 6.5v11L12 23 1 17.5v-11L12 1Z" />
+      <path d="M1 6.5 12 12.5 23 6.5" />
+      <path d="M12 12.5V23" />
     </svg>
   );
 }
+
+
 
 function ArrowIcon({ direction = "right" }) {
   return (
@@ -171,7 +158,7 @@ function Orders() {
         <div className="container">
           <div className="orders-loading">
             <div className="orders-loading-icon">
-              <OrdersIcon />
+              <PackageIcon />
             </div>
 
             <p>Loading your orders...</p>
@@ -191,7 +178,7 @@ function Orders() {
         <div className="container">
           <div className="orders-state orders-auth-state">
             <div className="orders-state-icon">
-              <OrdersIcon />
+              <PackageIcon />
             </div>
 
             <p className="orders-state-eyebrow">
@@ -226,7 +213,7 @@ function Orders() {
           <div className="orders-header-content">
             <div className="orders-title-row">
               <div className="orders-title-icon">
-                <OrdersIcon />
+                <PackageIcon />
               </div>
 
               <div>
@@ -249,17 +236,6 @@ function Orders() {
               <span className="orders-meta-item">
                 <PackageIcon />
                 Your order history
-              </span>
-
-              <span className="orders-meta-divider" />
-
-              <span className="orders-meta-item">
-                <CartIcon />
-                {orders.length}{" "}
-                {orders.length === 1
-                  ? "order"
-                  : "orders"}{" "}
-                on this page
               </span>
             </div>
           </div>
@@ -331,27 +307,6 @@ function Orders() {
           !error &&
           orders.length > 0 && (
             <>
-              <div className="orders-results-header">
-                <div className="orders-results-title">
-                  <PackageIcon />
-
-                  <div>
-                    <span>Your Orders</span>
-                    <strong>
-                      {orders.length}{" "}
-                      {orders.length === 1
-                        ? "order"
-                        : "orders"}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="orders-results-page">
-                  Page {page + 1} of{" "}
-                  {totalPages || 1}
-                </div>
-              </div>
-
               <div className="orders-list">
                 {orders.map((order, index) => {
                   const isPaymentPending =
@@ -410,8 +365,12 @@ function Orders() {
                           </span>
 
                           <strong>
-                            {order.items?.length || 0}
+                            {order.items?.reduce(
+                              (total, item) => total + (item.quantity || 0),
+                              0
+                            )}
                           </strong>
+
                         </div>
 
                         <div className="order-detail-item order-total">
