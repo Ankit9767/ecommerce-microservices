@@ -1,3 +1,4 @@
+
 import React, {
   useCallback,
   useEffect,
@@ -71,6 +72,170 @@ const SHIPMENT_STEPS = [
   }
 ];
 
+function OrderIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z" />
+      <path d="M4 6.5 12 10l8-3.5" />
+      <path d="M12 10v11" />
+      <path d="M8 8.25v4.5" />
+    </svg>
+  );
+}
+
+function ProductsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="nav-icon"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M4 9h16" />
+      <path d="M9 9v11" />
+    </svg>
+  );
+}
+
+function PackageIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4 7.5 8 4.5 8-4.5" />
+      <path d="M12 12v9" />
+    </svg>
+  );
+}
+
+function ArrowIcon({ direction = "right" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      {direction === "left" ? (
+        <>
+          <path d="M19 12H5" />
+          <path d="m11 18-6-6 6-6" />
+        </>
+      ) : (
+        <>
+          <path d="M5 12h14" />
+          <path d="m13 6 6 6-6 6" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function PaymentIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <rect
+        x="3.5"
+        y="5"
+        width="17"
+        height="14"
+        rx="2"
+      />
+      <path d="M3.5 9h17" />
+      <path d="M7 14h4" />
+    </svg>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="M3 6h11v11H3z" />
+      <path d="M14 10h4l3 3v4h-7z" />
+      <circle cx="7" cy="18" r="1.7" />
+      <circle cx="18" cy="18" r="1.7" />
+    </svg>
+  );
+}
+
+function ReviewIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="m12 4 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L12 4Z" />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="M20 10.5c0 5.2-8 10.5-8 10.5S4 15.7 4 10.5a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10.5" r="2.5" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="order-details-icon"
+    >
+      <path d="M12 4 21 20H3L12 4Z" />
+      <path d="M12 9v5" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
 function formatShipmentDate(dateValue) {
   if (!dateValue) {
     return null;
@@ -126,11 +291,6 @@ function OrderDetails() {
   const [payment, setPayment] = useState(null);
   const [shipment, setShipment] = useState(null);
 
-  /*
-   * IMPORTANT:
-   * This loading state is ONLY for the order.
-   * Review loading never changes this state.
-   */
   const [isLoading, setIsLoading] = useState(true);
 
   const [isPaymentLoading, setIsPaymentLoading] =
@@ -159,9 +319,6 @@ function OrderDetails() {
   const [shipmentError, setShipmentError] =
     useState("");
 
-  /*
-   * Reviews
-   */
   const [myReviews, setMyReviews] =
     useState([]);
 
@@ -183,16 +340,6 @@ function OrderDetails() {
   const [deletingReviewId, setDeletingReviewId] =
     useState(null);
 
-  /*
-   * ============================================================
-   * LOAD ORDER
-   * ============================================================
-   *
-   * This is intentionally independent from reviews.
-   *
-   * The 15 second timeout guarantees that the page does not
-   * remain on "Loading order..." forever if getOrder() hangs.
-   */
   useEffect(() => {
     let isMounted = true;
     let timeoutId = null;
@@ -223,11 +370,7 @@ function OrderDetails() {
       }, 15000);
 
       try {
-        console.log("Loading order:", id);
-
         const response = await getOrder(id);
-
-        console.log("Order response:", response);
 
         if (!isMounted) {
           return;
@@ -235,11 +378,6 @@ function OrderDetails() {
 
         setOrder(response);
       } catch (requestError) {
-        console.error(
-          "Order loading failed:",
-          requestError
-        );
-
         if (!isMounted) {
           return;
         }
@@ -258,10 +396,6 @@ function OrderDetails() {
         }
 
         if (isMounted) {
-          console.log(
-            "Setting isLoading(false)"
-          );
-
           setIsLoading(false);
         }
       }
@@ -284,17 +418,6 @@ function OrderDetails() {
     isAuthLoading
   ]);
 
-  /*
-   * ============================================================
-   * LOAD MY REVIEWS
-   * ============================================================
-   *
-   * IMPORTANT:
-   * This does NOT touch isLoading.
-   *
-   * Therefore a slow/failing getMyReviews() request cannot
-   * make the entire OrderDetails page display "Loading order...".
-   */
   useEffect(() => {
     let isMounted = true;
 
@@ -330,20 +453,11 @@ function OrderDetails() {
           return;
         }
 
-        console.error(
-          "Review loading failed:",
-          requestError
-        );
-
         setReviewError(
           requestError?.message ||
             "Unable to load your reviews."
         );
 
-        /*
-         * Important:
-         * Even if reviews fail, the order page remains usable.
-         */
         setMyReviews([]);
       } finally {
         if (isMounted) {
@@ -352,10 +466,6 @@ function OrderDetails() {
       }
     }
 
-    /*
-     * Review loading waits only for authentication.
-     * It does NOT wait for the order request.
-     */
     if (!isAuthLoading) {
       loadMyReviews();
     }
@@ -368,11 +478,6 @@ function OrderDetails() {
     isAuthLoading
   ]);
 
-  /*
-   * ============================================================
-   * FIND REVIEW FOR PRODUCT
-   * ============================================================
-   */
   const getReviewForProduct = useCallback(
     (productId) => {
       if (!order?.id || !productId) {
@@ -395,11 +500,6 @@ function OrderDetails() {
     ]
   );
 
-  /*
-   * ============================================================
-   * SUBMIT / UPDATE REVIEW
-   * ============================================================
-   */
   const handleReviewSubmit = async ({
     rating,
     title,
@@ -424,9 +524,6 @@ function OrderDetails() {
 
       let response;
 
-      /*
-       * Update existing review
-       */
       if (existingReview) {
         response = await updateReview(
           existingReview.id,
@@ -444,22 +541,13 @@ function OrderDetails() {
               : review
           )
         );
-      }
-
-      /*
-       * Create new review
-       */
-      else {
+      } else {
         response = await createReview({
           productId:
             reviewFormProductId,
-
           orderId: order.id,
-
           rating,
-
           title,
-
           comment
         });
 
@@ -472,11 +560,6 @@ function OrderDetails() {
       setReviewFormProductId(null);
       setEditingReview(null);
     } catch (requestError) {
-      console.error(
-        "Review save failed:",
-        requestError
-      );
-
       setReviewError(
         requestError?.message ||
           "Unable to save your review."
@@ -486,28 +569,16 @@ function OrderDetails() {
     }
   };
 
-  /*
-   * ============================================================
-   * EDIT REVIEW
-   * ============================================================
-   */
   const handleEditReview = (
     review
   ) => {
     setReviewError("");
-
     setEditingReview(review);
-
     setReviewFormProductId(
       review.productId
     );
   };
 
-  /*
-   * ============================================================
-   * DELETE REVIEW
-   * ============================================================
-   */
   const handleDeleteReview = async (
     review
   ) => {
@@ -526,16 +597,11 @@ function OrderDetails() {
       return;
     }
 
-    setDeletingReviewId(
-      review.id
-    );
-
+    setDeletingReviewId(review.id);
     setReviewError("");
 
     try {
-      await deleteReview(
-        review.id
-      );
+      await deleteReview(review.id);
 
       setMyReviews((current) =>
         current.filter(
@@ -552,11 +618,6 @@ function OrderDetails() {
         setReviewFormProductId(null);
       }
     } catch (requestError) {
-      console.error(
-        "Review delete failed:",
-        requestError
-      );
-
       setReviewError(
         requestError?.message ||
           "Unable to delete your review."
@@ -566,11 +627,6 @@ function OrderDetails() {
     }
   };
 
-  /*
-   * ============================================================
-   * LOAD SHIPMENT
-   * ============================================================
-   */
   const loadShipment = useCallback(
     async (showLoading = true) => {
       if (
@@ -588,17 +644,14 @@ function OrderDetails() {
 
       try {
         const response =
-          await trackShipmentByOrderId(
-            id
-          );
+          await trackShipmentByOrderId(id);
 
         setShipment(response);
 
         return response;
       } catch (requestError) {
         if (
-          requestError?.status ===
-          404
+          requestError?.status === 404
         ) {
           setShipment(null);
           return null;
@@ -622,11 +675,6 @@ function OrderDetails() {
     ]
   );
 
-  /*
-   * ============================================================
-   * SHIPMENT POLLING
-   * ============================================================
-   */
   useEffect(() => {
     if (
       !isAuthenticated ||
@@ -668,9 +716,7 @@ function OrderDetails() {
             }
 
             const latestShipment =
-              await loadShipment(
-                false
-              );
+              await loadShipment(false);
 
             if (
               latestShipment?.status ===
@@ -711,11 +757,6 @@ function OrderDetails() {
     loadShipment
   ]);
 
-  /*
-   * ============================================================
-   * FIND PAYMENT
-   * ============================================================
-   */
   const findPaymentForOrder =
     useCallback(
       async () => {
@@ -748,11 +789,6 @@ function OrderDetails() {
       [id]
     );
 
-  /*
-   * ============================================================
-   * DISCOVER PAYMENT
-   * ============================================================
-   */
   useEffect(() => {
     let isMounted = true;
 
@@ -840,11 +876,6 @@ function OrderDetails() {
     findPaymentForOrder
   ]);
 
-  /*
-   * ============================================================
-   * WAIT FOR PAYMENT RESULT
-   * ============================================================
-   */
   const waitForPaymentResult =
     useCallback(
       async (paymentId) => {
@@ -933,11 +964,6 @@ function OrderDetails() {
       [id]
     );
 
-  /*
-   * ============================================================
-   * COMPLETE PAYMENT
-   * ============================================================
-   */
   const handleCompletePayment =
     useCallback(
       async () => {
@@ -1046,11 +1072,6 @@ function OrderDetails() {
       ]
     );
 
-  /*
-   * ============================================================
-   * CANCEL ORDER
-   * ============================================================
-   */
   const handleCancel =
     async () => {
       if (
@@ -1089,54 +1110,56 @@ function OrderDetails() {
       }
     };
 
-  /*
-   * ============================================================
-   * PAGE LOADING
-   * ============================================================
-   *
-   * Only authentication + order loading control this screen.
-   *
-   * Review loading does NOT appear here.
-   */
   if (
     isAuthLoading ||
     isLoading
   ) {
     return (
-      <main className="page">
+      <main className="page order-details-page">
         <div className="container">
-          <p className="order-details-state">
-            Loading order...
-          </p>
+          <div className="order-details-loading">
+            <div className="order-details-loading-icon">
+              <OrderIcon />
+            </div>
+
+            <p>Loading order...</p>
+
+            <div className="order-details-loading-bar">
+              <span />
+            </div>
+          </div>
         </div>
       </main>
     );
   }
 
-  /*
-   * ============================================================
-   * NOT AUTHENTICATED
-   * ============================================================
-   */
   if (!isAuthenticated) {
     return (
-      <main className="page">
+      <main className="page order-details-page">
         <div className="container">
           <div className="order-details-state">
+            <div className="order-details-state-icon">
+              <OrderIcon />
+            </div>
+
+            <p className="order-details-state-eyebrow">
+              EcommerceHub
+            </p>
+
             <h1 className="page-title">
               Order Details
             </h1>
 
             <p>
-              Please sign in to view
-              your order.
+              Please sign in to view your order.
             </p>
 
             <Link
-              className="button"
+              className="button order-details-primary-button"
               to="/login"
             >
-              Sign In
+              <span>Sign In</span>
+              <ArrowIcon />
             </Link>
           </div>
         </div>
@@ -1144,25 +1167,29 @@ function OrderDetails() {
     );
   }
 
-  /*
-   * ============================================================
-   * ORDER ERROR
-   * ============================================================
-   */
   if (error) {
     return (
-      <main className="page">
+      <main className="page order-details-page">
         <div className="container">
-          <div className="order-details-state">
+          <div className="order-details-state order-details-error-state">
+            <div className="order-details-state-icon">
+              <AlertIcon />
+            </div>
+
+            <p className="order-details-state-eyebrow">
+              Unable to load order
+            </p>
+
             <p className="order-details-error">
               {error}
             </p>
 
             <Link
-              className="button"
+              className="button order-details-primary-button"
               to="/orders"
             >
-              Back to Orders
+              <ArrowIcon direction="left" />
+              <span>Back to Orders</span>
             </Link>
           </div>
         </div>
@@ -1207,63 +1234,74 @@ function OrderDetails() {
       "FAILED";
 
   return (
-    <main className="page">
+    <main className="page order-details-page">
       <div className="container">
 
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
-
-        <div className="order-details-header">
-          <div>
+        <header className="order-details-header">
+          <div className="order-details-header-main">
             <Link
               className="order-back-link"
               to="/orders"
             >
-              ← Back to Orders
+              <ArrowIcon direction="left" />
+              <span>Back to Orders</span>
             </Link>
 
-            <h1 className="page-title">
-              Order #{order.id}
-            </h1>
+            <div className="order-details-title-row">
+              <div className="order-details-title-icon">
+                <OrderIcon />
+              </div>
+
+              <div>
+                <p className="order-details-eyebrow">
+                  Order Details
+                </p>
+
+                <h1 className="page-title">
+                  Order #{order.id}
+                </h1>
+              </div>
+            </div>
+
+            <p className="order-details-description">
+              Review your order, payment,
+              shipment progress, items, and
+              delivery information.
+            </p>
           </div>
-
-          <span
-            className={`order-details-status ${
-              isPaymentPending
-                ? "order-details-status-pending"
-                : ""
-            }`}
-          >
-            {order.status}
-          </span>
-        </div>
-
-        {/* =====================================================
-            PAYMENT
-        ===================================================== */}
+        </header>
 
         {isPaymentPending && (
           <section className="order-payment-section">
+            <div className="order-payment-icon">
+              <PaymentIcon />
+            </div>
+
             <div className="order-payment-content">
+              <p className="order-section-eyebrow">
+                Payment
+              </p>
+
               <h2>
                 Payment Required
               </h2>
 
               <p>
-                Your order has been
-                created, but payment has
-                not been completed yet.
+                Your order has been created,
+                but payment has not been
+                completed yet.
               </p>
 
               {isPaymentLoading && (
                 <p className="order-payment-message">
+                  <ClockIcon />
                   Preparing your payment...
                 </p>
               )}
 
               {paymentMessage && (
                 <p className="order-payment-message">
+                  <CheckIcon />
                   {paymentMessage}
                 </p>
               )}
@@ -1273,6 +1311,7 @@ function OrderDetails() {
                   className="order-payment-error"
                   role="alert"
                 >
+                  <AlertIcon />
                   {paymentError}
                 </p>
               )}
@@ -1293,17 +1332,17 @@ function OrderDetails() {
                     "PENDING"
                 }
               >
-                {isProcessingPayment
-                  ? "Processing Payment..."
-                  : "Complete Payment"}
+                <PaymentIcon />
+
+                <span>
+                  {isProcessingPayment
+                    ? "Processing Payment..."
+                    : "Complete Payment"}
+                </span>
               </button>
             </div>
           </section>
         )}
-
-        {/* =====================================================
-            SHIPMENT
-        ===================================================== */}
 
         <section
           className={`shipment-tracking-section ${
@@ -1312,38 +1351,68 @@ function OrderDetails() {
               : ""
           }`}
         >
+          <div className="shipment-section-heading">
+            <div className="shipment-section-icon">
+              <TruckIcon />
+            </div>
+
+            <div>
+              <p className="shipment-eyebrow">
+                Shipment Tracking
+              </p>
+
+              <h2>
+                {isPaymentPending
+                  ? "Payment Not Completed"
+                  : shipment
+                    ? getShipmentStatusLabel(
+                        shipment.status
+                      )
+                    : "Preparing Shipment"}
+              </h2>
+
+              <p className="shipment-description">
+                {isPaymentPending
+                  ? "Your order has not been shipped because payment has not been completed."
+                  : shipment
+                    ? shipmentIsTerminal
+                      ? shipmentStatus ===
+                        "DELIVERED"
+                        ? "Your shipment has reached its destination."
+                        : "Your shipment is no longer moving through the delivery process."
+                      : "Your shipment is progressing through the delivery process."
+                    : "Shipment tracking information is being prepared."}
+              </p>
+            </div>
+
+            <div
+              className={`shipment-status-indicator ${
+                isPaymentPending
+                  ? "shipment-status-awaiting-payment"
+                  : shipment
+                    ? `shipment-status-${shipmentStatus.toLowerCase()}`
+                    : ""
+              }`}
+            >
+              <span className="shipment-status-dot" />
+
+              <span>
+                {isPaymentPending
+                  ? "Awaiting Payment"
+                  : shipment
+                    ? getShipmentStatusLabel(
+                        shipment.status
+                      )
+                    : "Preparing"}
+              </span>
+            </div>
+          </div>
+
           {isPaymentPending ? (
             <>
-              <div className="shipment-tracking-header">
-                <div>
-                  <p className="shipment-eyebrow">
-                    Shipment Tracking
-                  </p>
-
-                  <h2>
-                    Payment Not Completed
-                  </h2>
-
-                  <p className="shipment-description">
-                    Your order has not
-                    been shipped because
-                    payment has not been
-                    completed.
-                  </p>
-                </div>
-
-                <div className="shipment-status-indicator shipment-status-awaiting-payment">
-                  <span className="shipment-status-dot" />
-
-                  <span>
-                    Awaiting Payment
-                  </span>
-                </div>
-              </div>
-
               <div className="shipment-pending-notice">
                 <div className="shipment-pending-icon">
-                  !
+                  <PaymentIcon />
                 </div>
 
                 <div>
@@ -1352,14 +1421,10 @@ function OrderDetails() {
                   </strong>
 
                   <p>
-                    Complete your
-                    payment first.
-                    Shipment tracking
-                    will become
-                    available after
-                    your payment is
-                    confirmed and the
-                    order enters
+                    Complete your payment first.
+                    Shipment tracking will become
+                    available after your payment is
+                    confirmed and the order enters
                     fulfillment.
                   </p>
                 </div>
@@ -1375,19 +1440,16 @@ function OrderDetails() {
                       }
                     >
                       <div className="shipment-step-marker">
-                        <span />
+                        <PackageIcon />
                       </div>
 
                       <div className="shipment-step-content">
                         <strong>
-                          {
-                            step.label
-                          }
+                          {step.label}
                         </strong>
 
                         <span>
-                          Waiting for
-                          payment
+                          Waiting for payment
                         </span>
                       </div>
                     </div>
@@ -1397,50 +1459,6 @@ function OrderDetails() {
             </>
           ) : (
             <>
-              <div className="shipment-tracking-header">
-                <div>
-                  <p className="shipment-eyebrow">
-                    Shipment Tracking
-                  </p>
-
-                  <h2>
-                    {shipment
-                      ? getShipmentStatusLabel(
-                          shipment.status
-                        )
-                      : "Preparing Shipment"}
-                  </h2>
-
-                  <p className="shipment-description">
-                    {shipment
-                      ? shipmentIsTerminal
-                        ? shipmentStatus ===
-                          "DELIVERED"
-                          ? "Your shipment has reached its destination."
-                          : "Your shipment is no longer moving through the delivery process."
-                        : "Your shipment is progressing through the delivery process."
-                      : "Shipment tracking information is being prepared."}
-                  </p>
-                </div>
-
-                {shipment && (
-                  <div
-                    className={`shipment-status-indicator shipment-status-${shipmentStatus.toLowerCase()}`}
-                    aria-label={`Shipment status: ${getShipmentStatusLabel(
-                      shipment.status
-                    )}`}
-                  >
-                    <span className="shipment-status-dot" />
-
-                    <span>
-                      {getShipmentStatusLabel(
-                        shipment.status
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
-
               {isShipmentLoading && (
                 <div
                   className="shipment-loading"
@@ -1459,6 +1477,7 @@ function OrderDetails() {
                   className="shipment-error"
                   role="alert"
                 >
+                  <AlertIcon />
                   {shipmentError}
                 </p>
               )}
@@ -1497,9 +1516,11 @@ function OrderDetails() {
                             }
                           >
                             <div className="shipment-step-marker">
-                              {isCompleted
-                                ? "✓"
-                                : ""}
+                              {isCompleted ? (
+                                <CheckIcon />
+                              ) : (
+                                <span />
+                              )}
                             </div>
 
                             <div className="shipment-step-content">
@@ -1525,8 +1546,7 @@ function OrderDetails() {
                     {shipment.trackingNumber && (
                       <div className="shipment-information-item">
                         <span>
-                          Tracking
-                          Number
+                          Tracking Number
                         </span>
 
                         <strong>
@@ -1584,8 +1604,7 @@ function OrderDetails() {
                     <p className="shipment-live-message">
                       <span className="shipment-live-dot" />
 
-                      Shipment status
-                      updates
+                      Shipment status updates
                       automatically.
                     </p>
                   )}
@@ -1596,12 +1615,12 @@ function OrderDetails() {
                 !isShipmentLoading &&
                 !shipmentError && (
                   <div className="shipment-empty">
+                    <PackageIcon />
+
                     <p>
-                      Shipment tracking
-                      will become
-                      available once
-                      your shipment has
-                      been created.
+                      Shipment tracking will
+                      become available once your
+                      shipment has been created.
                     </p>
                   </div>
                 )}
@@ -1609,23 +1628,21 @@ function OrderDetails() {
           )}
         </section>
 
-        {/* =====================================================
-            ORDER CONTENT
-        ===================================================== */}
-
         <div className="order-details-layout">
           <section className="order-details-main">
 
-            {/* =================================================
-                ITEMS + REVIEWS
-            ================================================= */}
-
             <div className="order-details-section">
-              <h2>Items</h2>
+              <div className="order-section-heading">
+                <div>
+                  <p className="order-section-eyebrow">
+                    Order Contents
+                  </p>
+                </div>
+              </div>
 
-              {/* Review loading does NOT block the order. */}
               {isReviewsLoading && (
                 <p className="order-payment-message">
+                  <ClockIcon />
                   Loading your reviews...
                 </p>
               )}
@@ -1635,219 +1652,159 @@ function OrderDetails() {
                   className="order-details-error"
                   role="alert"
                 >
+                  <AlertIcon />
                   {reviewError}
                 </p>
               )}
 
               <div className="order-items">
-                {order.items?.map(
-                  (item) => {
-                    const itemReview =
-                      getReviewForProduct(
-                        item.productId
-                      );
+                {order.items?.map((item, index) => {
+                  const itemReview =
+                    getReviewForProduct(item.productId);
 
-                    const isReviewFormOpen =
-                      reviewFormProductId ===
-                      item.productId;
+                  const isReviewFormOpen =
+                    reviewFormProductId === item.productId;
 
-                    return (
-                      <article
-                        className="order-item"
-                        key={item.id}
-                      >
-                        {/* ===============================
-                            ITEM INFORMATION
-                        =============================== */}
+                  return (
+                    <article
+                      className="order-item"
+                      key={item.id}
+                      style={{
+                        "--order-item-delay": `${index * 60}ms`
+                      }}
+                    >
+                      <div className="order-item-content">
+                        <div className="order-item-main">
+                          <div className="order-item-icon">
+                            <ProductsIcon />
+                          </div>
 
-                        <div className="order-item-content">
                           <div>
-                            <h3>
-                              {
-                                item.productName
-                              }
-                            </h3>
+                            <h3>{item.productName}</h3>
 
                             {item.sku && (
                               <p>
-                                SKU:{" "}
-                                {
-                                  item.sku
-                                }
+                                SKU: {item.sku}
                               </p>
                             )}
 
                             <p>
-                              Quantity:{" "}
-                              {
-                                item.quantity
-                              }
+                              Quantity: {item.quantity}
                             </p>
                           </div>
-
-                          <div className="order-item-price">
-                            <span>
-                              {
-                                order.currency
-                              }{" "}
-                              {Number(
-                                item.unitPrice
-                              ).toFixed(
-                                2
-                              )}{" "}
-                              each
-                            </span>
-
-                            <strong>
-                              {
-                                order.currency
-                              }{" "}
-                              {Number(
-                                item.lineTotal
-                              ).toFixed(
-                                2
-                              )}
-                            </strong>
-                          </div>
                         </div>
 
-                        {/* ===============================
-                            REVIEW
-                        =============================== */}
+                        <div className="order-item-price">
+                          <span>
+                            {order.currency}{" "}
+                            {Number(item.unitPrice).toFixed(2)} each
+                          </span>
 
-                        <div className="order-item-review">
-                          {itemReview ? (
-                            <>
-                              <div className="order-item-review-header">
-                                <span className="order-item-review-label">
-                                  Your
-                                  Review
-                                </span>
+                          <strong>
+                            {order.currency}{" "}
+                            {Number(item.lineTotal).toFixed(2)}
+                          </strong>
+                        </div>
+                      </div>
 
-                                <ReviewCard
-                                  review={
-                                    itemReview
-                                  }
-                                  isOwnReview
-                                  onEdit={
-                                    handleEditReview
-                                  }
-                                  onDelete={
-                                    handleDeleteReview
-                                  }
-                                  isDeleting={
-                                    deletingReviewId ===
-                                    itemReview.id
-                                  }
+                      <div className="order-item-review">
+                        {itemReview ? (
+                          <>
+                            <div className="order-item-review-header">
+                              <span className="order-item-review-label">
+                                <ReviewIcon />
+                                Your Review
+                              </span>
+
+                              <ReviewCard
+                                review={itemReview}
+                                isOwnReview
+                                onEdit={handleEditReview}
+                                onDelete={handleDeleteReview}
+                                isDeleting={
+                                  deletingReviewId === itemReview.id
+                                }
+                              />
+                            </div>
+
+                            {editingReview?.id === itemReview.id && (
+                              <ReviewForm
+                                review={editingReview}
+                                onSubmit={handleReviewSubmit}
+                                onCancel={() => {
+                                  setEditingReview(null);
+                                  setReviewFormProductId(null);
+                                  setReviewError("");
+                                }}
+                                isSubmitting={isReviewSubmitting}
+                                error={reviewError}
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {!isReviewFormOpen && (
+                              <button
+                                type="button"
+                                className="order-review-button"
+                                onClick={() => {
+                                  setReviewError("");
+                                  setEditingReview(null);
+                                  setReviewFormProductId(
+                                    item.productId
+                                  );
+                                }}
+                              >
+                                <ReviewIcon />
+                                <span>Write a Review</span>
+                              </button>
+                            )}
+
+                            {isReviewFormOpen && (
+                              <div className="order-review-form-wrapper">
+                                <div className="order-item-review-header">
+                                  <span className="order-item-review-label">
+                                    <ReviewIcon />
+                                    Review {item.productName}
+                                  </span>
+                                </div>
+
+                                <ReviewForm
+                                  onSubmit={handleReviewSubmit}
+                                  onCancel={() => {
+                                    setReviewFormProductId(null);
+                                    setReviewError("");
+                                  }}
+                                  isSubmitting={isReviewSubmitting}
+                                  error={reviewError}
                                 />
                               </div>
-
-                              {editingReview?.id ===
-                                itemReview.id && (
-                                <ReviewForm
-                                  review={
-                                    editingReview
-                                  }
-                                  onSubmit={
-                                    handleReviewSubmit
-                                  }
-                                  onCancel={() => {
-                                    setEditingReview(
-                                      null
-                                    );
-
-                                    setReviewFormProductId(
-                                      null
-                                    );
-
-                                    setReviewError(
-                                      ""
-                                    );
-                                  }}
-                                  isSubmitting={
-                                    isReviewSubmitting
-                                  }
-                                  error={
-                                    reviewError
-                                  }
-                                />
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              {!isReviewFormOpen && (
-                                <button
-                                  type="button"
-                                  className="order-review-button"
-                                  onClick={() => {
-                                    setReviewError(
-                                      ""
-                                    );
-
-                                    setEditingReview(
-                                      null
-                                    );
-
-                                    setReviewFormProductId(
-                                      item.productId
-                                    );
-                                  }}
-                                >
-                                  Write a Review
-                                </button>
-                              )}
-
-                              {isReviewFormOpen && (
-                                <div className="order-review-form-wrapper">
-                                  <div className="order-item-review-header">
-                                    <span className="order-item-review-label">
-                                      Review{" "}
-                                      {
-                                        item.productName
-                                      }
-                                    </span>
-                                  </div>
-
-                                  <ReviewForm
-                                    onSubmit={
-                                      handleReviewSubmit
-                                    }
-                                    onCancel={() => {
-                                      setReviewFormProductId(
-                                        null
-                                      );
-
-                                      setReviewError(
-                                        ""
-                                      );
-                                    }}
-                                    isSubmitting={
-                                      isReviewSubmitting
-                                    }
-                                    error={
-                                      reviewError
-                                    }
-                                  />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  }
-                )}
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </div>
 
-            {/* =================================================
-                SHIPPING ADDRESS
-            ================================================= */}
-
             <div className="order-details-section">
-              <h2>
-                Shipping Address
-              </h2>
+              <div className="order-section-heading">
+                <div className="order-section-icon">
+                  <LocationIcon />
+                </div>
+
+                <div>
+                  <p className="order-section-eyebrow">
+                    Delivery
+                  </p>
+
+                  <h2>
+                    Shipping Address
+                  </h2>
+                </div>
+              </div>
 
               <address>
                 <strong>
@@ -1919,19 +1876,25 @@ function OrderDetails() {
             </div>
           </section>
 
-          {/* ===================================================
-              ORDER SUMMARY
-          =================================================== */}
-
           <aside className="order-details-summary">
-            <h2>
-              Order Summary
-            </h2>
+            <div className="order-summary-heading">
+              <div className="order-summary-icon">
+                <OrderIcon />
+              </div>
+
+              <div>
+                <p className="order-section-eyebrow">
+                  Overview
+                </p>
+
+                <h2>
+                  Order Summary
+                </h2>
+              </div>
+            </div>
 
             <div className="order-summary-row">
-              <span>
-                Status
-              </span>
+              <span>Status</span>
 
               <strong>
                 {order.status}
@@ -1939,9 +1902,7 @@ function OrderDetails() {
             </div>
 
             <div className="order-summary-row">
-              <span>
-                Payment Method
-              </span>
+              <span>Payment Method</span>
 
               <strong>
                 {
@@ -1952,9 +1913,7 @@ function OrderDetails() {
 
             {payment && (
               <div className="order-summary-row">
-                <span>
-                  Payment Status
-                </span>
+                <span>Payment Status</span>
 
                 <strong>
                   {
@@ -1966,9 +1925,7 @@ function OrderDetails() {
 
             {shipment && (
               <div className="order-summary-row">
-                <span>
-                  Shipment Status
-                </span>
+                <span>Shipment Status</span>
 
                 <strong>
                   {getShipmentStatusLabel(
@@ -1980,9 +1937,7 @@ function OrderDetails() {
 
             {isPaymentPending && (
               <div className="order-summary-row">
-                <span>
-                  Shipment
-                </span>
+                <span>Shipment</span>
 
                 <strong>
                   Not Shipped
@@ -1991,9 +1946,7 @@ function OrderDetails() {
             )}
 
             <div className="order-summary-row order-summary-total">
-              <span>
-                Total
-              </span>
+              <span>Total</span>
 
               <strong>
                 {order.currency}{" "}
@@ -2008,6 +1961,7 @@ function OrderDetails() {
                 className="order-details-error"
                 role="alert"
               >
+                <AlertIcon />
                 {cancelError}
               </p>
             )}
@@ -2036,3 +1990,4 @@ function OrderDetails() {
 }
 
 export default OrderDetails;
+
