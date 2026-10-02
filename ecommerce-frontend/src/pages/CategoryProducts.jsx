@@ -41,6 +41,20 @@ function GridIcon() {
   );
 }
 
+function ProductsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="products-icon"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M4 9h16" />
+      <path d="M9 9v11" />
+    </svg>
+  );
+}
+
 function ArrowIcon({ direction = "right" }) {
   return (
     <svg
@@ -376,7 +390,7 @@ function CategoryProducts() {
 
             <div className="category-products-header-meta">
               <span className="category-products-meta-item">
-                <GridIcon />
+                <ProductsIcon />
                 Browse products
               </span>
             </div>
