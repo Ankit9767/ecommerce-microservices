@@ -1,10 +1,4 @@
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete,
-  apiRequest
-} from "./api";
+import { apiGet, apiPost, apiPut, apiDelete, apiRequest } from "./api";
 
 function searchProducts({
   q,
@@ -14,7 +8,7 @@ function searchProducts({
   active,
   page = 0,
   size = 20,
-  sort
+  sort,
 } = {}) {
   const params = new URLSearchParams();
 
@@ -45,9 +39,7 @@ function searchProducts({
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/search/products?${params.toString()}`
-  );
+  return apiGet(`/search/products?${params.toString()}`);
 }
 
 function getProduct(productId) {
@@ -71,64 +63,37 @@ function getProductImages(productId) {
 }
 
 function getProductImage(productId, imageId) {
-  return apiGet(
-    `/products/${productId}/images/${imageId}`
-  );
+  return apiGet(`/products/${productId}/images/${imageId}`);
 }
 
-function getProductImageContentUrl(
-  productId,
-  imageId
-) {
+function getProductImageContentUrl(productId, imageId) {
   return `/api/products/${productId}/images/${imageId}/content`;
 }
 
 function uploadProductImage(
   productId,
   file,
-  {
-    displayOrder = 0,
-    primaryImage = false
-  } = {}
+  { displayOrder = 0, primaryImage = false } = {},
 ) {
   const formData = new FormData();
 
   formData.append("file", file);
-  formData.append(
-    "displayOrder",
-    displayOrder
-  );
-  formData.append(
-    "primaryImage",
-    primaryImage
-  );
+  formData.append("displayOrder", displayOrder);
+  formData.append("primaryImage", primaryImage);
 
-  return apiRequest(
-    `/products/${productId}/images`,
-    {
-      method: "POST",
-      body: formData,
-      isFormData: true
-    }
-  );
+  return apiRequest(`/products/${productId}/images`, {
+    method: "POST",
+    body: formData,
+    isFormData: true,
+  });
 }
 
-function setPrimaryProductImage(
-  productId,
-  imageId
-) {
-  return apiPut(
-    `/products/${productId}/images/${imageId}/primary`
-  );
+function setPrimaryProductImage(productId, imageId) {
+  return apiPut(`/products/${productId}/images/${imageId}/primary`);
 }
 
-function deleteProductImage(
-  productId,
-  imageId
-) {
-  return apiDelete(
-    `/products/${productId}/images/${imageId}`
-  );
+function deleteProductImage(productId, imageId) {
+  return apiDelete(`/products/${productId}/images/${imageId}`);
 }
 
 export {
@@ -142,5 +107,5 @@ export {
   getProductImageContentUrl,
   uploadProductImage,
   setPrimaryProductImage,
-  deleteProductImage
+  deleteProductImage,
 };

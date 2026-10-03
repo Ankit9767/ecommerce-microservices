@@ -4,7 +4,7 @@ const TERMINAL_PAYMENT_STATUSES = [
   "SUCCESS",
   "FAILED",
   "CANCELLED",
-  "REFUNDED"
+  "REFUNDED",
 ];
 
 function wait(milliseconds) {
@@ -15,11 +15,7 @@ function wait(milliseconds) {
 
 async function waitForPaymentCompletion(
   paymentId,
-  {
-    interval = 2000,
-    maxAttempts = 30,
-    onUpdate
-  } = {}
+  { interval = 2000, maxAttempts = 30, onUpdate } = {},
 ) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const payment = await getPayment(paymentId);
@@ -28,11 +24,7 @@ async function waitForPaymentCompletion(
       onUpdate(payment);
     }
 
-    if (
-      TERMINAL_PAYMENT_STATUSES.includes(
-        payment.status
-      )
-    ) {
+    if (TERMINAL_PAYMENT_STATUSES.includes(payment.status)) {
       return payment;
     }
 
@@ -41,11 +33,7 @@ async function waitForPaymentCompletion(
     }
   }
 
-  throw new Error(
-    "Payment confirmation is taking longer than expected."
-  );
+  throw new Error("Payment confirmation is taking longer than expected.");
 }
 
-export {
-  waitForPaymentCompletion
-};
+export { waitForPaymentCompletion };

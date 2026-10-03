@@ -1,17 +1,6 @@
-import {
-  apiGet,
-  apiPost,
-  apiDelete
-} from "./api";
+import { apiGet, apiPost, apiDelete } from "./api";
 
-function register({
-  username,
-  firstName,
-  lastName,
-  email,
-  password,
-  phone
-}) {
+function register({ username, firstName, lastName, email, password, phone }) {
   return apiPost(
     "/auth/register",
     {
@@ -20,27 +9,24 @@ function register({
       lastName,
       email,
       password,
-      phone
+      phone,
     },
     {
-      token: null
-    }
+      token: null,
+    },
   );
 }
 
-function login({
-  usernameOrEmail,
-  password
-}) {
+function login({ usernameOrEmail, password }) {
   return apiPost(
     "/auth/login",
     {
       usernameOrEmail,
-      password
+      password,
     },
     {
-      token: null
-    }
+      token: null,
+    },
   );
 }
 
@@ -48,50 +34,43 @@ function refreshToken(refreshTokenValue) {
   return apiPost(
     "/auth/refresh",
     {
-      refreshToken: refreshTokenValue
+      refreshToken: refreshTokenValue,
     },
     {
-      token: null
-    }
+      token: null,
+    },
   );
 }
 
 function logout(refreshTokenValue) {
-  return apiPost(
-    "/auth/logout",
-    {
-      refreshToken: refreshTokenValue
-    }
-  );
+  return apiPost("/auth/logout", {
+    refreshToken: refreshTokenValue,
+  });
 }
 
 function forgotPassword(email) {
   return apiPost(
     "/auth/forgot-password",
     {
-      email
+      email,
     },
     {
-      token: null
-    }
+      token: null,
+    },
   );
 }
 
-function resetPassword({
-  token,
-  newPassword,
-  confirmPassword
-}) {
+function resetPassword({ token, newPassword, confirmPassword }) {
   return apiPost(
     "/auth/reset-password",
     {
       token,
       newPassword,
-      confirmPassword
+      confirmPassword,
     },
     {
-      token: null
-    }
+      token: null,
+    },
   );
 }
 
@@ -100,9 +79,7 @@ function getSessions() {
 }
 
 function logoutSession(sessionId) {
-  return apiDelete(
-    `/auth/sessions/${sessionId}`
-  );
+  return apiDelete(`/auth/sessions/${sessionId}`);
 }
 
 function logoutAllSessions() {
@@ -118,5 +95,5 @@ export {
   resetPassword,
   getSessions,
   logoutSession,
-  logoutAllSessions
+  logoutAllSessions,
 };

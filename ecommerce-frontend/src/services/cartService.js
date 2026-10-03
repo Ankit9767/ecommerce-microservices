@@ -1,9 +1,4 @@
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete
-} from "./api";
+import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
 function getCart() {
   return apiGet("/cart");
@@ -12,13 +7,13 @@ function getCart() {
 function addCartItem(productId, quantity) {
   return apiPost("/cart/items", {
     productId,
-    quantity
+    quantity,
   });
 }
 
 function updateCartItem(productId, quantity) {
   return apiPut(`/cart/items/${productId}`, {
-    quantity
+    quantity,
   });
 }
 
@@ -30,11 +25,7 @@ function clearCart() {
   return apiDelete("/cart");
 }
 
-function getAllCarts({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getAllCarts({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -53,5 +44,5 @@ export {
   updateCartItem,
   removeCartItem,
   clearCart,
-  getAllCarts
+  getAllCarts,
 };

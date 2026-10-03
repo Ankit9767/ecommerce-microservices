@@ -1,23 +1,12 @@
-import {
-  apiGet,
-  apiPost,
-  apiPatch,
-  apiDelete
-} from "./api";
+import { apiGet, apiPost, apiPatch, apiDelete } from "./api";
 
-function createReview({
-  productId,
-  orderId,
-  rating,
-  title,
-  comment
-}) {
+function createReview({ productId, orderId, rating, title, comment }) {
   return apiPost("/reviews", {
     productId,
     orderId,
     rating,
     title,
-    comment
+    comment,
   });
 }
 
@@ -25,14 +14,7 @@ function getReview(reviewId) {
   return apiGet(`/reviews/${reviewId}`);
 }
 
-function getProductReviews(
-  productId,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function getProductReviews(productId, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -42,16 +24,10 @@ function getProductReviews(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/reviews/product/${productId}?${params.toString()}`
-  );
+  return apiGet(`/reviews/product/${productId}?${params.toString()}`);
 }
 
-function getMyReviews({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getMyReviews({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -61,27 +37,15 @@ function getMyReviews({
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/reviews/me?${params.toString()}`
-  );
+  return apiGet(`/reviews/me?${params.toString()}`);
 }
 
-function updateReview(
-  reviewId,
-  {
+function updateReview(reviewId, { rating, title, comment }) {
+  return apiPatch(`/reviews/${reviewId}`, {
     rating,
     title,
-    comment
-  }
-) {
-  return apiPatch(
-    `/reviews/${reviewId}`,
-    {
-      rating,
-      title,
-      comment
-    }
-  );
+    comment,
+  });
 }
 
 function deleteReview(reviewId) {
@@ -94,5 +58,5 @@ export {
   getProductReviews,
   getMyReviews,
   updateReview,
-  deleteReview
+  deleteReview,
 };

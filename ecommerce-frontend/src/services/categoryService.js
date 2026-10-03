@@ -1,9 +1,4 @@
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete
-} from "./api";
+import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
 function getCategories() {
   return apiGet("/categories");
@@ -18,10 +13,7 @@ function createCategory(request) {
 }
 
 function updateCategory(categoryId, request) {
-  return apiPut(
-    `/categories/${categoryId}`,
-    request
-  );
+  return apiPut(`/categories/${categoryId}`, request);
 }
 
 function deleteCategory(categoryId) {
@@ -33,5 +25,5 @@ export {
   getCategory,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 };
