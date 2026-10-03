@@ -1,10 +1,6 @@
 import { apiGet } from "./api";
 
-function getAllAudits({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getAllAudits({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -17,14 +13,7 @@ function getAllAudits({
   return apiGet(`/admin/audit?${params.toString()}`);
 }
 
-function getAuditsByUser(
-  userId,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function getAuditsByUser(userId, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -34,19 +23,10 @@ function getAuditsByUser(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/admin/audit/user/${userId}?${params.toString()}`
-  );
+  return apiGet(`/admin/audit/user/${userId}?${params.toString()}`);
 }
 
-function getAuditsByEventType(
-  eventType,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function getAuditsByEventType(eventType, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -56,13 +36,7 @@ function getAuditsByEventType(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/admin/audit/event/${eventType}?${params.toString()}`
-  );
+  return apiGet(`/admin/audit/event/${eventType}?${params.toString()}`);
 }
 
-export {
-  getAllAudits,
-  getAuditsByUser,
-  getAuditsByEventType
-};
+export { getAllAudits, getAuditsByUser, getAuditsByEventType };

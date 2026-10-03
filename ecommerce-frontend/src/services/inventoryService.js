@@ -9,63 +9,36 @@ function getInventory(productId) {
 }
 
 function increaseStock(productId, quantity) {
-  return apiPost(
-    `/inventory/${productId}/increase`,
-    {
-      quantity
-    }
-  );
+  return apiPost(`/inventory/${productId}/increase`, {
+    quantity,
+  });
 }
 
 function decreaseStock(productId, quantity) {
-  return apiPost(
-    `/inventory/${productId}/decrease`,
-    {
-      quantity
-    }
-  );
+  return apiPost(`/inventory/${productId}/decrease`, {
+    quantity,
+  });
 }
 
-function reserveStock(
-  productId,
-  quantity,
-  reservationId = null
-) {
-  return apiPost(
-    `/inventory/${productId}/reserve`,
-    {
-      quantity,
-      reservationId
-    }
-  );
+function reserveStock(productId, quantity, reservationId = null) {
+  return apiPost(`/inventory/${productId}/reserve`, {
+    quantity,
+    reservationId,
+  });
 }
 
-function releaseStock(
-  productId,
-  quantity,
-  reservationId = null
-) {
-  return apiPost(
-    `/inventory/${productId}/release`,
-    {
-      quantity,
-      reservationId
-    }
-  );
+function releaseStock(productId, quantity, reservationId = null) {
+  return apiPost(`/inventory/${productId}/release`, {
+    quantity,
+    reservationId,
+  });
 }
 
-function confirmReservation(
-  productId,
-  quantity,
-  reservationId = null
-) {
-  return apiPost(
-    `/inventory/${productId}/confirm`,
-    {
-      quantity,
-      reservationId
-    }
-  );
+function confirmReservation(productId, quantity, reservationId = null) {
+  return apiPost(`/inventory/${productId}/confirm`, {
+    quantity,
+    reservationId,
+  });
 }
 
 export {
@@ -75,5 +48,5 @@ export {
   decreaseStock,
   reserveStock,
   releaseStock,
-  confirmReservation
+  confirmReservation,
 };

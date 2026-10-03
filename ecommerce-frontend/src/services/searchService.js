@@ -8,7 +8,7 @@ function searchProducts({
   active,
   page = 0,
   size = 20,
-  sort
+  sort,
 } = {}) {
   const params = new URLSearchParams();
 
@@ -20,17 +20,11 @@ function searchProducts({
     params.set("category", category);
   }
 
-  if (
-    minPrice !== undefined &&
-    minPrice !== ""
-  ) {
+  if (minPrice !== undefined && minPrice !== "") {
     params.set("minPrice", minPrice);
   }
 
-  if (
-    maxPrice !== undefined &&
-    maxPrice !== ""
-  ) {
+  if (maxPrice !== undefined && maxPrice !== "") {
     params.set("maxPrice", maxPrice);
   }
 
@@ -45,19 +39,10 @@ function searchProducts({
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/search/products?${params.toString()}`
-  );
+  return apiGet(`/search/products?${params.toString()}`);
 }
 
-function searchProductReviews(
-  productId,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function searchProductReviews(productId, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -67,12 +52,7 @@ function searchProductReviews(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/search/reviews/product/${productId}?${params.toString()}`
-  );
+  return apiGet(`/search/reviews/product/${productId}?${params.toString()}`);
 }
 
-export {
-  searchProducts,
-  searchProductReviews
-};
+export { searchProducts, searchProductReviews };

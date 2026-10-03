@@ -2,16 +2,10 @@ const API_BASE_URL = "http://ecommercehub.com/api";
 
 async function apiRequest(
   path,
-  {
-    method = "GET",
-    body,
-    token,
-    headers = {},
-    isFormData = false
-  } = {}
+  { method = "GET", body, token, headers = {}, isFormData = false } = {},
 ) {
   const requestHeaders = {
-    ...headers
+    ...headers,
   };
 
   if (!isFormData && body !== undefined) {
@@ -22,18 +16,15 @@ async function apiRequest(
     requestHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}${path}`,
-    {
-      method,
-      headers: requestHeaders,
-      body: isFormData
-        ? body
-        : body !== undefined
-          ? JSON.stringify(body)
-          : undefined
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: requestHeaders,
+    body: isFormData
+      ? body
+      : body !== undefined
+        ? JSON.stringify(body)
+        : undefined,
+  });
 
   if (!response.ok) {
     let errorData = null;
@@ -47,7 +38,7 @@ async function apiRequest(
     const error = new Error(
       errorData?.message ||
         errorData?.error ||
-        `Request failed with status ${response.status}`
+        `Request failed with status ${response.status}`,
     );
 
     error.status = response.status;
@@ -60,8 +51,7 @@ async function apiRequest(
     return null;
   }
 
-  const contentType =
-    response.headers.get("content-type") || "";
+  const contentType = response.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
     return response.json();
@@ -78,10 +68,7 @@ function apiGet(path, options = {}) {
   return apiRequest(path, {
     ...options,
     method: "GET",
-    token:
-      options.token !== undefined
-        ? options.token
-        : getAccessToken()
+    token: options.token !== undefined ? options.token : getAccessToken(),
   });
 }
 
@@ -90,10 +77,7 @@ function apiPost(path, body, options = {}) {
     ...options,
     method: "POST",
     body,
-    token:
-      options.token !== undefined
-        ? options.token
-        : getAccessToken()
+    token: options.token !== undefined ? options.token : getAccessToken(),
   });
 }
 
@@ -102,10 +86,7 @@ function apiPut(path, body, options = {}) {
     ...options,
     method: "PUT",
     body,
-    token:
-      options.token !== undefined
-        ? options.token
-        : getAccessToken()
+    token: options.token !== undefined ? options.token : getAccessToken(),
   });
 }
 
@@ -114,10 +95,7 @@ function apiPatch(path, body, options = {}) {
     ...options,
     method: "PATCH",
     body,
-    token:
-      options.token !== undefined
-        ? options.token
-        : getAccessToken()
+    token: options.token !== undefined ? options.token : getAccessToken(),
   });
 }
 
@@ -125,10 +103,7 @@ function apiDelete(path, options = {}) {
   return apiRequest(path, {
     ...options,
     method: "DELETE",
-    token:
-      options.token !== undefined
-        ? options.token
-        : getAccessToken()
+    token: options.token !== undefined ? options.token : getAccessToken(),
   });
 }
 
@@ -139,5 +114,5 @@ export {
   apiPut,
   apiPatch,
   apiDelete,
-  getAccessToken
+  getAccessToken,
 };

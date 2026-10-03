@@ -12,26 +12,18 @@ function wait(milliseconds) {
 
 async function waitForPaymentForOrder(
   orderId,
-  {
-    interval = 1000,
-    maxAttempts = 15
-  } = {}
+  { interval = 1000, maxAttempts = 15 } = {},
 ) {
-  for (
-    let attempt = 0;
-    attempt < maxAttempts;
-    attempt += 1
-  ) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const response = await getMyPayments({
       page: 0,
-      size: 100
+      size: 100,
     });
 
     const payments = response?.content || [];
 
     const payment = payments.find(
-      (item) =>
-        Number(item.orderId) === Number(orderId)
+      (item) => Number(item.orderId) === Number(orderId),
     );
 
     if (payment) {
@@ -43,11 +35,7 @@ async function waitForPaymentForOrder(
     }
   }
 
-  throw new Error(
-    "The payment could not be created for this order."
-  );
+  throw new Error("The payment could not be created for this order.");
 }
 
-export {
-  waitForPaymentForOrder
-};
+export { waitForPaymentForOrder };

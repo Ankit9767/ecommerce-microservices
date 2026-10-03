@@ -1,23 +1,14 @@
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete
-} from "./api";
+import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
 function createOrder(request) {
   return apiPost("/orders", request);
 }
 
-function createOrderFromCart({
-  currency,
-  paymentMethod,
-  shippingAddress
-}) {
+function createOrderFromCart({ currency, paymentMethod, shippingAddress }) {
   return apiPost("/orders/from-cart", {
     currency,
     paymentMethod,
-    shippingAddress
+    shippingAddress,
   });
 }
 
@@ -25,11 +16,7 @@ function getOrder(orderId) {
   return apiGet(`/orders/${orderId}`);
 }
 
-function getMyOrders({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getMyOrders({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -42,14 +29,7 @@ function getMyOrders({
   return apiGet(`/orders/my?${params.toString()}`);
 }
 
-function getOrdersByStatus(
-  status,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function getOrdersByStatus(status, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -70,29 +50,19 @@ function cancelOrder(orderId) {
   return apiDelete(`/orders/${orderId}`);
 }
 
-function checkReviewEligibility(
-  orderId,
-  productId,
-  userId
-) {
+function checkReviewEligibility(orderId, productId, userId) {
   const params = new URLSearchParams();
 
   params.set("productId", productId);
   params.set("userId", userId);
 
-  return apiGet(
-    `/orders/${orderId}/review-eligibility?${params.toString()}`
-  );
+  return apiGet(`/orders/${orderId}/review-eligibility?${params.toString()}`);
 }
 
 /*
  * Admin-only.
  */
-function getAllOrders({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getAllOrders({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -114,5 +84,5 @@ export {
   updateOrder,
   cancelOrder,
   checkReviewEligibility,
-  getAllOrders
+  getAllOrders,
 };

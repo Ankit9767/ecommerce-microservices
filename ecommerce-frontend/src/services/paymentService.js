@@ -2,7 +2,7 @@ import { apiGet, apiPost } from "./api";
 
 function createPayment(orderId) {
   return apiPost("/payments", {
-    orderId
+    orderId,
   });
 }
 
@@ -10,11 +10,7 @@ function getPayment(paymentId) {
   return apiGet(`/payments/${paymentId}`);
 }
 
-function getMyPayments({
-  page = 0,
-  size = 20,
-  sort
-} = {}) {
+function getMyPayments({ page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -24,19 +20,10 @@ function getMyPayments({
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/payments/my?${params.toString()}`
-  );
+  return apiGet(`/payments/my?${params.toString()}`);
 }
 
-function getPaymentsByStatus(
-  status,
-  {
-    page = 0,
-    size = 20,
-    sort
-  } = {}
-) {
+function getPaymentsByStatus(status, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
   params.set("page", page);
@@ -46,27 +33,19 @@ function getPaymentsByStatus(
     params.set("sort", sort);
   }
 
-  return apiGet(
-    `/payments/status/${status}?${params.toString()}`
-  );
+  return apiGet(`/payments/status/${status}?${params.toString()}`);
 }
 
 function initializeCheckout(paymentId) {
-  return apiPost(
-    `/payments/${paymentId}/checkout`
-  );
+  return apiPost(`/payments/${paymentId}/checkout`);
 }
 
 function completeMockPayment(paymentId) {
-  return apiPost(
-    `/payments/${paymentId}/mock/complete`
-  );
+  return apiPost(`/payments/${paymentId}/mock/complete`);
 }
 
 function failMockPayment(paymentId) {
-  return apiPost(
-    `/payments/${paymentId}/mock/fail`
-  );
+  return apiPost(`/payments/${paymentId}/mock/fail`);
 }
 
 export {
@@ -76,5 +55,5 @@ export {
   getPaymentsByStatus,
   initializeCheckout,
   completeMockPayment,
-  failMockPayment
+  failMockPayment,
 };
