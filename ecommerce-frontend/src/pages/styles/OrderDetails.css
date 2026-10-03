@@ -761,11 +761,6 @@
     background-color 180ms ease;
 }
 
-.order-item:hover .order-item-icon {
-  transform: translateY(-2px) rotate(-3deg);
-  background: var(--color-surface);
-}
-
 .order-item-icon .order-details-icon {
   width: 18px;
   height: 18px;

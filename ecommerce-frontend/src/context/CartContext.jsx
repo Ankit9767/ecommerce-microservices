@@ -27,7 +27,13 @@ function CartProvider({ children }) {
 
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Keeps track of whether ANY cart operation is running.
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Keeps track of WHICH product is currently being added.
+  const [addingProductId, setAddingProductId] = useState(null);
+
   const [error, setError] = useState("");
 
   const loadCart = useCallback(async () => {
@@ -42,11 +48,14 @@ function CartProvider({ children }) {
 
     try {
       const response = await getCart();
+
       setCart(response);
+
       return response;
     } catch (requestError) {
       setError(
-        requestError.message || "Unable to load your cart."
+        requestError.message ||
+          "Unable to load your cart."
       );
 
       throw requestError;
@@ -63,6 +72,7 @@ function CartProvider({ children }) {
     if (!isAuthenticated) {
       setCart(null);
       setError("");
+      setAddingProductId(null);
       return;
     }
 
@@ -80,6 +90,9 @@ function CartProvider({ children }) {
           "A valid product is required to add an item to the cart."
         );
       }
+
+      // Store the exact product being added.
+      setAddingProductId(product.id);
 
       setIsUpdating(true);
       setError("");
@@ -101,6 +114,9 @@ function CartProvider({ children }) {
 
         throw requestError;
       } finally {
+        // Clear the product-specific loading state.
+        setAddingProductId(null);
+
         setIsUpdating(false);
       }
     },
@@ -161,7 +177,7 @@ function CartProvider({ children }) {
       } catch (requestError) {
         setError(
           requestError.message ||
-            "Unable to remove the cart item."
+            "Unable to remove the product from your cart."
         );
 
         throw requestError;
@@ -201,7 +217,9 @@ function CartProvider({ children }) {
    * - totalItems for cart pages
    * - cartItemCount for the header
    */
-  const totalItems = Number(cart?.totalItems || 0);
+  const totalItems = Number(
+    cart?.totalItems || 0
+  );
 
   const cartItemCount = totalItems;
 
@@ -210,11 +228,20 @@ function CartProvider({ children }) {
       cart,
       items: cart?.items || [],
       totalAmount: cart?.totalAmount || 0,
+
       totalItems,
       cartItemCount,
+
       isLoading,
+
+      // Global cart operation state.
       isUpdating,
+
+      // Product-specific add state.
+      addingProductId,
+
       error,
+
       loadCart,
       addToCart,
       updateQuantity,
@@ -227,6 +254,7 @@ function CartProvider({ children }) {
       cartItemCount,
       isLoading,
       isUpdating,
+      addingProductId,
       error,
       loadCart,
       addToCart,

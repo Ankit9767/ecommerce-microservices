@@ -37,12 +37,14 @@ isAuthenticated
 } = useAuth();
 
 const {
-items,
-addToCart,
-updateQuantity,
-removeFromCart,
-isUpdating
+  items,
+  addToCart,
+  updateQuantity,
+  removeFromCart,
+  isUpdating,
+  addingProductId
 } = useCart();
+
 
 const [error, setError] = useState("");
 const [isPressed, setIsPressed] = useState(false);
@@ -69,6 +71,10 @@ const cartQuantity = cartItem
 : 0;
 
 const isInCart = Boolean(cartItem);
+
+const isAdding =
+  String(addingProductId) === String(product.id);
+
 
 const handleAddToCart = async () => {
 setError("");
@@ -239,7 +245,7 @@ aria-label={`View ${product.name}`}
           type="button"
           className="product-card-cart-button"
           onClick={handleAddToCart}
-          disabled={isUpdating}
+          disabled={isAdding}
         >
           <span className="product-card-cart-icon">
             <svg
@@ -257,7 +263,7 @@ aria-label={`View ${product.name}`}
           </span>
 
           <span>
-            {isUpdating
+            {isAdding
               ? "Adding..."
               : "Add to Cart"}
           </span>
