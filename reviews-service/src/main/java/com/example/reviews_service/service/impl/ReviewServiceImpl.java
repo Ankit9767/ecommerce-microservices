@@ -69,11 +69,20 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ReviewNotEligibleException(reason);
         }
 
-        if (reviewRepository.existsByUserIdAndProductIdAndOrderId(
-                userId,
-                request.getProductId(),
-                request.getOrderId()
-        )) {
+        Review review = reviewRepository
+                .findByUserIdAndProductIdAndOrderId(
+                        userId,
+                        request.getProductId(),
+                        request.getOrderId()
+                )
+                .orElse(null);
+
+        /*
+         * Existing ACTIVE review means the user has already
+         * reviewed this product for this order.
+         */
+        if (review != null && review.getStatus() == ReviewStatus.ACTIVE) {
+
             throw new DuplicateReviewException(
                     userId,
                     request.getProductId(),
@@ -81,7 +90,25 @@ public class ReviewServiceImpl implements ReviewService {
             );
         }
 
-        Review review = Review.builder()
+        /*
+         * Existing DELETED review:
+         * Reuse the same row instead of inserting a new one.
+         */
+        if (review != null && review.getStatus() == ReviewStatus.DELETED) {
+
+            review.setRating(request.getRating());
+            review.setTitle(request.getTitle());
+            review.setComment(request.getComment());
+            review.setStatus(ReviewStatus.ACTIVE);
+
+            Review savedReview = reviewRepository.save(review);
+
+            writeReviewCreatedToOutbox(savedReview);
+
+            return ReviewResponse.from(savedReview);
+        }
+
+        review = Review.builder()
                 .productId(request.getProductId())
                 .userId(userId)
                 .orderId(request.getOrderId())
