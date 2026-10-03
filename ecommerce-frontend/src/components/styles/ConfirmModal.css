@@ -1,0 +1,306 @@
+/* =========================
+   Confirm Modal
+========================= */
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(5px);
+  animation: confirmModalBackdropEnter 180ms ease-out;
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* =========================
+   Modal
+========================= */
+
+.confirm-modal {
+  position: relative;
+  width: min(100%, 430px);
+  overflow: hidden;
+  padding: var(--spacing-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0, 0, 0, 0.035), transparent 38%),
+    var(--color-surface);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: confirmModalEnter 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Decorative line */
+
+.confirm-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: 80px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-text);
+  opacity: 0.09;
+}
+
+/* =========================
+   Icon
+========================= */
+
+.confirm-modal-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.05);
+  animation: confirmModalIconFloat 4s ease-in-out infinite;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+.confirm-modal:hover .confirm-modal-icon-wrapper {
+  transform: translateY(-2px);
+  border-color: #cfcfcf;
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.07);
+}
+
+.confirm-modal-icon {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =========================
+   Content
+========================= */
+
+.confirm-modal-content {
+  min-width: 0;
+  padding-top: 1px;
+}
+.confirm-modal-eyebrow {
+  margin: 0 0 4px;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.confirm-modal-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.3rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+.confirm-modal-message {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* =========================
+   Actions
+========================= */
+
+.confirm-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: var(--spacing-xl);
+}
+
+.confirm-modal-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.confirm-modal-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.confirm-modal-cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.confirm-modal-cancel:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #cfcfcf;
+  background: var(--color-surface);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
+}
+
+.confirm-modal-confirm {
+  border: 1px solid var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.09);
+}
+
+.confirm-modal-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.13);
+}
+
+.confirm-modal-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.confirm-modal-button:focus-visible {
+  outline: 2px solid #bdbdbd;
+  outline-offset: 3px;
+}
+
+/* =========================
+   Loading
+========================= */
+
+.confirm-modal-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: confirmModalSpinner 700ms linear infinite;
+}
+
+/* =========================
+   Animations
+========================= */
+
+@keyframes confirmModalBackdropEnter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confirmModalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes confirmModalIconFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes confirmModalSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 500px) {
+  .confirm-modal-backdrop {
+    padding: var(--spacing-md);
+  }
+
+  .confirm-modal {
+    padding: var(--spacing-lg);
+  }
+
+  .confirm-modal-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+  }
+
+  .confirm-modal-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .confirm-modal-title {
+    font-size: 1.2rem;
+  }
+
+  .confirm-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .confirm-modal-button {
+    width: 100%;
+  }
+}
+
+/* =========================
+   Reduced Motion
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-modal-backdrop,
+  .confirm-modal,
+  .confirm-modal-icon-wrapper,
+  .confirm-modal-spinner {
+    animation: none;
+  }
+
+  .confirm-modal-button {
+    transition: none;
+  }
+}
