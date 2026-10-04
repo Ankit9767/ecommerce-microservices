@@ -383,46 +383,23 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    @Override
     @Transactional
     public void processOrderCancelledEvent(OrderCancelledEvent event) {
 
         Long orderId = event.getOrderId();
 
         Payment payment =
-                paymentRepository.findByOrderId(orderId)
+                paymentRepository
+                        .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(
+                                orderId,
+                                PaymentStatus.PENDING
+                        )
                         .orElse(null);
 
         if (payment == null) {
 
             log.info(
-                    "No payment found for cancelled order {}",
-                    orderId
-            );
-
-            return;
-        }
-
-        PaymentStatus currentStatus = payment.getStatus();
-
-        if (currentStatus == PaymentStatus.SUCCESS) {
-
-            log.warn(
-                    "Order {} was cancelled but payment {} is already SUCCESS. " +
-                            "Refund handling is required.",
-                    orderId,
-                    payment.getId()
-            );
-
-            return;
-        }
-
-        if (currentStatus == PaymentStatus.FAILED) {
-
-            log.info(
-                    "Payment {} for order {} is already FAILED. " +
-                            "Ignoring duplicate cancellation.",
-                    payment.getId(),
+                    "No pending payment found for cancelled order {}",
                     orderId
             );
 
@@ -843,5 +820,154 @@ public class PaymentServiceImpl implements PaymentService {
         );
 
         return paymentMapper.toResponse(savedPayment);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse retryPayment(Long paymentId,
+                                        Authentication authentication) {
+
+        Payment failedPayment =
+                paymentRepository.findById(paymentId)
+                        .orElseThrow(() -> {
+                            paymentMetrics.paymentNotFound();
+
+                            return new PaymentNotFoundException(
+                                    paymentId
+                            );
+                        });
+
+        if (!roleSecurity.hasRole(authentication, "ADMIN")) {
+
+            Long currentUserId =
+                    currentUser.getUserId(authentication);
+
+            if (!failedPayment.getCustomerId().equals(currentUserId)) {
+
+                throw new AccessDeniedException(
+                        "You are not authorized to retry this payment"
+                );
+            }
+        }
+
+        /*
+         * Only failed/cancelled attempts can be retried.
+         */
+
+        if (failedPayment.getStatus() != PaymentStatus.FAILED &&
+                failedPayment.getStatus() != PaymentStatus.CANCELLED) {
+
+            throw new IllegalStateException(
+                    "Only FAILED or CANCELLED payments can be retried"
+            );
+        }
+
+        OrderResponse order;
+
+        try {
+
+            order =
+                    orderClient.getOrderInternal(
+                            failedPayment.getOrderId()
+                    );
+
+        } catch (RemoteResourceNotFoundException ex) {
+
+            throw new OrderNotFoundException(
+                    failedPayment.getOrderId()
+            );
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+
+            throw new IllegalStateException(
+                    "Payment cannot be retried because the order is no longer awaiting payment"
+            );
+        }
+
+        /*
+         * This protects us from a race where another payment
+         * attempt succeeded after the frontend loaded the FAILED
+         * payment.
+         */
+
+        if (paymentRepository.existsByOrderIdAndStatus(
+                order.getId(),
+                PaymentStatus.SUCCESS
+        )) {
+
+            throw new IllegalStateException(
+                    "Order has already been paid"
+            );
+        }
+
+        /*
+         * CREATE NEW PAYMENT ATTEMPT
+         */
+
+        PaymentPersistenceService.PaymentCreationResult result =
+                paymentPersistenceService.createRetryPayment(
+                        order,
+                        paymentProvider.getProviderName()
+                );
+
+        PaymentResponse retryPayment = result.payment();
+
+        if (!result.created()) {
+
+            log.info(
+                    "Returning existing active retry payment {} for order {}",
+                    retryPayment.id(),
+                    retryPayment.orderId()
+            );
+
+            return retryPayment;
+        }
+
+        /*
+         * CREATE NEW PROVIDER TRANSACTION
+         */
+
+        PaymentProviderRequest providerRequest =
+                new PaymentProviderRequest(
+                        retryPayment.id(),
+                        retryPayment.orderId(),
+                        retryPayment.amount(),
+                        retryPayment.currency(),
+                        retryPayment.paymentMethod()
+                );
+
+        PaymentProviderResponse providerResponse;
+
+        try {
+
+            providerResponse =
+                    paymentProvider.createProviderPaymentTransaction(
+                            providerRequest
+                    );
+
+        } catch (RuntimeException ex) {
+
+            log.error(
+                    "Failed to create provider transaction for retry. " +
+                            "paymentId={}, orderId={}",
+                    retryPayment.id(),
+                    retryPayment.orderId(),
+                    ex
+            );
+
+            /*
+             * The new local payment remains PENDING.
+             *
+             * This is intentional. We haven't received a provider
+             * payment failure; provider order creation itself failed.
+             */
+            throw ex;
+        }
+
+        return paymentPersistenceService.markPaymentProcessing(
+                retryPayment.id(),
+                providerResponse
+        );
     }
 }

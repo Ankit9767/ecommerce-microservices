@@ -41,4 +41,7 @@ public interface PaymentService {
 
     PaymentResponse failMockPayment(Long paymentId,
                                     Authentication authentication);
+
+    PaymentResponse retryPayment(Long paymentId,
+                                 Authentication authentication);
 }
