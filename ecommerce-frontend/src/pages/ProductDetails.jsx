@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -140,7 +139,6 @@ function SkuIcon() {
   );
 }
 
-
 function DescriptionIcon() {
   return (
     <svg
@@ -162,11 +160,7 @@ function DescriptionIcon() {
 
 function StarIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.2l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" />
     </svg>
   );
@@ -196,13 +190,8 @@ function ProductDetails() {
 
   const { isAuthenticated } = useAuth();
 
-  const {
-    items,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    isUpdating
-  } = useCart();
+  const { items, addToCart, updateQuantity, removeFromCart, isUpdating } =
+    useCart();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -219,9 +208,7 @@ function ProductDetails() {
   const [reviewsError, setReviewsError] = useState("");
   const [reviewTotalElements, setReviewTotalElements] = useState(0);
 
-  const cartItem = items.find(
-    (item) => String(item.productId) === String(id)
-  );
+  const cartItem = items.find((item) => String(item.productId) === String(id));
 
   const isInCart = Boolean(cartItem);
   const cartQuantity = Number(cartItem?.quantity || 0);
@@ -260,8 +247,7 @@ function ProductDetails() {
           setError("Product not found.");
         } else {
           setError(
-            requestError.message ||
-              "Unable to load product. Please try again."
+            requestError.message || "Unable to load product. Please try again.",
           );
         }
       } finally {
@@ -293,7 +279,7 @@ function ProductDetails() {
         const response = await getProductReviews(id, {
           page: 0,
           size: 20,
-          sort: "createdAt,desc"
+          sort: "createdAt,desc",
         });
 
         if (!isMounted) {
@@ -301,17 +287,14 @@ function ProductDetails() {
         }
 
         setReviews(response?.content || []);
-        setReviewTotalElements(
-          Number(response?.totalElements || 0)
-        );
+        setReviewTotalElements(Number(response?.totalElements || 0));
       } catch (requestError) {
         if (!isMounted) {
           return;
         }
 
         setReviewsError(
-          requestError.message ||
-            "Unable to load product reviews."
+          requestError.message || "Unable to load product reviews.",
         );
       } finally {
         if (isMounted) {
@@ -350,8 +333,7 @@ function ProductDetails() {
       await updateQuantity(product.id, nextQuantity);
     } catch (requestError) {
       setCartError(
-        requestError.message ||
-          "Unable to update the cart quantity."
+        requestError.message || "Unable to update the cart quantity.",
       );
     }
   };
@@ -376,8 +358,7 @@ function ProductDetails() {
       setAddedToCart(true);
     } catch (requestError) {
       setCartError(
-        requestError.message ||
-          "Unable to add the product to your cart."
+        requestError.message || "Unable to add the product to your cart.",
       );
     } finally {
       setIsAddingToCart(false);
@@ -398,8 +379,7 @@ function ProductDetails() {
       setAddedToCart(false);
     } catch (requestError) {
       setCartError(
-        requestError.message ||
-          "Unable to remove the product from your cart."
+        requestError.message || "Unable to remove the product from your cart.",
       );
     }
   };
@@ -429,10 +409,7 @@ function ProductDetails() {
 
             <p>{error}</p>
 
-            <Link
-              className="button product-details-back-button"
-              to="/products"
-            >
+            <Link className="button product-details-back-button" to="/products">
               <BackIcon />
               Back to Products
             </Link>
@@ -449,10 +426,7 @@ function ProductDetails() {
           <div className="product-details-status">
             <p>Product not found.</p>
 
-            <Link
-              className="button product-details-back-button"
-              to="/products"
-            >
+            <Link className="button product-details-back-button" to="/products">
               <BackIcon />
               Back to Products
             </Link>
@@ -467,10 +441,7 @@ function ProductDetails() {
   return (
     <section className="page product-details-page">
       <div className="container">
-        <Link
-          className="product-details-back-link"
-          to="/products"
-        >
+        <Link className="product-details-back-link" to="/products">
           <BackIcon />
           <span>Back to Products</span>
         </Link>
@@ -479,10 +450,7 @@ function ProductDetails() {
           <div className="product-details-image">
             {product.image || product.primaryImageUrl ? (
               <img
-                src={
-                  product.image ||
-                  product.primaryImageUrl
-                }
+                src={product.image || product.primaryImageUrl}
                 alt={product.name}
               />
             ) : (
@@ -490,9 +458,7 @@ function ProductDetails() {
                 className="product-details-image-placeholder"
                 aria-label={`${product.name} image placeholder`}
               >
-                {product.name
-                  ? product.name.charAt(0).toUpperCase()
-                  : "P"}
+                {product.name ? product.name.charAt(0).toUpperCase() : "P"}
               </div>
             )}
 
@@ -507,9 +473,7 @@ function ProductDetails() {
               </p>
             )}
 
-            <h1 className="product-details-title">
-              {product.name}
-            </h1>
+            <h1 className="product-details-title">{product.name}</h1>
 
             {product.sku && (
               <p className="product-details-sku">
@@ -535,24 +499,19 @@ function ProductDetails() {
               )}
             </div>
 
-            {product.rating !== null &&
-              product.rating !== undefined && (
-                <div className="product-details-rating">
-                  <span className="product-details-rating-stars">
-                    <StarIcon />
-                  </span>
+            {product.rating !== null && product.rating !== undefined && (
+              <div className="product-details-rating">
+                <span className="product-details-rating-stars">
+                  <StarIcon />
+                </span>
 
-                  <strong>
-                    {Number(product.rating).toFixed(1)}
-                  </strong>
+                <strong>{Number(product.rating).toFixed(1)}</strong>
 
-                  {product.reviewCount !== undefined && (
-                    <span>
-                      {Number(product.reviewCount)} reviews
-                    </span>
-                  )}
-                </div>
-              )}
+                {product.reviewCount !== undefined && (
+                  <span>{Number(product.reviewCount)} reviews</span>
+                )}
+              </div>
+            )}
 
             {product.description && (
               <div className="product-details-description">
@@ -595,18 +554,9 @@ function ProductDetails() {
                 <div className="product-details-purchase-row">
                   <div className="product-details-purchase-controls">
                     <QuantitySelector
-                      quantity={
-                        isInCart
-                          ? cartQuantity
-                          : quantity
-                      }
-                      onQuantityChange={
-                        handleQuantityChange
-                      }
-                      disabled={
-                        isAddingToCart ||
-                        isUpdating
-                      }
+                      quantity={isInCart ? cartQuantity : quantity}
+                      onQuantityChange={handleQuantityChange}
+                      disabled={isAddingToCart || isUpdating}
                     />
 
                     {isInCart && (
@@ -614,10 +564,7 @@ function ProductDetails() {
                         type="button"
                         className="product-details-remove-button"
                         onClick={handleRemoveFromCart}
-                        disabled={
-                          isUpdating ||
-                          isAddingToCart
-                        }
+                        disabled={isUpdating || isAddingToCart}
                         aria-label={`Remove ${product.name} from cart`}
                         title="Remove from cart"
                       >
@@ -632,22 +579,15 @@ function ProductDetails() {
                         type="button"
                         className="button product-details-cart-button"
                         onClick={handleAddToCart}
-                        disabled={
-                          isAddingToCart ||
-                          isUpdating
-                        }
+                        disabled={isAddingToCart || isUpdating}
                       >
                         <CartIcon />
 
                         <span>
-                          {isAddingToCart
-                            ? "Adding..."
-                            : "Add to Cart"}
+                          {isAddingToCart ? "Adding..." : "Add to Cart"}
                         </span>
 
-                        {!isAddingToCart && (
-                          <ArrowIcon />
-                        )}
+                        {!isAddingToCart && <ArrowIcon />}
                       </button>
                     ) : (
                       <Link
@@ -656,9 +596,7 @@ function ProductDetails() {
                       >
                         <CartIcon />
 
-                        <span>
-                          Sign In to Add to Cart
-                        </span>
+                        <span>Sign In to Add to Cart</span>
 
                         <ArrowIcon />
                       </Link>
@@ -679,20 +617,14 @@ function ProductDetails() {
                 </div>
 
                 {addedToCart && !cartError && (
-                  <p
-                    className="product-details-cart-success"
-                    role="status"
-                  >
+                  <p className="product-details-cart-success" role="status">
                     <span>✓</span>
                     Product added to cart.
                   </p>
                 )}
 
                 {cartError && (
-                  <p
-                    className="product-details-cart-error"
-                    role="alert"
-                  >
+                  <p className="product-details-cart-error" role="alert">
                     <span>!</span>
                     {cartError}
                   </p>
@@ -712,7 +644,6 @@ function ProductDetails() {
 
               <h2>
                 Reviews
-
                 {reviewTotalElements > 0 && (
                   <span className="product-reviews-count">
                     {reviewTotalElements}
@@ -734,41 +665,30 @@ function ProductDetails() {
 
           {!isReviewsLoading && reviewsError && (
             <div className="product-reviews-state">
-              <p
-                className="product-reviews-error"
-                role="alert"
-              >
+              <p className="product-reviews-error" role="alert">
                 {reviewsError}
               </p>
             </div>
           )}
 
-          {!isReviewsLoading &&
-            !reviewsError &&
-            reviews.length === 0 && (
-              <div className="product-reviews-state">
-                <ReviewIcon />
+          {!isReviewsLoading && !reviewsError && reviews.length === 0 && (
+            <div className="product-reviews-state">
+              <ReviewIcon />
 
-                <p>
-                  No reviews yet. Be the first customer
-                  to review this product after your
-                  purchase.
-                </p>
-              </div>
-            )}
+              <p>
+                No reviews yet. Be the first customer to review this product
+                after your purchase.
+              </p>
+            </div>
+          )}
 
-          {!isReviewsLoading &&
-            !reviewsError &&
-            reviews.length > 0 && (
-              <div className="product-reviews-list">
-                {reviews.map((review) => (
-                  <ReviewCard
-                    key={review.id}
-                    review={review}
-                  />
-                ))}
-              </div>
-            )}
+          {!isReviewsLoading && !reviewsError && reviews.length > 0 && (
+            <div className="product-reviews-list">
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </section>

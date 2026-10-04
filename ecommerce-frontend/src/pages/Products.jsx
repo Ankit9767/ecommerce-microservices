@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -35,11 +34,7 @@ function GridIcon() {
 
 function ProductsIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="products-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
       <rect x="4" y="4" width="16" height="16" rx="2" />
       <path d="M4 9h16" />
       <path d="M9 9v11" />
@@ -49,11 +44,7 @@ function ProductsIcon() {
 
 function ArrowIcon({ direction = "right" }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="products-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
       {direction === "left" ? (
         <>
           <path d="M19 12H5" />
@@ -89,7 +80,7 @@ function mapProductSearchResult(product) {
     image: product.primaryImageUrl,
     rating: product.averageRating,
     reviewCount: product.reviewCount,
-    active: product.active
+    active: product.active,
   };
 }
 
@@ -100,8 +91,7 @@ function Products() {
   const [categories, setCategories] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isCategoriesLoading, setIsCategoriesLoading] =
-    useState(true);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
 
   const [error, setError] = useState("");
   const [categoryError, setCategoryError] = useState("");
@@ -117,10 +107,7 @@ function Products() {
 
   const pageValue = Number(searchParams.get("page"));
 
-  const page =
-    Number.isInteger(pageValue) && pageValue >= 0
-      ? pageValue
-      : 0;
+  const page = Number.isInteger(pageValue) && pageValue >= 0 ? pageValue : 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -141,7 +128,7 @@ function Products() {
           : response?.content || [];
 
         const activeCategories = categoryList.filter(
-          (item) => item.active !== false
+          (item) => item.active !== false,
         );
 
         setCategories(activeCategories);
@@ -152,10 +139,7 @@ function Products() {
 
         setCategories([]);
 
-        setCategoryError(
-          requestError.message ||
-            "Unable to load categories."
-        );
+        setCategoryError(requestError.message || "Unable to load categories.");
       } finally {
         if (isMounted) {
           setIsCategoriesLoading(false);
@@ -183,40 +167,30 @@ function Products() {
             q: search || undefined,
             category: category || undefined,
 
-            minPrice:
-              minPrice !== ""
-                ? minPrice
-                : undefined,
+            minPrice: minPrice !== "" ? minPrice : undefined,
 
-            maxPrice:
-              maxPrice !== ""
-                ? maxPrice
-                : undefined,
+            maxPrice: maxPrice !== "" ? maxPrice : undefined,
 
             active: true,
 
             page,
             size: DEFAULT_PAGE_SIZE,
-            sort: sortBy || undefined
+            sort: sortBy || undefined,
           });
 
           if (!isMounted) {
             return;
           }
 
-          const mappedProducts = (
-            response?.content || []
-          ).map(mapProductSearchResult);
+          const mappedProducts = (response?.content || []).map(
+            mapProductSearchResult,
+          );
 
           setProducts(mappedProducts);
 
-          setTotalElements(
-            response?.totalElements || 0
-          );
+          setTotalElements(response?.totalElements || 0);
 
-          setTotalPages(
-            response?.totalPages || 0
-          );
+          setTotalPages(response?.totalPages || 0);
         } catch (requestError) {
           if (!isMounted) {
             return;
@@ -228,7 +202,7 @@ function Products() {
 
           setError(
             requestError.message ||
-              "Unable to load products. Please try again."
+              "Unable to load products. Please try again.",
           );
         } finally {
           if (isMounted) {
@@ -244,31 +218,18 @@ function Products() {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [
-    search,
-    category,
-    minPrice,
-    maxPrice,
-    sortBy,
-    page
-  ]);
+  }, [search, category, minPrice, maxPrice, sortBy, page]);
 
   const updateSearchParams = (updates) => {
     const nextParams = new URLSearchParams(searchParams);
 
-    Object.entries(updates).forEach(
-      ([key, value]) => {
-        if (
-          value === undefined ||
-          value === null ||
-          value === ""
-        ) {
-          nextParams.delete(key);
-        } else {
-          nextParams.set(key, String(value));
-        }
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") {
+        nextParams.delete(key);
+      } else {
+        nextParams.set(key, String(value));
       }
-    );
+    });
 
     nextParams.set("page", "0");
 
@@ -277,37 +238,37 @@ function Products() {
 
   const handleSearchChange = (value) => {
     updateSearchParams({
-      search: value
+      search: value,
     });
   };
 
   const handleCategoryChange = (value) => {
     updateSearchParams({
-      category: value
+      category: value,
     });
   };
 
   const handleMinPriceChange = (value) => {
     updateSearchParams({
-      minPrice: value
+      minPrice: value,
     });
   };
 
   const handleMaxPriceChange = (value) => {
     updateSearchParams({
-      maxPrice: value
+      maxPrice: value,
     });
   };
 
   const handleSortChange = (value) => {
     updateSearchParams({
-      sort: value
+      sort: value,
     });
   };
 
   const handleClear = () => {
     setSearchParams({
-      page: "0"
+      page: "0",
     });
   };
 
@@ -316,28 +277,18 @@ function Products() {
       return;
     }
 
-    if (
-      totalPages > 0 &&
-      nextPage >= totalPages
-    ) {
+    if (totalPages > 0 && nextPage >= totalPages) {
       return;
     }
 
-    const nextParams = new URLSearchParams(
-      searchParams
-    );
+    const nextParams = new URLSearchParams(searchParams);
 
-    nextParams.set(
-      "page",
-      String(nextPage)
-    );
+    nextParams.set("page", String(nextPage));
 
     setSearchParams(nextParams);
   };
 
-  const categoryOptions = categories.map(
-    (item) => item.name
-  );
+  const categoryOptions = categories.map((item) => item.name);
 
   return (
     <section className="page products-page">
@@ -350,20 +301,15 @@ function Products() {
               </div>
 
               <div>
-                <p className="products-eyebrow">
-                  EcommerceHub
-                </p>
+                <p className="products-eyebrow">EcommerceHub</p>
 
-                <h1 className="page-title">
-                  Products
-                </h1>
+                <h1 className="page-title">Products</h1>
               </div>
             </div>
 
             <p className="products-description">
-              Discover products across our growing
-              collection and find something that fits
-              what you need.
+              Discover products across our growing collection and find something
+              that fits what you need.
             </p>
 
             <div className="products-header-meta">
@@ -380,7 +326,6 @@ function Products() {
               </span>
             </div>
           </div>
-
         </header>
 
         <div className="products-filter-section">
@@ -391,10 +336,7 @@ function Products() {
 
             <div>
               <h2>Find what you're looking for</h2>
-              <p>
-                Search, filter, and sort the available
-                products.
-              </p>
+              <p>Search, filter, and sort the available products.</p>
             </div>
           </div>
 
@@ -416,10 +358,7 @@ function Products() {
         </div>
 
         {categoryError && (
-          <div
-            className="products-filter-error"
-            role="alert"
-          >
+          <div className="products-filter-error" role="alert">
             <AlertIcon />
             <p>{categoryError}</p>
           </div>
@@ -436,26 +375,17 @@ function Products() {
 
             <div className="products-loading-content">
               <strong>Loading products</strong>
-              <p>
-                We're finding products that match
-                your selection.
-              </p>
+              <p>We're finding products that match your selection.</p>
             </div>
 
-            <div
-              className="products-loading-bar"
-              aria-hidden="true"
-            >
+            <div className="products-loading-bar" aria-hidden="true">
               <span />
             </div>
           </div>
         )}
 
         {!isLoading && error && (
-          <div
-            className="products-status products-status-error"
-            role="alert"
-          >
+          <div className="products-status products-status-error" role="alert">
             <div className="products-state-icon">
               <AlertIcon />
             </div>
@@ -476,23 +406,17 @@ function Products() {
                 </span>
 
                 <div>
-                  <p className="products-results-label">
-                    Product collection
-                  </p>
+                  <p className="products-results-label">Product collection</p>
 
                   <p className="products-count">
                     {totalElements}{" "}
-                    {totalElements === 1
-                      ? "product found"
-                      : "products found"}
+                    {totalElements === 1 ? "product found" : "products found"}
                   </p>
                 </div>
               </div>
 
               {sortBy && (
-                <span className="products-active-sort">
-                  Sorted results
-                </span>
+                <span className="products-active-sort">Sorted results</span>
               )}
             </div>
 
@@ -509,8 +433,7 @@ function Products() {
                 <h2>No products found</h2>
 
                 <p>
-                  Try changing your search or filters
-                  to find more products.
+                  Try changing your search or filters to find more products.
                 </p>
 
                 <button
@@ -531,9 +454,7 @@ function Products() {
                 <button
                   type="button"
                   className="products-pagination-button"
-                  onClick={() =>
-                    handlePageChange(page - 1)
-                  }
+                  onClick={() => handlePageChange(page - 1)}
                   disabled={page === 0}
                 >
                   <ArrowIcon direction="left" />
@@ -550,12 +471,8 @@ function Products() {
                 <button
                   type="button"
                   className="products-pagination-button"
-                  onClick={() =>
-                    handlePageChange(page + 1)
-                  }
-                  disabled={
-                    page >= totalPages - 1
-                  }
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages - 1}
                 >
                   <span>Next</span>
                   <ArrowIcon />
@@ -570,4 +487,3 @@ function Products() {
 }
 
 export default Products;
-

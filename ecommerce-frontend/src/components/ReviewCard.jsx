@@ -16,31 +16,26 @@ function formatReviewDate(dateValue) {
 }
 
 function ReviewStars({ rating }) {
-  const normalizedRating = Math.min(
-    5,
-    Math.max(0, Number(rating) || 0)
-  );
+  const normalizedRating = Math.min(5, Math.max(0, Number(rating) || 0));
 
   return (
     <div
       className="review-stars"
       aria-label={`${normalizedRating} out of 5 stars`}
     >
-      {Array.from({ length: 5 }).map(
-        (_, index) => (
-          <span
-            key={index}
-            className={
-              index < normalizedRating
-                ? "review-star review-star-filled"
-                : "review-star"
-            }
-            aria-hidden="true"
-          >
-            ★
-          </span>
-        )
-      )}
+      {Array.from({ length: 5 }).map((_, index) => (
+        <span
+          key={index}
+          className={
+            index < normalizedRating
+              ? "review-star review-star-filled"
+              : "review-star"
+          }
+          aria-hidden="true"
+        >
+          ★
+        </span>
+      ))}
     </div>
   );
 }
@@ -50,7 +45,7 @@ function ReviewCard({
   isOwnReview = false,
   onEdit,
   onDelete,
-  isDeleting = false
+  isDeleting = false,
 }) {
   if (!review) {
     return null;
@@ -63,9 +58,7 @@ function ReviewCard({
           <ReviewStars rating={review.rating} />
 
           {review.title && (
-            <h3 className="review-card-title">
-              {review.title}
-            </h3>
+            <h3 className="review-card-title">{review.title}</h3>
           )}
         </div>
 
@@ -77,9 +70,7 @@ function ReviewCard({
         </time>
       </div>
 
-      <p className="review-card-comment">
-        {review.comment}
-      </p>
+      <p className="review-card-comment">{review.comment}</p>
 
       {isOwnReview && (
         <div className="review-card-actions">
@@ -101,9 +92,7 @@ function ReviewCard({
               onClick={() => onDelete(review)}
               disabled={isDeleting}
             >
-              {isDeleting
-                ? "Deleting..."
-                : "Delete"}
+              {isDeleting ? "Deleting..." : "Delete"}
             </button>
           )}
         </div>

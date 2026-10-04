@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -9,11 +8,7 @@ import "./styles/Orders.css";
 
 function PackageIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="products-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
       <path d="M12 1 23 6.5v11L12 23 1 17.5v-11L12 1Z" />
       <path d="M1 6.5 12 12.5 23 6.5" />
       <path d="M12 12.5V23" />
@@ -21,15 +16,9 @@ function PackageIcon() {
   );
 }
 
-
-
 function ArrowIcon({ direction = "right" }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="orders-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="orders-icon">
       {direction === "left" ? (
         <>
           <path d="M19 12H5" />
@@ -47,11 +36,7 @@ function ArrowIcon({ direction = "right" }) {
 
 function ClockIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="orders-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="orders-icon">
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7v5l3 2" />
     </svg>
@@ -60,11 +45,7 @@ function ClockIcon() {
 
 function CartIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="orders-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="orders-icon">
       <circle cx="9" cy="19" r="1.5" />
       <circle cx="18" cy="19" r="1.5" />
       <path d="M3.5 4.5h2l1.8 9.2h10.4l2-7H7" />
@@ -74,11 +55,7 @@ function CartIcon() {
 
 function AlertIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="orders-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="orders-icon">
       <path d="M12 4 21 20H3L12 4Z" />
       <path d="M12 9v5" />
       <path d="M12 17h.01" />
@@ -87,10 +64,7 @@ function AlertIcon() {
 }
 
 function Orders() {
-  const {
-    isAuthenticated,
-    isLoading: isAuthLoading
-  } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +88,7 @@ function Orders() {
       try {
         const response = await getMyOrders({
           page,
-          size: 10
+          size: 10,
         });
 
         if (!isMounted) {
@@ -128,10 +102,7 @@ function Orders() {
           return;
         }
 
-        setError(
-          requestError.message ||
-            "Unable to load your orders."
-        );
+        setError(requestError.message || "Unable to load your orders.");
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -146,11 +117,7 @@ function Orders() {
     return () => {
       isMounted = false;
     };
-  }, [
-    isAuthenticated,
-    isAuthLoading,
-    page
-  ]);
+  }, [isAuthenticated, isAuthLoading, page]);
 
   if (isAuthLoading) {
     return (
@@ -181,22 +148,13 @@ function Orders() {
               <PackageIcon />
             </div>
 
-            <p className="orders-state-eyebrow">
-              EcommerceHub
-            </p>
+            <p className="orders-state-eyebrow">EcommerceHub</p>
 
-            <h1 className="page-title">
-              My Orders
-            </h1>
+            <h1 className="page-title">My Orders</h1>
 
-            <p>
-              Please sign in to view your orders.
-            </p>
+            <p>Please sign in to view your orders.</p>
 
-            <Link
-              className="button orders-primary-button"
-              to="/login"
-            >
+            <Link className="button orders-primary-button" to="/login">
               <span>Sign In</span>
               <ArrowIcon />
             </Link>
@@ -217,19 +175,15 @@ function Orders() {
               </div>
 
               <div>
-                <p className="orders-eyebrow">
-                  EcommerceHub
-                </p>
+                <p className="orders-eyebrow">EcommerceHub</p>
 
-                <h1 className="page-title">
-                  My Orders
-                </h1>
+                <h1 className="page-title">My Orders</h1>
               </div>
             </div>
 
             <p className="orders-description">
-              View your previous orders, payment status,
-              order details, and current progress.
+              View your previous orders, payment status, order details, and
+              current progress.
             </p>
 
             <div className="orders-header-meta">
@@ -256,210 +210,155 @@ function Orders() {
         )}
 
         {!isLoading && error && (
-          <div
-            className="orders-state orders-error-state"
-            role="alert"
-          >
+          <div className="orders-state orders-error-state" role="alert">
             <div className="orders-state-icon orders-error-icon">
               <AlertIcon />
             </div>
 
-            <p className="orders-state-eyebrow">
-              Something went wrong
-            </p>
+            <p className="orders-state-eyebrow">Something went wrong</p>
 
-            <p className="orders-error">
-              {error}
-            </p>
+            <p className="orders-error">{error}</p>
           </div>
         )}
 
-        {!isLoading &&
-          !error &&
-          orders.length === 0 && (
-            <div className="orders-state orders-empty-state">
-              <div className="orders-state-icon">
-                <PackageIcon />
-              </div>
-
-              <p className="orders-state-eyebrow">
-                Order history
-              </p>
-
-              <h2>No orders yet</h2>
-
-              <p>
-                Your completed and active orders will
-                appear here once you place an order.
-              </p>
-
-              <Link
-                className="button orders-primary-button"
-                to="/products"
-              >
-                <span>Start Shopping</span>
-                <ArrowIcon />
-              </Link>
+        {!isLoading && !error && orders.length === 0 && (
+          <div className="orders-state orders-empty-state">
+            <div className="orders-state-icon">
+              <PackageIcon />
             </div>
-          )}
 
-        {!isLoading &&
-          !error &&
-          orders.length > 0 && (
-            <>
-              <div className="orders-list">
-                {orders.map((order, index) => {
-                  const isPaymentPending =
-                    order.status === "PENDING_PAYMENT";
+            <p className="orders-state-eyebrow">Order history</p>
 
-                  return (
-                    <article
-                      className="order-card"
-                      key={order.id}
-                      style={{
-                        "--order-delay": `${index * 70}ms`
-                      }}
-                    >
-                      <div className="order-card-top">
-                        <div className="order-card-identity">
-                          <div className="order-card-icon">
-                            <PackageIcon />
-                          </div>
+            <h2>No orders yet</h2>
 
-                          <div>
-                            <p className="order-card-label">
-                              Order
+            <p>
+              Your completed and active orders will appear here once you place
+              an order.
+            </p>
+
+            <Link className="button orders-primary-button" to="/products">
+              <span>Start Shopping</span>
+              <ArrowIcon />
+            </Link>
+          </div>
+        )}
+
+        {!isLoading && !error && orders.length > 0 && (
+          <>
+            <div className="orders-list">
+              {orders.map((order, index) => {
+                const isPaymentPending = order.status === "PENDING_PAYMENT";
+
+                return (
+                  <article
+                    className="order-card"
+                    key={order.id}
+                    style={{
+                      "--order-delay": `${index * 70}ms`,
+                    }}
+                  >
+                    <div className="order-card-top">
+                      <div className="order-card-identity">
+                        <div className="order-card-icon">
+                          <PackageIcon />
+                        </div>
+
+                        <div>
+                          <p className="order-card-label">Order</p>
+
+                          <h2>#{order.id}</h2>
+
+                          {order.createdAt && (
+                            <p className="order-card-date">
+                              <ClockIcon />
+                              {new Date(order.createdAt).toLocaleString()}
                             </p>
-
-                            <h2>
-                              #{order.id}
-                            </h2>
-
-                            {order.createdAt && (
-                              <p className="order-card-date">
-                                <ClockIcon />
-                                {new Date(
-                                  order.createdAt
-                                ).toLocaleString()}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
+                      </div>
 
-                        <span
-                          className={`order-status ${
-                            isPaymentPending
-                              ? "order-status-pending"
-                              : ""
-                          }`}
-                        >
-                          {order.status}
+                      <span
+                        className={`order-status ${
+                          isPaymentPending ? "order-status-pending" : ""
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
+
+                    <div className="order-card-details">
+                      <div className="order-detail-item">
+                        <span className="order-detail-label">
+                          <CartIcon />
+                          Items
                         </span>
+
+                        <strong>
+                          {order.items?.reduce(
+                            (total, item) => total + (item.quantity || 0),
+                            0,
+                          )}
+                        </strong>
                       </div>
 
-                      <div className="order-card-details">
-                        <div className="order-detail-item">
-                          <span className="order-detail-label">
-                            <CartIcon />
-                            Items
-                          </span>
+                      <div className="order-detail-item order-total">
+                        <span className="order-detail-label">Total</span>
 
-                          <strong>
-                            {order.items?.reduce(
-                              (total, item) => total + (item.quantity || 0),
-                              0
-                            )}
-                          </strong>
-
-                        </div>
-
-                        <div className="order-detail-item order-total">
-                          <span className="order-detail-label">
-                            Total
-                          </span>
-
-                          <strong>
-                            {order.currency}{" "}
-                            {Number(
-                              order.totalAmount
-                            ).toFixed(2)}
-                          </strong>
-                        </div>
+                        <strong>
+                          {order.currency}{" "}
+                          {Number(order.totalAmount).toFixed(2)}
+                        </strong>
                       </div>
+                    </div>
 
-                      <div className="order-card-actions">
-                        <Link
-                          className="button order-view-button"
-                          to={`/orders/${order.id}`}
-                        >
-                          <span>View Order</span>
-                          <ArrowIcon />
-                        </Link>
+                    <div className="order-card-actions">
+                      <Link
+                        className="button order-view-button"
+                        to={`/orders/${order.id}`}
+                      >
+                        <span>View Order</span>
+                        <ArrowIcon />
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
 
-                        {isPaymentPending && (
-                          <Link
-                            className="button order-payment-button"
-                            to={`/orders/${order.id}?payment=1`}
-                          >
-                            <span>Complete Payment</span>
-                            <ArrowIcon />
-                          </Link>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-
-              {totalPages > 1 && (
-                <nav
-                  className="orders-pagination"
-                  aria-label="Orders pagination"
+            {totalPages > 1 && (
+              <nav className="orders-pagination" aria-label="Orders pagination">
+                <button
+                  type="button"
+                  className="orders-pagination-button"
+                  onClick={() => setPage((current) => Math.max(0, current - 1))}
+                  disabled={page === 0}
                 >
-                  <button
-                    type="button"
-                    className="orders-pagination-button"
-                    onClick={() =>
-                      setPage((current) =>
-                        Math.max(0, current - 1)
-                      )
-                    }
-                    disabled={page === 0}
-                  >
-                    <ArrowIcon direction="left" />
-                    <span>Previous</span>
-                  </button>
+                  <ArrowIcon direction="left" />
+                  <span>Previous</span>
+                </button>
 
-                  <span className="orders-pagination-status">
-                    Page {page + 1} of {totalPages}
-                  </span>
+                <span className="orders-pagination-status">
+                  Page {page + 1} of {totalPages}
+                </span>
 
-                  <button
-                    type="button"
-                    className="orders-pagination-button"
-                    onClick={() =>
-                      setPage((current) =>
-                        Math.min(
-                          totalPages - 1,
-                          current + 1
-                        )
-                      )
-                    }
-                    disabled={
-                      page >= totalPages - 1
-                    }
-                  >
-                    <span>Next</span>
-                    <ArrowIcon />
-                  </button>
-                </nav>
-              )}
-            </>
-          )}
+                <button
+                  type="button"
+                  className="orders-pagination-button"
+                  onClick={() =>
+                    setPage((current) => Math.min(totalPages - 1, current + 1))
+                  }
+                  disabled={page >= totalPages - 1}
+                >
+                  <span>Next</span>
+                  <ArrowIcon />
+                </button>
+              </nav>
+            )}
+          </>
+        )}
       </div>
     </main>
   );
 }
 
 export default Orders;
-

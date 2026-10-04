@@ -1,4 +1,3 @@
-
 .product-card {
   display: flex;
   flex-direction: column;
@@ -37,12 +36,11 @@
   justify-content: center;
   aspect-ratio: 1 / 0.86;
   overflow: hidden;
-  background:
-    radial-gradient(
-      circle at 50% 35%,
-      #ffffff 0%,
-      var(--color-background) 72%
-    );
+  background: radial-gradient(
+    circle at 50% 35%,
+    #ffffff 0%,
+    var(--color-background) 72%
+  );
 }
 
 .product-card-image img {
@@ -105,11 +103,7 @@
   display: inline;
   color: var(--color-text);
   text-decoration: none;
-  background-image: linear-gradient(
-    to right,
-    currentColor,
-    currentColor
-  );
+  background-image: linear-gradient(to right, currentColor, currentColor);
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 0% 1.5px;
@@ -143,8 +137,7 @@
 .product-card-name a:focus-visible {
   outline: none;
   border-radius: 3px;
-  box-shadow:
-    0 0 0 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
 /*
@@ -211,10 +204,7 @@
   position: relative;
   min-height: 40px;
   margin-top: 12px;
-  animation:
-    product-card-action-enter
-    260ms cubic-bezier(0.22, 1, 0.36, 1)
-    both;
+  animation: product-card-action-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .product-card-action--quantity {
@@ -340,8 +330,7 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.13);
 }
 
-.product-card-cart-button:hover:not(:disabled)
-  .product-card-cart-icon svg {
+.product-card-cart-button:hover:not(:disabled) .product-card-cart-icon svg {
   transform: translateY(-1px) scale(1.08);
 }
 
@@ -371,10 +360,7 @@
   color: #a33a3a;
   font-size: 0.72rem;
   line-height: 1.4;
-  animation:
-    product-card-error-enter
-    220ms ease
-    both;
+  animation: product-card-error-enter 220ms ease both;
 }
 
 /* =========================================
@@ -473,4 +459,3 @@
     background-size: 100% 1.5px;
   }
 }
-

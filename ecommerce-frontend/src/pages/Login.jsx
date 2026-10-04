@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import FormField from "../components/FormField";
 import { useAuth } from "../context/AuthContext";
@@ -18,22 +14,20 @@ function Login() {
 
   const [form, setForm] = useState({
     usernameOrEmail: "",
-    password: ""
+    password: "",
   });
 
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectPath =
-    location.state?.from?.pathname || "/";
+  const redirectPath = location.state?.from?.pathname || "/";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
     setForm((currentForm) => ({
       ...currentForm,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -46,13 +40,10 @@ function Login() {
     try {
       await login(form);
       navigate(redirectPath, {
-        replace: true
+        replace: true,
       });
     } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to log in. Please try again."
-      );
+      setError(requestError.message || "Unable to log in. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -62,27 +53,19 @@ function Login() {
     <section className="page login-page">
       <div className="container">
         <div className="login-card">
-          <h1 className="page-title">
-            Login
-          </h1>
+          <h1 className="page-title">Login</h1>
 
           <p className="page-description">
             Sign in to your EcommerceHub account.
           </p>
 
           {error && (
-            <p
-              className="login-error"
-              role="alert"
-            >
+            <p className="login-error" role="alert">
               {error}
             </p>
           )}
 
-          <form
-            className="login-form"
-            onSubmit={handleSubmit}
-          >
+          <form className="login-form" onSubmit={handleSubmit}>
             <FormField
               id="usernameOrEmail"
               name="usernameOrEmail"
@@ -104,22 +87,13 @@ function Login() {
               autoComplete="current-password"
             />
 
-            <button
-              type="submit"
-              className="button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? "Signing in..."
-                : "Login"}
+            <button type="submit" className="button" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Login"}
             </button>
           </form>
 
           <p className="login-register-link">
-            Don't have an account?{" "}
-            <Link to="/register">
-              Register
-            </Link>
+            Don't have an account? <Link to="/register">Register</Link>
           </p>
         </div>
       </div>
