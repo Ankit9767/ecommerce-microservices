@@ -3,6 +3,7 @@ package com.example.payment_service.service.impl;
 import com.ecommerce.common.dto.OrderResponse;
 import com.ecommerce.common.dto.PaymentProviderResponse;
 import com.ecommerce.common.dto.PaymentResponse;
+import com.ecommerce.common.enums.OrderStatus;
 import com.ecommerce.common.enums.PaymentStatus;
 import com.example.payment_service.entity.Payment;
 import com.example.payment_service.exception.InvalidPaymentProviderResponseException;
@@ -20,6 +21,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,13 +36,22 @@ public class PaymentPersistenceService {
 
     private final PaymentMetrics paymentMetrics;
 
+    private static final List<PaymentStatus> ACTIVE_STATUSES =
+            List.of(
+                    PaymentStatus.PENDING,
+                    PaymentStatus.PROCESSING
+            );
+
     @Transactional
     public PaymentCreationResult createPendingPayment(OrderResponse order,
                                                       String providerName) {
 
         Payment existingPayment =
                 paymentRepository
-                        .findByOrderId(order.getId())
+                        .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
+                                order.getId(),
+                                ACTIVE_STATUSES
+                        )
                         .orElse(null);
 
         if (existingPayment != null) {
@@ -47,7 +59,7 @@ public class PaymentPersistenceService {
             paymentMetrics.duplicatePayment();
 
             log.info(
-                    "Payment already exists for order {}. " +
+                    "Active payment already exists for order {}. " +
                             "paymentId={}, status={}, providerOrderId={}, " +
                             "providerPaymentId={}",
                     order.getId(),
@@ -81,8 +93,7 @@ public class PaymentPersistenceService {
             paymentMetrics.paymentCreated();
 
             log.info(
-                    "Created new payment {} for order {}. " +
-                            "provider={}",
+                    "Created new payment {} for order {}. provider={}",
                     savedPayment.getId(),
                     order.getId(),
                     providerName
@@ -96,17 +107,19 @@ public class PaymentPersistenceService {
         } catch (DataIntegrityViolationException ex) {
 
             /*
-             * --------------------------------------------------
-             * CONCURRENT PAYMENT CREATION
+             * The UNIQUE constraint on active_order_id protects
+             * us against concurrent creation of an active payment.
              *
-             * UNIQUE(order_id) prevents two payments for
-             * the same order.
-             * --------------------------------------------------
+             * Another request may have inserted the active payment
+             * after our initial lookup.
              */
 
             Payment concurrentPayment =
                     paymentRepository
-                            .findByOrderId(order.getId())
+                            .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
+                                    order.getId(),
+                                    ACTIVE_STATUSES
+                            )
                             .orElse(null);
 
             if (concurrentPayment != null) {
@@ -114,13 +127,10 @@ public class PaymentPersistenceService {
                 paymentMetrics.duplicatePayment();
 
                 log.info(
-                        "Payment was created concurrently for order {}. " +
-                                "Returning payment {}. " +
-                                "status={}, providerOrderId={}",
+                        "Active payment was created concurrently for order {}. " +
+                                "Returning payment {}.",
                         order.getId(),
-                        concurrentPayment.getId(),
-                        concurrentPayment.getStatus(),
-                        concurrentPayment.getProviderOrderId()
+                        concurrentPayment.getId()
                 );
 
                 return new PaymentCreationResult(
@@ -130,15 +140,142 @@ public class PaymentPersistenceService {
             }
 
             log.error(
-                    "Payment creation failed for order {} and no " +
-                            "existing payment could be found.",
+                    "Payment creation failed for order {} " +
+                            "without an existing active payment.",
                     order.getId(),
                     ex
             );
 
-            throw new PaymentConcurrencyException(
+            throw ex;
+        }
+    }
+
+    @Transactional
+    public PaymentCreationResult createRetryPayment(OrderResponse order,
+                                                    String providerName) {
+
+        if (order == null || order.getId() == null) {
+
+            throw new IllegalArgumentException(
+                    "Order is required to create a retry payment"
+            );
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+
+            throw new IllegalStateException(
+                    "Payment can only be retried while the order is awaiting payment"
+            );
+        }
+
+        if (paymentRepository.existsByOrderIdAndStatus(
+                order.getId(),
+                PaymentStatus.SUCCESS
+        )) {
+
+            log.warn(
+                    "Retry rejected because order {} already has a successful payment",
                     order.getId()
             );
+
+            throw new IllegalStateException("Order has already been paid");
+        }
+
+        /*
+         * If another retry request already created an active
+         * attempt, return it instead of creating another one.
+         */
+        Payment existingActivePayment =
+                paymentRepository
+                        .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
+                                order.getId(),
+                                ACTIVE_STATUSES
+                        )
+                        .orElse(null);
+
+        if (existingActivePayment != null) {
+
+            log.info(
+                    "Active payment already exists for retry. " +
+                            "orderId={}, paymentId={}, status={}",
+                    order.getId(),
+                    existingActivePayment.getId(),
+                    existingActivePayment.getStatus()
+            );
+
+            return new PaymentCreationResult(
+                    paymentMapper.toResponse(existingActivePayment),
+                    false
+            );
+        }
+
+        Payment payment = Payment.builder()
+                .orderId(order.getId())
+                .customerId(order.getCustomerId())
+                .customerEmail(order.getCustomerEmail())
+                .amount(order.getTotalAmount())
+                .currency(order.getCurrency())
+                .paymentMethod(order.getPaymentMethod())
+                .provider(providerName)
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        try {
+
+            Payment savedPayment =
+                    paymentRepository.saveAndFlush(payment);
+
+            paymentMetrics.paymentCreated();
+
+            log.info(
+                    "Created payment retry attempt {} for order {}. provider={}",
+                    savedPayment.getId(),
+                    order.getId(),
+                    providerName
+            );
+
+            return new PaymentCreationResult(
+                    paymentMapper.toResponse(savedPayment),
+                    true
+            );
+
+        } catch (DataIntegrityViolationException ex) {
+
+            /*
+             * Another request may have won the race and created
+             * the active payment first.
+             */
+
+            Payment concurrentPayment =
+                    paymentRepository
+                            .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
+                                    order.getId(),
+                                    ACTIVE_STATUSES
+                            )
+                            .orElse(null);
+
+            if (concurrentPayment != null) {
+
+                log.info(
+                        "Retry payment was created concurrently for order {}. " +
+                                "Returning payment {}.",
+                        order.getId(),
+                        concurrentPayment.getId()
+                );
+
+                return new PaymentCreationResult(
+                        paymentMapper.toResponse(concurrentPayment),
+                        false
+                );
+            }
+
+            log.error(
+                    "Failed to create retry payment for order {}",
+                    order.getId(),
+                    ex
+            );
+
+            throw ex;
         }
     }
 

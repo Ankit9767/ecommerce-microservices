@@ -97,6 +97,19 @@ public class PaymentController {
         );
     }
 
+    @PostMapping("/{paymentId}/retry")
+    @PreAuthorize("hasAuthority('PAYMENT_CHECKOUT')")
+    public ResponseEntity<PaymentResponse> retryPayment(@PathVariable Long paymentId,
+                                                        Authentication authentication) {
+
+        return ResponseEntity.ok(
+                paymentService.retryPayment(
+                        paymentId,
+                        authentication
+                )
+        );
+    }
+
     @PostMapping("/{paymentId}/mock/complete")
     @PreAuthorize("hasAuthority('PAYMENT_CHECKOUT')")
     public ResponseEntity<PaymentResponse> completeMockPayment(@PathVariable Long paymentId,
