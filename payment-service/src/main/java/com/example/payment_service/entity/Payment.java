@@ -13,11 +13,27 @@ import java.math.BigDecimal;
 @Table(
         name = "payments",
         indexes = {
-                @Index(name = "idx_payment_order_id", columnList = "order_id"),
-                @Index(name = "idx_payment_customer_id", columnList = "customer_id"),
-                @Index(name = "idx_payment_status", columnList = "status"),
-                @Index(name = "idx_payment_provider_reference",
-                        columnList = "provider_reference")
+                @Index(
+                        name = "idx_payment_order_id",
+                        columnList = "order_id"
+                ),
+                @Index(
+                        name = "idx_payment_customer_id",
+                        columnList = "customer_id"
+                ),
+                @Index(
+                        name = "idx_payment_status",
+                        columnList = "status"
+                ),
+                @Index(
+                        name = "idx_payment_provider_reference",
+                        columnList = "provider_reference"
+                ),
+                @Index(
+                        name = "uk_payment_order_active",
+                        columnList = "active_order_id",
+                        unique = true
+                )
         }
 )
 @Getter
@@ -29,8 +45,7 @@ public class Payment extends BaseEntity {
 
     @Column(
             name = "order_id",
-            nullable = false,
-            unique = true
+            nullable = false
     )
     private Long orderId;
 
@@ -112,7 +127,39 @@ public class Payment extends BaseEntity {
     private String failureReason;
 
     @Version
-    @Column(name = "version", nullable = false)
+    @Column(
+            name = "version",
+            nullable = false
+    )
     @Builder.Default
     private Long version = 0L;
+
+    /**
+     * MySQL generated column.
+     *
+     * PENDING / PROCESSING:
+     *     active_order_id = order_id
+     *
+     * SUCCESS / FAILED / CANCELLED / REFUNDED:
+     *     active_order_id = NULL
+     *
+     * Unique index on active_order_id therefore guarantees:
+     *
+     * one order -> maximum one active payment attempt.
+     */
+    @Column(
+            name = "active_order_id",
+            insertable = false,
+            updatable = false,
+            columnDefinition = """
+                    BIGINT GENERATED ALWAYS AS (
+                        CASE
+                            WHEN status IN ('PENDING', 'PROCESSING')
+                                THEN order_id
+                            ELSE NULL
+                        END
+                    ) STORED
+                    """
+    )
+    private Long activeOrderId;
 }
