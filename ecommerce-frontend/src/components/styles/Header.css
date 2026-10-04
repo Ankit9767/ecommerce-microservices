@@ -7,8 +7,7 @@
 
   border-bottom: 1px solid var(--color-border);
 
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -63,8 +62,7 @@
   background: var(--color-primary);
   color: var(--color-primary-text);
 
-  box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 
   transition:
     transform 250ms ease,
@@ -95,8 +93,7 @@
 
   border-radius: 12px;
 
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.14);
 }
 
 .brand:hover .brand-cart-icon {
@@ -260,8 +257,7 @@
 .cart-nav-link:hover .cart-count {
   transform: translateY(-2px) scale(1.1);
 
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 
   animation: cart-badge-pulse 650ms ease;
 }
@@ -402,4 +398,3 @@
     transform: none;
   }
 }
-
