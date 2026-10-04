@@ -40,6 +40,10 @@ function initializeCheckout(paymentId) {
   return apiPost(`/payments/${paymentId}/checkout`);
 }
 
+function retryPayment(paymentId) {
+  return apiPost(`/payments/${paymentId}/retry`);
+}
+
 function completeMockPayment(paymentId) {
   return apiPost(`/payments/${paymentId}/mock/complete`);
 }
@@ -54,6 +58,7 @@ export {
   getMyPayments,
   getPaymentsByStatus,
   initializeCheckout,
+  retryPayment,
   completeMockPayment,
   failMockPayment,
 };
