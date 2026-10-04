@@ -3,7 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState
+  useState,
 } from "react";
 
 import { getAccessToken } from "../services/api";
@@ -11,15 +11,13 @@ import { getAccessToken } from "../services/api";
 import {
   login as loginRequest,
   register as registerRequest,
-  logout as logoutRequest
+  logout as logoutRequest,
 } from "../services/authService";
 
 const AuthContext = createContext(null);
 
 function AuthProvider({ children }) {
-  const [accessToken, setAccessToken] = useState(
-    () => getAccessToken()
-  );
+  const [accessToken, setAccessToken] = useState(() => getAccessToken());
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,16 +28,10 @@ function AuthProvider({ children }) {
   const login = async (credentials) => {
     const response = await loginRequest(credentials);
 
-    localStorage.setItem(
-      "accessToken",
-      response.accessToken
-    );
+    localStorage.setItem("accessToken", response.accessToken);
 
     if (response.refreshToken) {
-      localStorage.setItem(
-        "refreshToken",
-        response.refreshToken
-      );
+      localStorage.setItem("refreshToken", response.refreshToken);
     }
 
     setAccessToken(response.accessToken);
@@ -52,8 +44,7 @@ function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    const refreshToken =
-      localStorage.getItem("refreshToken");
+    const refreshToken = localStorage.getItem("refreshToken");
 
     try {
       await logoutRequest(refreshToken);
@@ -71,34 +62,22 @@ function AuthProvider({ children }) {
       isLoading,
       login,
       register,
-      logout
+      logout,
     }),
-    [
-      accessToken,
-      isLoading
-    ]
+    [accessToken, isLoading],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider"
-    );
+    throw new Error("useAuth must be used inside AuthProvider");
   }
 
   return context;
 }
 
-export {
-  AuthProvider,
-  useAuth
-};
+export { AuthProvider, useAuth };

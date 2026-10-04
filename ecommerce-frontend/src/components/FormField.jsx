@@ -12,23 +12,18 @@ function FormField({
   placeholder,
   required = false,
   error,
-  autoComplete
+  autoComplete,
 }) {
   return (
     <div className="form-field">
-      <label
-        className="form-field-label"
-        htmlFor={id}
-      >
+      <label className="form-field-label" htmlFor={id}>
         {label}
       </label>
 
       <input
         id={id}
         name={name}
-        className={`form-field-input ${
-          error ? "form-field-input-error" : ""
-        }`}
+        className={`form-field-input ${error ? "form-field-input-error" : ""}`}
         type={type}
         value={value}
         onChange={onChange}
@@ -36,17 +31,11 @@ function FormField({
         required={required}
         autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
-        aria-describedby={
-          error ? `${id}-error` : undefined
-        }
+        aria-describedby={error ? `${id}-error` : undefined}
       />
 
       {error && (
-        <p
-          id={`${id}-error`}
-          className="form-field-error"
-          role="alert"
-        >
+        <p id={`${id}-error`} className="form-field-error" role="alert">
           {error}
         </p>
       )}

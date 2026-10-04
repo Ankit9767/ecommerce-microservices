@@ -111,13 +111,6 @@
     border-color 200ms ease;
 }
 
-.cart-heading-icon:hover {
-  transform: translateY(-3px) rotate(-2deg);
-  border-color: #cfcfcf;
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.08);
-}
-
 .cart-heading-icon .cart-icon {
   width: 22px;
   height: 22px;
@@ -167,8 +160,7 @@
 .cart-item-wrapper .cart-item:hover {
   transform: translateY(-2px);
   border-color: #d0d0d0;
-  box-shadow:
-    0 9px 22px rgba(0, 0, 0, 0.055);
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.055);
 }
 
 /* =========================
@@ -282,18 +274,6 @@
   animation: cartSummaryEnter 500ms ease 120ms both;
 }
 
-.cart-summary::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 24px;
-  left: 24px;
-  height: 2px;
-  border-radius: 999px;
-  background: var(--color-text);
-  opacity: 0.1;
-}
-
 .cart-summary::after {
   content: "";
   position: absolute;
@@ -349,19 +329,11 @@
   border-radius: 12px;
   background: var(--color-background);
   color: var(--color-text);
-  box-shadow:
-    0 5px 14px rgba(0, 0, 0, 0.045);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.045);
   transition:
     transform 200ms ease,
     box-shadow 200ms ease,
     border-color 200ms ease;
-}
-
-.cart-summary-heading:hover .cart-summary-icon {
-  transform: translateY(-2px) rotate(-2deg);
-  border-color: #cfcfcf;
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.07);
 }
 
 .cart-summary-icon .cart-icon {
@@ -460,13 +432,12 @@
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
-  color: var(--color-text);
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
 .cart-summary-total-label {
   font-size: 14px;
-  font-weight: 600;
   color: var(--color-text-muted);
 }
 
@@ -481,8 +452,6 @@
   color: var(--color-text);
   white-space: nowrap;
 }
-
-
 
 /* =========================
    Actions
@@ -524,8 +493,7 @@
 
 .cart-checkout-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.13);
 }
 
 .cart-checkout-button:hover .cart-button-icon {
@@ -550,8 +518,7 @@
   border-color: #333333;
   background: #333333;
   color: #ffffff;
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.13);
 }
 
 .cart-clear-button:active:not(:disabled) {
@@ -805,8 +772,7 @@
   border-radius: 18px;
   background: var(--color-background);
   color: var(--color-text);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
   animation: cartIconFloat 4s ease-in-out infinite;
 }
 
@@ -850,8 +816,7 @@
 
 .cart-state-button:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
 }
 
 /* =========================

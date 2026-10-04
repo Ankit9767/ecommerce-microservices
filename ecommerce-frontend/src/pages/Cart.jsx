@@ -9,11 +9,7 @@ import "./styles/Cart.css";
 
 function CartIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-icon">
       <path d="M4 5h2l1.4 9.2a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5L21 8H7" />
       <circle cx="10" cy="19" r="1.2" />
       <circle cx="18" cy="19" r="1.2" />
@@ -37,14 +33,9 @@ function MoneyIcon() {
   );
 }
 
-
 function ProductsIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-icon">
       <rect x="4" y="4" width="16" height="16" rx="2" />
       <path d="M4 9h16" />
       <path d="M9 9v11" />
@@ -54,11 +45,7 @@ function ProductsIcon() {
 
 function SummaryIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-icon">
       <path d="M6 3.5h12a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5A1.5 1.5 0 0 1 6 3.5Z" />
       <path d="M8 8h8" />
       <path d="M8 12h8" />
@@ -69,11 +56,7 @@ function SummaryIcon() {
 
 function TrashIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-button-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-button-icon">
       <path d="M5 7h14" />
       <path d="M9 7V4.5h6V7" />
       <path d="m7 7 .8 12h8.4L17 7" />
@@ -85,11 +68,7 @@ function TrashIcon() {
 
 function CheckoutIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-button-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-button-icon">
       <path d="M4 5h2l1.4 9.2a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5L21 8H7" />
       <path d="M14 12h5" />
       <path d="m17 9 3 3-3 3" />
@@ -99,11 +78,7 @@ function CheckoutIcon() {
 
 function ArrowIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-button-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-button-icon">
       <path d="M19 12H5" />
       <path d="m11 6-6 6 6 6" />
     </svg>
@@ -112,11 +87,7 @@ function ArrowIcon() {
 
 function AlertIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="cart-alert-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="cart-alert-icon">
       <path d="M12 4 21 19H3L12 4Z" />
       <path d="M12 9v5" />
       <path d="M12 17.2v.1" />
@@ -134,30 +105,20 @@ function Cart() {
     error,
     updateQuantity,
     removeFromCart,
-    emptyCart
+    emptyCart,
   } = useCart();
 
   const { isAuthenticated } = useAuth();
 
-  const [actionError, setActionError] =
-    useState("");
+  const [actionError, setActionError] = useState("");
 
-  const handleQuantityChange = async (
-    productId,
-    quantity
-  ) => {
+  const handleQuantityChange = async (productId, quantity) => {
     setActionError("");
 
     try {
-      await updateQuantity(
-        productId,
-        quantity
-      );
+      await updateQuantity(productId, quantity);
     } catch (requestError) {
-      setActionError(
-        requestError.message ||
-          "Unable to update the cart."
-      );
+      setActionError(requestError.message || "Unable to update the cart.");
     }
   };
 
@@ -167,10 +128,7 @@ function Cart() {
     try {
       await removeFromCart(productId);
     } catch (requestError) {
-      setActionError(
-        requestError.message ||
-          "Unable to remove the item."
-      );
+      setActionError(requestError.message || "Unable to remove the item.");
     }
   };
 
@@ -180,10 +138,7 @@ function Cart() {
     try {
       await emptyCart();
     } catch (requestError) {
-      setActionError(
-        requestError.message ||
-          "Unable to clear the cart."
-      );
+      setActionError(requestError.message || "Unable to clear the cart.");
     }
   };
 
@@ -196,18 +151,11 @@ function Cart() {
               <CartIcon />
             </div>
 
-            <h1 className="page-title">
-              Your Cart
-            </h1>
+            <h1 className="page-title">Your Cart</h1>
 
-            <p>
-              Please sign in to view your cart.
-            </p>
+            <p>Please sign in to view your cart.</p>
 
-            <Link
-              className="button cart-state-button"
-              to="/login"
-            >
+            <Link className="button cart-state-button" to="/login">
               <span>Sign In</span>
             </Link>
           </div>
@@ -227,10 +175,7 @@ function Cart() {
 
             <p>Loading your cart...</p>
 
-            <span
-              className="cart-loading-spinner"
-              aria-hidden="true"
-            />
+            <span className="cart-loading-spinner" aria-hidden="true" />
           </div>
         </div>
       </section>
@@ -249,9 +194,7 @@ function Cart() {
               <AlertIcon />
             </div>
 
-            <h1 className="page-title">
-              Something went wrong
-            </h1>
+            <h1 className="page-title">Something went wrong</h1>
 
             <p>{error}</p>
           </div>
@@ -269,18 +212,11 @@ function Cart() {
               <CartIcon />
             </div>
 
-            <h1 className="page-title">
-              Your Cart
-            </h1>
+            <h1 className="page-title">Your Cart</h1>
 
-            <p>
-              Your cart is currently empty.
-            </p>
+            <p>Your cart is currently empty.</p>
 
-            <Link
-              className="button cart-state-button"
-              to="/products"
-            >
+            <Link className="button cart-state-button" to="/products">
               <ProductsIcon />
 
               <span>Browse Products</span>
@@ -301,29 +237,20 @@ function Cart() {
             </div>
 
             <div>
-              <p className="cart-eyebrow">
-                EcommerceHub
-              </p>
+              <p className="cart-eyebrow">EcommerceHub</p>
 
-              <h1 className="page-title">
-                Your Cart
-              </h1>
+              <h1 className="page-title">Your Cart</h1>
             </div>
           </div>
         </div>
 
         {(error || actionError) && (
-          <div
-            className="cart-status cart-status-error"
-            role="alert"
-          >
+          <div className="cart-status cart-status-error" role="alert">
             <div className="cart-alert-icon-wrap">
               <AlertIcon />
             </div>
 
-            <p>
-              {actionError || error}
-            </p>
+            <p>{actionError || error}</p>
           </div>
         )}
 
@@ -334,16 +261,12 @@ function Cart() {
                 className="cart-item-wrapper"
                 key={item.id}
                 style={{
-                  "--cart-item-delay": `${
-                    index * 70
-                  }ms`
+                  "--cart-item-delay": `${index * 70}ms`,
                 }}
               >
                 <CartItem
                   item={item}
-                  onQuantityChange={
-                    handleQuantityChange
-                  }
+                  onQuantityChange={handleQuantityChange}
                   onRemove={handleRemove}
                   disabled={isUpdating}
                 />
@@ -352,99 +275,79 @@ function Cart() {
           </div>
 
           <aside className="cart-summary">
-  <div className="cart-summary-glow" />
+            <div className="cart-summary-glow" />
 
-  <div className="cart-summary-heading">
-    <div className="cart-summary-icon">
-      <SummaryIcon />
-    </div>
+            <div className="cart-summary-heading">
+              <div className="cart-summary-icon">
+                <SummaryIcon />
+              </div>
 
-    <div>
-      <p className="cart-summary-eyebrow">
-        Your Order
-      </p>
+              <div>
+                <p className="cart-summary-eyebrow">Your Order</p>
 
-      <h2 className="cart-summary-title">
-        Order Summary
-      </h2>
-    </div>
-  </div>
+                <h2 className="cart-summary-title">Order Summary</h2>
+              </div>
+            </div>
 
-  <div className="cart-summary-details">
-    <div className="cart-summary-row">
-      <div className="cart-summary-label">
-        <ProductsIcon />
+            <div className="cart-summary-details">
+              <div className="cart-summary-row">
+                <div className="cart-summary-label">
+                  <ProductsIcon />
 
-        <span>Items</span>
-      </div>
+                  <span>Items</span>
+                </div>
 
-      <strong>{totalItems}</strong>
-    </div>
-  </div>
+                <strong>{totalItems}</strong>
+              </div>
+            </div>
 
-  <div className="cart-summary-total-card">
-  <div className="cart-summary-total-info">
-    <div className="cart-summary-total-heading">
-      <MoneyIcon />
+            <div className="cart-summary-total-card">
+              <div className="cart-summary-total-info">
+                <div className="cart-summary-total-heading">
+                  <MoneyIcon />
 
-      <span className="cart-summary-total-label">
-        Total amount
-      </span>
-    </div>
+                  <span className="cart-summary-total-label">Total amount</span>
+                </div>
 
-    <span className="cart-summary-total-note">
-      Including all items
-    </span>
-  </div>
+                <span className="cart-summary-total-note">
+                  Including all items
+                </span>
+              </div>
 
-  <strong>
-    {Number(totalAmount).toFixed(2)}
-  </strong>
-</div>
+              <strong>{Number(totalAmount).toFixed(2)}</strong>
+            </div>
 
+            <div className="cart-summary-actions">
+              <Link className="button cart-checkout-button" to="/checkout">
+                <CheckoutIcon />
 
-  <div className="cart-summary-actions">
-    <Link
-      className="button cart-checkout-button"
-      to="/checkout"
-    >
-      <CheckoutIcon />
-      
-      <span>Proceed to Checkout</span>
-      
-    </Link>
+                <span>Proceed to Checkout</span>
+              </Link>
 
-    <button
-      type="button"
-      className="cart-clear-button"
-      onClick={handleClearCart}
-      disabled={isUpdating}
-    >
-      <TrashIcon />
+              <button
+                type="button"
+                className="cart-clear-button"
+                onClick={handleClearCart}
+                disabled={isUpdating}
+              >
+                <TrashIcon />
 
-      <span>
-        {isUpdating
-          ? "Updating..."
-          : "Clear Cart"}
-      </span>
-    </button>
-  </div>
+                <span>{isUpdating ? "Updating..." : "Clear Cart"}</span>
+              </button>
+            </div>
 
-  <Link
-    className="cart-continue-link"
-    to="/products"
-  >
-    <ArrowIcon />
+            <Link className="cart-continue-link" to="/products">
+              <ArrowIcon />
 
-    <span>Continue Shopping</span>
-  </Link>
+              <span>Continue Shopping</span>
+            </Link>
 
-  <div className="cart-summary-footer">
-    <span className="cart-summary-footer-dot" />
+            <div className="cart-summary-footer">
+              <span className="cart-summary-footer-dot" />
 
-    <span>Ready for checkout</span>
-  </div>
-</aside>
+              <span>Ready for checkout</span>
+            </div>
+          </aside>
         </div>
       </div>
     </section>

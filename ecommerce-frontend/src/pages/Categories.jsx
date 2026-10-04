@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -8,11 +7,7 @@ import "./styles/Categories.css";
 
 function CategoryIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="categories-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="categories-icon">
       <rect x="4" y="4" width="6" height="6" rx="1" />
       <rect x="14" y="4" width="6" height="6" rx="1" />
       <rect x="4" y="14" width="6" height="6" rx="1" />
@@ -23,11 +18,7 @@ function CategoryIcon() {
 
 function GridIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="categories-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="categories-icon">
       <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
       <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
       <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
@@ -38,11 +29,7 @@ function GridIcon() {
 
 function ArrowIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="categories-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="categories-icon">
       <path d="M5 12h14" />
       <path d="m13 6 6 6-6 6" />
     </svg>
@@ -73,7 +60,7 @@ function Categories() {
           : response?.content || [];
 
         const activeCategories = categoryList.filter(
-          (category) => category.active !== false
+          (category) => category.active !== false,
         );
 
         setCategories(activeCategories);
@@ -85,7 +72,7 @@ function Categories() {
         setCategories([]);
         setError(
           requestError.message ||
-            "Unable to load categories. Please try again."
+            "Unable to load categories. Please try again.",
         );
       } finally {
         if (isMounted) {
@@ -130,9 +117,7 @@ function Categories() {
             className="categories-status categories-status-error"
             role="alert"
           >
-            <div className="categories-status-error-icon">
-              !
-            </div>
+            <div className="categories-status-error-icon">!</div>
 
             <div>
               <h2>Unable to load categories</h2>
@@ -155,20 +140,15 @@ function Categories() {
               </div>
 
               <div>
-                <p className="categories-eyebrow">
-                  EcommerceHub
-                </p>
+                <p className="categories-eyebrow">EcommerceHub</p>
 
-                <h1 className="page-title">
-                  Categories
-                </h1>
+                <h1 className="page-title">Categories</h1>
               </div>
             </div>
 
             <p className="categories-description">
-              Explore our collection through thoughtfully
-              organized categories and discover products
-              that fit what you need.
+              Explore our collection through thoughtfully organized categories
+              and discover products that fit what you need.
             </p>
 
             <div className="categories-header-meta">
@@ -195,9 +175,7 @@ function Categories() {
 
             <h2>No categories available</h2>
 
-            <p>
-              No categories are currently available.
-            </p>
+            <p>No categories are currently available.</p>
           </div>
         ) : (
           <div className="categories-grid">
@@ -207,7 +185,7 @@ function Categories() {
                 key={category.id}
                 to={`/categories/${category.id}`}
                 style={{
-                  "--category-delay": `${index * 75}ms`
+                  "--category-delay": `${index * 75}ms`,
                 }}
               >
                 <div className="category-card-background">
@@ -221,9 +199,7 @@ function Categories() {
                   </div>
 
                   <div className="category-card-title-wrap">
-                    <h2 className="category-card-title">
-                      {category.name}
-                    </h2>
+                    <h2 className="category-card-title">{category.name}</h2>
 
                     {category.description && (
                       <p className="category-card-description">
@@ -248,4 +224,3 @@ function Categories() {
 }
 
 export default Categories;
-
