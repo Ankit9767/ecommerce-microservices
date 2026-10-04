@@ -1,4 +1,3 @@
-
 .orders-page {
   position: relative;
   min-height: 100%;
@@ -344,19 +343,8 @@
 }
 
 .order-view-button:hover .orders-icon,
-.order-payment-button:hover .orders-icon {
+.orders-icon {
   transform: translateX(3px);
-}
-
-.order-payment-button {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-.order-payment-button:hover {
-  background: var(--color-text);
-  color: var(--color-primary-text);
 }
 
 /* Loading */
@@ -768,4 +756,3 @@
     animation: none;
   }
 }
-

@@ -1,4 +1,3 @@
-
 .products-page {
   position: relative;
   min-height: 100%;
@@ -532,13 +531,11 @@
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.11);
 }
 
-.products-pagination-button:first-child:hover:not(:disabled)
-  .products-icon {
+.products-pagination-button:first-child:hover:not(:disabled) .products-icon {
   transform: translateX(-3px);
 }
 
-.products-pagination-button:last-child:hover:not(:disabled)
-  .products-icon {
+.products-pagination-button:last-child:hover:not(:disabled) .products-icon {
   transform: translateX(3px);
 }
 

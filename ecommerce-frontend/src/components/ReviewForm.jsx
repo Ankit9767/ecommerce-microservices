@@ -1,17 +1,10 @@
-import React, {
-  useEffect,
-  useState
-} from "react";
+import React, { useEffect, useState } from "react";
 
 import "./styles/ReviewForm.css";
 
 function StarIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="review-form-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="review-form-icon">
       <path d="m12 4 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L12 4Z" />
     </svg>
   );
@@ -19,11 +12,7 @@ function StarIcon() {
 
 function EditIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="review-form-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="review-form-icon">
       <path d="m4 16.5-.8 3.3 3.3-.8L17.8 7.7a2.2 2.2 0 0 0-3.1-3.1L4 16.5Z" />
       <path d="m13.5 6.5 4 4" />
     </svg>
@@ -32,11 +21,7 @@ function EditIcon() {
 
 function MessageIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="review-form-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="review-form-icon">
       <path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-4.5 3v-3H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" />
       <path d="M7 10h10" />
       <path d="M7 13.5h7" />
@@ -74,21 +59,15 @@ function ReviewForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-  error = ""
+  error = "",
 }) {
   const isEditing = Boolean(review);
 
-  const [rating, setRating] = useState(
-    review?.rating || 5
-  );
+  const [rating, setRating] = useState(review?.rating || 5);
 
-  const [title, setTitle] = useState(
-    review?.title || ""
-  );
+  const [title, setTitle] = useState(review?.title || "");
 
-  const [comment, setComment] = useState(
-    review?.comment || ""
-  );
+  const [comment, setComment] = useState(review?.comment || "");
 
   useEffect(() => {
     setRating(review?.rating || 5);
@@ -114,28 +93,21 @@ function ReviewForm({
     await onSubmit({
       rating,
       title: title.trim(),
-      comment: comment.trim()
+      comment: comment.trim(),
     });
   };
 
   return (
-    <form
-      className="review-form"
-      onSubmit={handleSubmit}
-    >
+    <form className="review-form" onSubmit={handleSubmit}>
       <div
         className="review-form-field review-form-field-rating"
         style={{
-          "--review-field-delay": "0ms"
+          "--review-field-delay": "0ms",
         }}
       >
         <label
           className="review-form-label"
-          htmlFor={
-            isEditing
-              ? "review-rating-edit"
-              : "review-rating"
-          }
+          htmlFor={isEditing ? "review-rating-edit" : "review-rating"}
         >
           <span className="review-form-label-icon">
             <StarIcon />
@@ -149,62 +121,46 @@ function ReviewForm({
           role="radiogroup"
           aria-label="Rating"
         >
-          {Array.from({ length: 5 }).map(
-            (_, index) => {
-              const value = index + 1;
+          {Array.from({ length: 5 }).map((_, index) => {
+            const value = index + 1;
 
-              return (
-                <label
-                  className={`review-rating-option ${
-                    rating >= value
-                      ? "review-rating-option-filled"
-                      : ""
-                  } ${
-                    rating === value
-                      ? "review-rating-option-selected"
-                      : ""
-                  }`}
-                  key={value}
-                >
-                  <input
-                    type="radio"
-                    name="review-rating"
-                    value={value}
-                    checked={rating === value}
-                    onChange={() => setRating(value)}
-                  />
+            return (
+              <label
+                className={`review-rating-option ${
+                  rating >= value ? "review-rating-option-filled" : ""
+                } ${rating === value ? "review-rating-option-selected" : ""}`}
+                key={value}
+              >
+                <input
+                  type="radio"
+                  name="review-rating"
+                  value={value}
+                  checked={rating === value}
+                  onChange={() => setRating(value)}
+                />
 
-                  <span
-                    className="review-rating-star"
-                    aria-hidden="true"
-                  >
-                    <StarIcon />
-                  </span>
+                <span className="review-rating-star" aria-hidden="true">
+                  <StarIcon />
+                </span>
 
-                  <span className="sr-only">
-                    {value}{" "}
-                    {value === 1 ? "star" : "stars"}
-                  </span>
-                </label>
-              );
-            }
-          )}
+                <span className="sr-only">
+                  {value} {value === 1 ? "star" : "stars"}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
       <div
         className="review-form-field"
         style={{
-          "--review-field-delay": "70ms"
+          "--review-field-delay": "70ms",
         }}
       >
         <label
           className="review-form-label"
-          htmlFor={
-            isEditing
-              ? "review-title-edit"
-              : "review-title"
-          }
+          htmlFor={isEditing ? "review-title-edit" : "review-title"}
         >
           <span className="review-form-label-icon">
             <EditIcon />
@@ -215,40 +171,28 @@ function ReviewForm({
 
         <div className="review-form-control">
           <input
-            id={
-              isEditing
-                ? "review-title-edit"
-                : "review-title"
-            }
+            id={isEditing ? "review-title-edit" : "review-title"}
             className="review-form-input"
             type="text"
             value={title}
             maxLength={150}
-            onChange={(event) =>
-              setTitle(event.target.value)
-            }
+            onChange={(event) => setTitle(event.target.value)}
             placeholder="Summarize your experience"
           />
 
-          <span className="review-form-counter">
-            {title.length}/150
-          </span>
+          <span className="review-form-counter">{title.length}/150</span>
         </div>
       </div>
 
       <div
         className="review-form-field"
         style={{
-          "--review-field-delay": "140ms"
+          "--review-field-delay": "140ms",
         }}
       >
         <label
           className="review-form-label"
-          htmlFor={
-            isEditing
-              ? "review-comment-edit"
-              : "review-comment"
-          }
+          htmlFor={isEditing ? "review-comment-edit" : "review-comment"}
         >
           <span className="review-form-label-icon">
             <MessageIcon />
@@ -259,36 +203,23 @@ function ReviewForm({
 
         <div className="review-form-control">
           <textarea
-            id={
-              isEditing
-                ? "review-comment-edit"
-                : "review-comment"
-            }
+            id={isEditing ? "review-comment-edit" : "review-comment"}
             className="review-form-textarea"
             value={comment}
             maxLength={5000}
             required={!isEditing}
-            onChange={(event) =>
-              setComment(event.target.value)
-            }
+            onChange={(event) => setComment(event.target.value)}
             placeholder="Tell other customers about your experience"
             rows={6}
           />
 
-          <span className="review-form-counter">
-            {comment.length}/5000
-          </span>
+          <span className="review-form-counter">{comment.length}/5000</span>
         </div>
       </div>
 
       {error && (
-        <p
-          className="review-form-error"
-          role="alert"
-        >
-          <span className="review-form-error-icon">
-            !
-          </span>
+        <p className="review-form-error" role="alert">
+          <span className="review-form-error-icon">!</span>
 
           <span>{error}</span>
         </p>
@@ -303,8 +234,7 @@ function ReviewForm({
             !rating ||
             rating < 1 ||
             rating > 5 ||
-            (!isEditing &&
-              !comment.trim())
+            (!isEditing && !comment.trim())
           }
         >
           <span>

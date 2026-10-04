@@ -16,19 +16,18 @@ function Register() {
     lastName: "",
     email: "",
     password: "",
-    phone: ""
+    phone: "",
   });
 
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
     setForm((currentForm) => ({
       ...currentForm,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -44,14 +43,11 @@ function Register() {
       navigate("/login", {
         replace: true,
         state: {
-          registered: true
-        }
+          registered: true,
+        },
       });
     } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to create your account."
-      );
+      setError(requestError.message || "Unable to create your account.");
     } finally {
       setIsSubmitting(false);
     }
@@ -61,27 +57,17 @@ function Register() {
     <section className="page register-page">
       <div className="container">
         <div className="register-card">
-          <h1 className="page-title">
-            Create Account
-          </h1>
+          <h1 className="page-title">Create Account</h1>
 
-          <p className="page-description">
-            Create your EcommerceHub account.
-          </p>
+          <p className="page-description">Create your EcommerceHub account.</p>
 
           {error && (
-            <p
-              className="register-error"
-              role="alert"
-            >
+            <p className="register-error" role="alert">
               {error}
             </p>
           )}
 
-          <form
-            className="register-form"
-            onSubmit={handleSubmit}
-          >
+          <form className="register-form" onSubmit={handleSubmit}>
             <FormField
               id="username"
               name="username"
@@ -145,22 +131,13 @@ function Register() {
               autoComplete="new-password"
             />
 
-            <button
-              type="submit"
-              className="button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? "Creating Account..."
-                : "Create Account"}
+            <button type="submit" className="button" disabled={isSubmitting}>
+              {isSubmitting ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 
           <p className="register-login-link">
-            Already have an account?{" "}
-            <Link to="/login">
-              Login
-            </Link>
+            Already have an account? <Link to="/login">Login</Link>
           </p>
         </div>
       </div>

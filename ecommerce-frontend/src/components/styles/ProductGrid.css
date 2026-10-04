@@ -1,8 +1,7 @@
 .product-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 
   gap: 14px;
 
@@ -13,14 +12,9 @@
   min-width: 0;
   height: 100%;
 
-  animation:
-    product-grid-item-enter
-    420ms
-    cubic-bezier(0.22, 1, 0.36, 1)
-    both;
+  animation: product-grid-item-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 
-  animation-delay:
-    calc(var(--product-grid-index, 0) * 40ms);
+  animation-delay: calc(var(--product-grid-index, 0) * 40ms);
 }
 
 .product-grid-item > * {
@@ -45,20 +39,12 @@
   border-radius: 13px;
 
   background:
-    radial-gradient(
-      circle at 50% 0%,
-      rgba(0, 0, 0, 0.025),
-      transparent 45%
-    ),
+    radial-gradient(circle at 50% 0%, rgba(0, 0, 0, 0.025), transparent 45%),
     var(--color-surface);
 
   text-align: center;
 
-  animation:
-    product-grid-empty-enter
-    400ms
-    ease
-    both;
+  animation: product-grid-empty-enter 400ms ease both;
 }
 
 .product-grid-empty-icon {
@@ -77,8 +63,7 @@
   background: #fafafa;
   color: #777777;
 
-  box-shadow:
-    0 5px 14px rgba(0, 0, 0, 0.035);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.035);
 }
 
 .product-grid-empty-icon svg {
@@ -113,8 +98,7 @@
 
 @media (max-width: 1100px) {
   .product-grid {
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     gap: 13px;
   }
@@ -126,8 +110,7 @@
 
 @media (max-width: 900px) {
   .product-grid {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     gap: 13px;
   }
@@ -139,8 +122,7 @@
 
 @media (max-width: 768px) {
   .product-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 
     gap: 12px;
   }
@@ -160,8 +142,7 @@
   }
 
   .product-grid-item {
-    animation-delay:
-      calc(var(--product-grid-index, 0) * 35ms);
+    animation-delay: calc(var(--product-grid-index, 0) * 35ms);
   }
 }
 
@@ -173,17 +154,13 @@
   0% {
     opacity: 0;
 
-    transform:
-      translateY(10px)
-      scale(0.99);
+    transform: translateY(10px) scale(0.99);
   }
 
   100% {
     opacity: 1;
 
-    transform:
-      translateY(0)
-      scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -191,15 +168,13 @@
   0% {
     opacity: 0;
 
-    transform:
-      translateY(7px);
+    transform: translateY(7px);
   }
 
   100% {
     opacity: 1;
 
-    transform:
-      translateY(0);
+    transform: translateY(0);
   }
 }
 

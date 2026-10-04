@@ -1,19 +1,10 @@
-
 .product-details-page {
   position: relative;
   min-height: 100%;
   padding-bottom: var(--spacing-3xl);
   background:
-    radial-gradient(
-      circle at 8% 8%,
-      rgba(0, 0, 0, 0.025),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 92% 38%,
-      rgba(0, 0, 0, 0.02),
-      transparent 26%
-    );
+    radial-gradient(circle at 8% 8%, rgba(0, 0, 0, 0.025), transparent 24%),
+    radial-gradient(circle at 92% 38%, rgba(0, 0, 0, 0.02), transparent 26%);
 }
 
 /* Back navigation */
@@ -112,12 +103,7 @@
   justify-content: center;
   width: 100%;
   min-height: 470px;
-  background:
-    linear-gradient(
-      135deg,
-      #f7f7f7 0%,
-      #eeeeee 100%
-    );
+  background: linear-gradient(135deg, #f7f7f7 0%, #eeeeee 100%);
   color: #a0a0a0;
   font-size: 5rem;
   font-weight: 700;
@@ -360,8 +346,7 @@
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.025);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.025);
   animation: purchasePanelEnter 500ms 200ms ease both;
 }
 
@@ -1015,4 +1000,3 @@
     animation: none;
   }
 }
-
