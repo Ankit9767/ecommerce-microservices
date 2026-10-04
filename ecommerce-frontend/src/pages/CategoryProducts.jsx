@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -43,11 +42,7 @@ function GridIcon() {
 
 function ProductsIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="products-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="products-icon">
       <rect x="4" y="4" width="16" height="16" rx="2" />
       <path d="M4 9h16" />
       <path d="M9 9v11" />
@@ -101,7 +96,7 @@ function mapProductSearchResult(product) {
     image: product.primaryImageUrl,
     rating: product.averageRating,
     reviewCount: product.reviewCount,
-    active: product.active
+    active: product.active,
   };
 }
 
@@ -153,26 +148,22 @@ function CategoryProducts() {
           category: categoryResponse.name,
           active: true,
           page: 0,
-          size: DEFAULT_PAGE_SIZE
+          size: DEFAULT_PAGE_SIZE,
         });
 
         if (!isMounted) {
           return;
         }
 
-        const mappedProducts = (
-          productResponse?.content || []
-        ).map(mapProductSearchResult);
+        const mappedProducts = (productResponse?.content || []).map(
+          mapProductSearchResult,
+        );
 
         setProducts(mappedProducts);
 
-        setTotalElements(
-          productResponse?.totalElements || 0
-        );
+        setTotalElements(productResponse?.totalElements || 0);
 
-        setTotalPages(
-          productResponse?.totalPages || 0
-        );
+        setTotalPages(productResponse?.totalPages || 0);
       } catch (requestError) {
         if (!isMounted) {
           return;
@@ -183,7 +174,7 @@ function CategoryProducts() {
         } else {
           setError(
             requestError.message ||
-              "Unable to load category products. Please try again."
+              "Unable to load category products. Please try again.",
           );
         }
       } finally {
@@ -225,26 +216,22 @@ function CategoryProducts() {
           category: category.name,
           active: true,
           page,
-          size: DEFAULT_PAGE_SIZE
+          size: DEFAULT_PAGE_SIZE,
         });
 
         if (!isMounted) {
           return;
         }
 
-        const mappedProducts = (
-          response?.content || []
-        ).map(mapProductSearchResult);
+        const mappedProducts = (response?.content || []).map(
+          mapProductSearchResult,
+        );
 
         setProducts(mappedProducts);
 
-        setTotalElements(
-          response?.totalElements || 0
-        );
+        setTotalElements(response?.totalElements || 0);
 
-        setTotalPages(
-          response?.totalPages || 0
-        );
+        setTotalPages(response?.totalPages || 0);
       } catch (requestError) {
         if (!isMounted) {
           return;
@@ -256,7 +243,7 @@ function CategoryProducts() {
 
         setError(
           requestError.message ||
-            "Unable to load category products. Please try again."
+            "Unable to load category products. Please try again.",
         );
       } finally {
         if (isMounted) {
@@ -281,10 +268,7 @@ function CategoryProducts() {
   };
 
   const handleNextPage = () => {
-    if (
-      totalPages === 0 ||
-      page >= totalPages - 1
-    ) {
+    if (totalPages === 0 || page >= totalPages - 1) {
       return;
     }
 
@@ -302,14 +286,9 @@ function CategoryProducts() {
 
             <strong>Loading category</strong>
 
-            <p>
-              We're finding products in this category.
-            </p>
+            <p>We're finding products in this category.</p>
 
-            <div
-              className="category-products-loading-bar"
-              aria-hidden="true"
-            >
+            <div className="category-products-loading-bar" aria-hidden="true">
               <span />
             </div>
           </div>
@@ -335,10 +314,7 @@ function CategoryProducts() {
 
               <p>{error}</p>
 
-              <Link
-                className="category-products-back-button"
-                to="/categories"
-              >
+              <Link className="category-products-back-button" to="/categories">
                 <ArrowIcon direction="left" />
                 <span>Back to Categories</span>
               </Link>
@@ -356,10 +332,7 @@ function CategoryProducts() {
   return (
     <section className="page category-products-page">
       <div className="container">
-        <Link
-          className="category-products-back-link"
-          to="/categories"
-        >
+        <Link className="category-products-back-link" to="/categories">
           <ArrowIcon direction="left" />
           <span>Back to Categories</span>
         </Link>
@@ -372,13 +345,9 @@ function CategoryProducts() {
               </div>
 
               <div>
-                <p className="category-products-eyebrow">
-                  Category
-                </p>
+                <p className="category-products-eyebrow">Category</p>
 
-                <h1 className="page-title">
-                  {category.name}
-                </h1>
+                <h1 className="page-title">{category.name}</h1>
               </div>
             </div>
 
@@ -398,20 +367,14 @@ function CategoryProducts() {
         </header>
 
         {error && (
-          <div
-            className="category-products-filter-error"
-            role="alert"
-          >
+          <div className="category-products-filter-error" role="alert">
             <AlertIcon />
             <p>{error}</p>
           </div>
         )}
 
         {isLoading && (
-          <div
-            className="category-products-loading-state"
-            aria-live="polite"
-          >
+          <div className="category-products-loading-state" aria-live="polite">
             <div className="category-products-loading-icon-small">
               <CategoryIcon />
             </div>
@@ -419,15 +382,10 @@ function CategoryProducts() {
             <div className="category-products-loading-content">
               <strong>Loading products</strong>
 
-              <p>
-                We're finding products in this category.
-              </p>
+              <p>We're finding products in this category.</p>
             </div>
 
-            <div
-              className="category-products-loading-bar"
-              aria-hidden="true"
-            >
+            <div className="category-products-loading-bar" aria-hidden="true">
               <span />
             </div>
           </div>
@@ -448,8 +406,7 @@ function CategoryProducts() {
                 <h2>No products found</h2>
 
                 <p>
-                  There are currently no products available
-                  in this category.
+                  There are currently no products available in this category.
                 </p>
 
                 <Link
@@ -488,9 +445,7 @@ function CategoryProducts() {
                   type="button"
                   className="category-products-pagination-button"
                   onClick={handleNextPage}
-                  disabled={
-                    page >= totalPages - 1
-                  }
+                  disabled={page >= totalPages - 1}
                 >
                   <span>Next</span>
                   <ArrowIcon />
