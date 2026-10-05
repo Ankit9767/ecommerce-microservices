@@ -84,6 +84,10 @@ spec:
             - secretRef:
                 name: product-service-secret
 
+          env:
+            - name: APP_STORAGE_PRODUCT_IMAGES_DIR
+              value: /app/storage/product-images
+
           resources:
             requests:
               cpu: {{ .Values.product.resources.requests.cpu | quote }}
@@ -91,6 +95,10 @@ spec:
             limits:
               cpu: {{ .Values.product.resources.limits.cpu | quote }}
               memory: {{ .Values.product.resources.limits.memory | quote }}
+
+          volumeMounts:
+            - name: product-images
+              mountPath: /app/storage/product-images
 
           readinessProbe:
             httpGet:
@@ -117,3 +125,8 @@ spec:
               port: 8089
             failureThreshold: 30
             periodSeconds: 10
+
+      volumes:
+        - name: product-images
+          persistentVolumeClaim:
+            claimName: product-images-pvc
