@@ -4,7 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState
+  useState,
 } from "react";
 
 import {
@@ -12,7 +12,7 @@ import {
   clearCart,
   getCart,
   removeCartItem,
-  updateCartItem
+  updateCartItem,
 } from "../services/cartService";
 
 import { useAuth } from "./AuthContext";
@@ -20,20 +20,12 @@ import { useAuth } from "./AuthContext";
 const CartContext = createContext(null);
 
 function CartProvider({ children }) {
-  const {
-    isAuthenticated,
-    isLoading: isAuthLoading
-  } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Keeps track of whether ANY cart operation is running.
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Keeps track of WHICH product is currently being added.
   const [addingProductId, setAddingProductId] = useState(null);
-
   const [error, setError] = useState("");
 
   const loadCart = useCallback(async () => {
@@ -53,10 +45,7 @@ function CartProvider({ children }) {
 
       return response;
     } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to load your cart."
-      );
+      setError(requestError.message || "Unable to load your cart.");
 
       throw requestError;
     } finally {
@@ -77,116 +66,84 @@ function CartProvider({ children }) {
     }
 
     loadCart().catch(() => {});
-  }, [
-    isAuthenticated,
-    isAuthLoading,
-    loadCart
-  ]);
+  }, [isAuthenticated, isAuthLoading, loadCart]);
 
-  const addToCart = useCallback(
-    async (product, quantity = 1) => {
-      if (!product?.id) {
-        throw new Error(
-          "A valid product is required to add an item to the cart."
-        );
-      }
+  const addToCart = useCallback(async (product, quantity = 1) => {
+    if (!product?.id) {
+      throw new Error(
+        "A valid product is required to add an item to the cart.",
+      );
+    }
 
-      // Store the exact product being added.
-      setAddingProductId(product.id);
+    setAddingProductId(product.id);
+    setIsUpdating(true);
+    setError("");
 
-      setIsUpdating(true);
-      setError("");
+    try {
+      const response = await addCartItem(product.id, quantity);
 
-      try {
-        const response = await addCartItem(
-          product.id,
-          quantity
-        );
+      setCart(response);
 
-        setCart(response);
+      return response;
+    } catch (requestError) {
+      setError(
+        requestError.message || "Unable to add the product to your cart.",
+      );
 
-        return response;
-      } catch (requestError) {
-        setError(
-          requestError.message ||
-            "Unable to add the product to your cart."
-        );
+      throw requestError;
+    } finally {
+      setAddingProductId(null);
+      setIsUpdating(false);
+    }
+  }, []);
 
-        throw requestError;
-      } finally {
-        // Clear the product-specific loading state.
-        setAddingProductId(null);
+  const updateQuantity = useCallback(async (productId, quantity) => {
+    if (!productId) {
+      throw new Error("A valid product ID is required.");
+    }
 
-        setIsUpdating(false);
-      }
-    },
-    []
-  );
+    setIsUpdating(true);
+    setError("");
 
-  const updateQuantity = useCallback(
-    async (productId, quantity) => {
-      if (!productId) {
-        throw new Error(
-          "A valid product ID is required."
-        );
-      }
+    try {
+      const response = await updateCartItem(productId, quantity);
 
-      setIsUpdating(true);
-      setError("");
+      setCart(response);
 
-      try {
-        const response = await updateCartItem(
-          productId,
-          quantity
-        );
+      return response;
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update the cart item.");
 
-        setCart(response);
+      throw requestError;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, []);
 
-        return response;
-      } catch (requestError) {
-        setError(
-          requestError.message ||
-            "Unable to update the cart item."
-        );
+  const removeFromCart = useCallback(async (productId) => {
+    if (!productId) {
+      throw new Error("A valid product ID is required.");
+    }
 
-        throw requestError;
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    []
-  );
+    setIsUpdating(true);
+    setError("");
 
-  const removeFromCart = useCallback(
-    async (productId) => {
-      if (!productId) {
-        throw new Error(
-          "A valid product ID is required."
-        );
-      }
+    try {
+      const response = await removeCartItem(productId);
 
-      setIsUpdating(true);
-      setError("");
+      setCart(response);
 
-      try {
-        const response = await removeCartItem(productId);
+      return response;
+    } catch (requestError) {
+      setError(
+        requestError.message || "Unable to remove the product from your cart.",
+      );
 
-        setCart(response);
-
-        return response;
-      } catch (requestError) {
-        setError(
-          requestError.message ||
-            "Unable to remove the product from your cart."
-        );
-
-        throw requestError;
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    []
-  );
+      throw requestError;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, []);
 
   const emptyCart = useCallback(async () => {
     setIsUpdating(true);
@@ -199,10 +156,7 @@ function CartProvider({ children }) {
 
       return response;
     } catch (requestError) {
-      setError(
-        requestError.message ||
-          "Unable to clear your cart."
-      );
+      setError(requestError.message || "Unable to clear the cart.");
 
       throw requestError;
     } finally {
@@ -211,16 +165,35 @@ function CartProvider({ children }) {
   }, []);
 
   /*
-   * cart.totalItems is the backend-provided total item count.
+   * Clears the cart only in React state.
    *
-   * Keep both names:
-   * - totalItems for cart pages
-   * - cartItemCount for the header
+   * This is useful after successfully placing an order when the backend
+   * has already cleared the cart as part of the order creation process.
+   *
+   * No API request is made here.
    */
-  const totalItems = Number(
-    cart?.totalItems || 0
-  );
+  const resetCart = useCallback(() => {
+    setCart((currentCart) => {
+      if (!currentCart) {
+        return {
+          items: [],
+          totalItems: 0,
+          totalAmount: 0,
+        };
+      }
 
+      return {
+        ...currentCart,
+        items: [],
+        totalItems: 0,
+        totalAmount: 0,
+      };
+    });
+
+    setError("");
+  }, []);
+
+  const totalItems = Number(cart?.totalItems || 0);
   const cartItemCount = totalItems;
 
   const value = useMemo(
@@ -228,25 +201,23 @@ function CartProvider({ children }) {
       cart,
       items: cart?.items || [],
       totalAmount: cart?.totalAmount || 0,
-
       totalItems,
       cartItemCount,
 
       isLoading,
-
-      // Global cart operation state.
       isUpdating,
-
-      // Product-specific add state.
       addingProductId,
-
       error,
 
       loadCart,
       addToCart,
       updateQuantity,
       removeFromCart,
-      emptyCart
+      emptyCart,
+
+      // Use this after successful order creation
+      // when the backend has already cleared the cart.
+      resetCart,
     }),
     [
       cart,
@@ -260,30 +231,22 @@ function CartProvider({ children }) {
       addToCart,
       updateQuantity,
       removeFromCart,
-      emptyCart
-    ]
+      emptyCart,
+      resetCart,
+    ],
   );
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 function useCart() {
   const context = useContext(CartContext);
 
   if (!context) {
-    throw new Error(
-      "useCart must be used inside CartProvider"
-    );
+    throw new Error("useCart must be used inside CartProvider");
   }
 
   return context;
 }
 
-export {
-  CartProvider,
-  useCart
-};
+export { CartProvider, useCart };
