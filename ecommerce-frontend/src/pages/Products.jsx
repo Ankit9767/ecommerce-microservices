@@ -77,7 +77,7 @@ function mapProductSearchResult(product) {
     sku: product.sku,
     category: product.category,
     price: Number(product.price),
-    image: product.primaryImageUrl,
+    primaryImageId: product.primaryImageId,
     rating: product.averageRating,
     reviewCount: product.reviewCount,
     active: product.active,
