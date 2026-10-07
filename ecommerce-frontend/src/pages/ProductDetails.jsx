@@ -7,7 +7,9 @@ import ReviewCard from "../components/ReviewCard";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
-import { getProduct } from "../services/productService";
+import { apiGetBlob } from "../services/api";
+
+import { getProduct, getProductImages } from "../services/productService";
 import { getProductReviews } from "../services/reviewService";
 
 import "./styles/ProductDetails.css";
@@ -195,6 +197,7 @@ function ProductDetails() {
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [imageUrl, setImageUrl] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -212,6 +215,59 @@ function ProductDetails() {
 
   const isInCart = Boolean(cartItem);
   const cartQuantity = Number(cartItem?.quantity || 0);
+
+  useEffect(() => {
+    let isMounted = true;
+    let objectUrl = null;
+
+    async function loadProductImage() {
+      if (!product?.id) {
+        setImageUrl("");
+        return;
+      }
+
+      try {
+        const images = await getProductImages(product.id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const primaryImage =
+          images?.find((image) => image.primaryImage === true) || images?.[0];
+
+        if (!primaryImage?.id) {
+          setImageUrl("");
+          return;
+        }
+
+        const imageBlob = await apiGetBlob(
+          `/products/${product.id}/images/${primaryImage.id}/content`,
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(imageBlob);
+        setImageUrl(objectUrl);
+      } catch {
+        if (isMounted) {
+          setImageUrl("");
+        }
+      }
+    }
+
+    loadProductImage();
+
+    return () => {
+      isMounted = false;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [product?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -448,11 +504,8 @@ function ProductDetails() {
 
         <div className="product-details">
           <div className="product-details-image">
-            {product.image || product.primaryImageUrl ? (
-              <img
-                src={product.image || product.primaryImageUrl}
-                alt={product.name}
-              />
+            {imageUrl ? (
+              <img src={imageUrl} alt={product.name} />
             ) : (
               <div
                 className="product-details-image-placeholder"
