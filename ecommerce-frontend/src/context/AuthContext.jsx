@@ -40,7 +40,17 @@ function AuthProvider({ children }) {
   };
 
   const register = async (request) => {
-    return registerRequest(request);
+    const response = await registerRequest(request);
+
+    localStorage.setItem("accessToken", response.accessToken);
+
+    if (response.refreshToken) {
+      localStorage.setItem("refreshToken", response.refreshToken);
+    }
+
+    setAccessToken(response.accessToken);
+
+    return response;
   };
 
   const logout = async () => {
