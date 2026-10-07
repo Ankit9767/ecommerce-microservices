@@ -143,6 +143,7 @@ function Checkout() {
     totalAmount,
     totalItems,
     isLoading: isCartLoading,
+    resetCart,
   } = useCart();
 
   const [form, setForm] = useState({
@@ -159,6 +160,8 @@ function Checkout() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [orderCreated, setOrderCreated] = useState(false);
 
   const [error, setError] = useState("");
 
@@ -195,9 +198,17 @@ function Checkout() {
   const handleChange = (event) => {
     const { name, value } = event.target;
 
+    const nextValue =
+      name === "country"
+        ? value
+            .replace(/[^a-zA-Z]/g, "")
+            .slice(0, 2)
+            .toUpperCase()
+        : value;
+
     setForm((current) => ({
       ...current,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     setError("");
@@ -237,6 +248,12 @@ function Checkout() {
       }
 
       const orderId = response.id;
+
+      // The backend has successfully created the order and consumed the cart.
+      // Update the React cart state now, but keep this checkout flow alive.
+      setOrderCreated(true);
+
+      resetCart();
 
       setPaymentStatus("Preparing your payment...");
 
@@ -377,7 +394,7 @@ function Checkout() {
     );
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !orderCreated) {
     return (
       <main className="page checkout-page">
         <div className="container">
