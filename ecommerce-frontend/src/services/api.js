@@ -1,5 +1,28 @@
 const API_BASE_URL = "http://ecommercehub.com/api";
 
+async function apiGetBlob(path, options = {}) {
+  const token = options.token !== undefined ? options.token : getAccessToken();
+
+  const requestHeaders = {
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    requestHeaders.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`http://ecommercehub.com/api${path}`, {
+    method: "GET",
+    headers: requestHeaders,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  return response.blob();
+}
+
 async function apiRequest(
   path,
   { method = "GET", body, token, headers = {}, isFormData = false } = {},
@@ -109,6 +132,7 @@ function apiDelete(path, options = {}) {
 
 export {
   apiRequest,
+  apiGetBlob,
   apiGet,
   apiPost,
   apiPut,
