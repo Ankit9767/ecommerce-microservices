@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+
+import { apiGetBlob } from "../services/api";
 
 import QuantitySelector from "./QuantitySelector";
 
@@ -36,6 +38,47 @@ function ProductCard({ product }) {
   const [error, setError] = useState("");
   const [isPressed, setIsPressed] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  useEffect(() => {
+    let objectUrl = null;
+    let isCancelled = false;
+
+    const loadProductImage = async () => {
+      if (!product?.id || !product?.primaryImageId) {
+        setImageUrl("");
+        return;
+      }
+
+      try {
+        const imageBlob = await apiGetBlob(
+          `/products/${product.id}/images/${product.primaryImageId}/content`,
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(imageBlob);
+        setImageUrl(objectUrl);
+      } catch {
+        if (!isCancelled) {
+          setImageUrl("");
+        }
+      }
+    };
+
+    loadProductImage();
+
+    return () => {
+      isCancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [product?.id, product?.primaryImageId]);
 
   const cartItem = useMemo(() => {
     if (!product?.id || !Array.isArray(items)) {
@@ -127,10 +170,10 @@ function ProductCard({ product }) {
         to={`/products/${product.id}`}
         aria-label={`View ${product.name}`}
       >
-        {product.image ? (
-          <img src={product.image} alt={product.name} />
+        {imageUrl ? (
+          <img src={imageUrl} alt={product.name} />
         ) : (
-          <span>{product.name?.charAt(0)} </span>
+          <span>{product.name?.charAt(0)}</span>
         )}{" "}
       </Link>
 
