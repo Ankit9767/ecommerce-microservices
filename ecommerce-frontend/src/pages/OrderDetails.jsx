@@ -1,14 +1,6 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import React, {
-  useCallback,
-  useEffect,
-  useState
-} from "react";
-
-import {
-  Link,
-  useParams
-} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -19,28 +11,24 @@ import {
   createReview,
   deleteReview,
   getMyReviews,
-  updateReview
+  updateReview,
 } from "../services/reviewService";
 
-import {
-  cancelOrder,
-  getOrder
-} from "../services/orderService";
+import { cancelOrder, getOrder } from "../services/orderService";
 
 import {
   getMyPayments,
   getPayment,
-  initializeCheckout
+  initializeCheckout,
+  retryPayment,
 } from "../services/paymentService";
 
 import {
   openRazorpayCheckout,
-  toRazorpayAmount
+  toRazorpayAmount,
 } from "../services/razorpayService";
 
-import {
-  trackShipmentByOrderId
-} from "../services/shipmentService";
+import { trackShipmentByOrderId } from "../services/shipmentService";
 
 import "./styles/OrderDetails.css";
 
@@ -53,32 +41,33 @@ const SHIPMENT_STEPS = [
   {
     status: "CREATED",
     label: "Order Processing",
-    description: "Your shipment has been created."
+    description: "Your shipment has been created.",
+  },
+  {
+    status: "SHIPPED",
+    label: "Shipped",
+    description: "Your order has been shipped.",
   },
   {
     status: "IN_TRANSIT",
     label: "In Transit",
-    description: "Your shipment is on its way."
+    description: "Your shipment is on its way.",
   },
   {
     status: "OUT_FOR_DELIVERY",
     label: "Out for Delivery",
-    description: "Your shipment is out for delivery."
+    description: "Your shipment is out for delivery.",
   },
   {
     status: "DELIVERED",
     label: "Delivered",
-    description: "Your shipment has been delivered."
-  }
+    description: "Your shipment has been delivered.",
+  },
 ];
 
 function OrderIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z" />
       <path d="M4 6.5 12 10l8-3.5" />
       <path d="M12 10v11" />
@@ -89,11 +78,7 @@ function OrderIcon() {
 
 function ProductsIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="nav-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="nav-icon">
       <rect x="4" y="4" width="16" height="16" rx="2" />
       <path d="M4 9h16" />
       <path d="M9 9v11" />
@@ -103,11 +88,7 @@ function ProductsIcon() {
 
 function PackageIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
       <path d="m4 7.5 8 4.5 8-4.5" />
       <path d="M12 12v9" />
@@ -117,11 +98,7 @@ function PackageIcon() {
 
 function ArrowIcon({ direction = "right" }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       {direction === "left" ? (
         <>
           <path d="M19 12H5" />
@@ -139,18 +116,8 @@ function ArrowIcon({ direction = "right" }) {
 
 function PaymentIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
-      <rect
-        x="3.5"
-        y="5"
-        width="17"
-        height="14"
-        rx="2"
-      />
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
       <path d="M3.5 9h17" />
       <path d="M7 14h4" />
     </svg>
@@ -159,11 +126,7 @@ function PaymentIcon() {
 
 function TruckIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="M3 6h11v11H3z" />
       <path d="M14 10h4l3 3v4h-7z" />
       <circle cx="7" cy="18" r="1.7" />
@@ -174,11 +137,7 @@ function TruckIcon() {
 
 function ReviewIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="m12 4 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L12 4Z" />
     </svg>
   );
@@ -186,11 +145,7 @@ function ReviewIcon() {
 
 function LocationIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="M20 10.5c0 5.2-8 10.5-8 10.5S4 15.7 4 10.5a8 8 0 1 1 16 0Z" />
       <circle cx="12" cy="10.5" r="2.5" />
     </svg>
@@ -199,11 +154,7 @@ function LocationIcon() {
 
 function CheckIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="m5 12 4 4L19 6" />
     </svg>
   );
@@ -211,11 +162,7 @@ function CheckIcon() {
 
 function ClockIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7v5l3 2" />
     </svg>
@@ -224,11 +171,7 @@ function ClockIcon() {
 
 function AlertIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="order-details-icon"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="order-details-icon">
       <path d="M12 4 21 20H3L12 4Z" />
       <path d="M12 9v5" />
       <path d="M12 17h.01" />
@@ -251,20 +194,16 @@ function formatShipmentDate(dateValue) {
 }
 
 function getShipmentStepIndex(status) {
-  const normalizedStatus =
-    String(status || "").toUpperCase();
+  const normalizedStatus = String(status || "").toUpperCase();
 
-  return SHIPMENT_STEPS.findIndex(
-    (step) => step.status === normalizedStatus
-  );
+  return SHIPMENT_STEPS.findIndex((step) => step.status === normalizedStatus);
 }
 
 function getShipmentStatusLabel(status) {
-  const normalizedStatus =
-    String(status || "").toUpperCase();
+  const normalizedStatus = String(status || "").toUpperCase();
 
   const matchingStep = SHIPMENT_STEPS.find(
-    (step) => step.status === normalizedStatus
+    (step) => step.status === normalizedStatus,
   );
 
   if (matchingStep) {
@@ -274,18 +213,13 @@ function getShipmentStatusLabel(status) {
   return normalizedStatus
     .replace(/_/g, " ")
     .toLowerCase()
-    .replace(/\b\w/g, (character) =>
-      character.toUpperCase()
-    );
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function OrderDetails() {
   const { id } = useParams();
 
-  const {
-    isAuthenticated,
-    isLoading: isAuthLoading
-  } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [order, setOrder] = useState(null);
   const [payment, setPayment] = useState(null);
@@ -293,52 +227,39 @@ function OrderDetails() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isPaymentLoading, setIsPaymentLoading] =
-    useState(false);
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
-  const [isProcessingPayment, setIsProcessingPayment] =
-    useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const [isCancelling, setIsCancelling] =
-    useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const [isShipmentLoading, setIsShipmentLoading] =
-    useState(false);
+  const [isShipmentLoading, setIsShipmentLoading] = useState(false);
 
   const [error, setError] = useState("");
 
-  const [paymentError, setPaymentError] =
-    useState("");
+  const [paymentError, setPaymentError] = useState("");
 
-  const [paymentMessage, setPaymentMessage] =
-    useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
 
-  const [cancelError, setCancelError] =
-    useState("");
+  const [cancelError, setCancelError] = useState("");
 
-  const [shipmentError, setShipmentError] =
-    useState("");
+  const [shipmentError, setShipmentError] = useState("");
 
-  const [myReviews, setMyReviews] =
-    useState([]);
+  const [myReviews, setMyReviews] = useState([]);
 
-  const [isReviewsLoading, setIsReviewsLoading] =
-    useState(false);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
 
-  const [reviewError, setReviewError] =
-    useState("");
+  const [reviewError, setReviewError] = useState("");
 
-  const [reviewFormProductId, setReviewFormProductId] =
-    useState(null);
+  const [reviewFormProductId, setReviewFormProductId] = useState(null);
 
-  const [editingReview, setEditingReview] =
-    useState(null);
+  const [editingReview, setEditingReview] = useState(null);
 
-  const [isReviewSubmitting, setIsReviewSubmitting] =
-    useState(false);
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
-  const [deletingReviewId, setDeletingReviewId] =
-    useState(null);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
+
+  const previousShipmentStatusRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -363,9 +284,7 @@ function OrderDetails() {
         if (isMounted) {
           setIsLoading(false);
 
-          setError(
-            "The order request timed out. Please try again."
-          );
+          setError("The order request timed out. Please try again.");
         }
       }, 15000);
 
@@ -385,10 +304,7 @@ function OrderDetails() {
         if (requestError?.status === 404) {
           setError("Order not found.");
         } else {
-          setError(
-            requestError?.message ||
-              "Unable to load this order."
-          );
+          setError(requestError?.message || "Unable to load this order.");
         }
       } finally {
         if (timeoutId) {
@@ -412,11 +328,7 @@ function OrderDetails() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [
-    id,
-    isAuthenticated,
-    isAuthLoading
-  ]);
+  }, [id, isAuthenticated, isAuthLoading]);
 
   useEffect(() => {
     let isMounted = true;
@@ -438,25 +350,20 @@ function OrderDetails() {
         const response = await getMyReviews({
           page: 0,
           size: 100,
-          sort: "createdAt,desc"
+          sort: "createdAt,desc",
         });
 
         if (!isMounted) {
           return;
         }
 
-        setMyReviews(
-          response?.content || []
-        );
+        setMyReviews(response?.content || []);
       } catch (requestError) {
         if (!isMounted) {
           return;
         }
 
-        setReviewError(
-          requestError?.message ||
-            "Unable to load your reviews."
-        );
+        setReviewError(requestError?.message || "Unable to load your reviews.");
 
         setMyReviews([]);
       } finally {
@@ -473,10 +380,7 @@ function OrderDetails() {
     return () => {
       isMounted = false;
     };
-  }, [
-    isAuthenticated,
-    isAuthLoading
-  ]);
+  }, [isAuthenticated, isAuthLoading]);
 
   const getReviewForProduct = useCallback(
     (productId) => {
@@ -487,29 +391,16 @@ function OrderDetails() {
       return (
         myReviews.find(
           (review) =>
-            Number(review.orderId) ===
-              Number(order.id) &&
-            Number(review.productId) ===
-              Number(productId)
+            Number(review.orderId) === Number(order.id) &&
+            Number(review.productId) === Number(productId),
         ) || null
       );
     },
-    [
-      myReviews,
-      order
-    ]
+    [myReviews, order],
   );
 
-  const handleReviewSubmit = async ({
-    rating,
-    title,
-    comment
-  }) => {
-    if (
-      !order?.id ||
-      !reviewFormProductId ||
-      isReviewSubmitting
-    ) {
+  const handleReviewSubmit = async ({ rating, title, comment }) => {
+    if (!order?.id || !reviewFormProductId || isReviewSubmitting) {
       return;
     }
 
@@ -517,80 +408,56 @@ function OrderDetails() {
     setReviewError("");
 
     try {
-      const existingReview =
-        getReviewForProduct(
-          reviewFormProductId
-        );
+      const existingReview = getReviewForProduct(reviewFormProductId);
 
       let response;
 
       if (existingReview) {
-        response = await updateReview(
-          existingReview.id,
-          {
-            rating,
-            title,
-            comment
-          }
-        );
+        response = await updateReview(existingReview.id, {
+          rating,
+          title,
+          comment,
+        });
 
         setMyReviews((current) =>
           current.map((review) =>
-            review.id === response.id
-              ? response
-              : review
-          )
+            review.id === response.id ? response : review,
+          ),
         );
       } else {
         response = await createReview({
-          productId:
-            reviewFormProductId,
+          productId: reviewFormProductId,
           orderId: order.id,
           rating,
           title,
-          comment
+          comment,
         });
 
-        setMyReviews((current) => [
-          response,
-          ...current
-        ]);
+        setMyReviews((current) => [response, ...current]);
       }
 
       setReviewFormProductId(null);
       setEditingReview(null);
     } catch (requestError) {
-      setReviewError(
-        requestError?.message ||
-          "Unable to save your review."
-      );
+      setReviewError(requestError?.message || "Unable to save your review.");
     } finally {
       setIsReviewSubmitting(false);
     }
   };
 
-  const handleEditReview = (
-    review
-  ) => {
+  const handleEditReview = (review) => {
     setReviewError("");
     setEditingReview(review);
-    setReviewFormProductId(
-      review.productId
-    );
+    setReviewFormProductId(review.productId);
   };
 
-  const handleDeleteReview = async (
-    review
-  ) => {
-    if (
-      !review?.id ||
-      deletingReviewId
-    ) {
+  const handleDeleteReview = async (review) => {
+    if (!review?.id || deletingReviewId) {
       return;
     }
 
     const confirmed = window.confirm(
-      "Are you sure you want to delete this review?"
+      "Are you sure you want to delete this review?",
     );
 
     if (!confirmed) {
@@ -604,24 +471,15 @@ function OrderDetails() {
       await deleteReview(review.id);
 
       setMyReviews((current) =>
-        current.filter(
-          (item) =>
-            item.id !== review.id
-        )
+        current.filter((item) => item.id !== review.id),
       );
 
-      if (
-        editingReview?.id ===
-        review.id
-      ) {
+      if (editingReview?.id === review.id) {
         setEditingReview(null);
         setReviewFormProductId(null);
       }
     } catch (requestError) {
-      setReviewError(
-        requestError?.message ||
-          "Unable to delete your review."
-      );
+      setReviewError(requestError?.message || "Unable to delete your review.");
     } finally {
       setDeletingReviewId(null);
     }
@@ -629,10 +487,7 @@ function OrderDetails() {
 
   const loadShipment = useCallback(
     async (showLoading = true) => {
-      if (
-        !isAuthenticated ||
-        !id
-      ) {
+      if (!isAuthenticated || !id) {
         return null;
       }
 
@@ -643,23 +498,19 @@ function OrderDetails() {
       setShipmentError("");
 
       try {
-        const response =
-          await trackShipmentByOrderId(id);
+        const response = await trackShipmentByOrderId(id);
 
         setShipment(response);
 
         return response;
       } catch (requestError) {
-        if (
-          requestError?.status === 404
-        ) {
+        if (requestError?.status === 404) {
           setShipment(null);
           return null;
         }
 
         setShipmentError(
-          requestError?.message ||
-            "Unable to load shipment tracking."
+          requestError?.message || "Unable to load shipment tracking.",
         );
 
         return null;
@@ -669,74 +520,95 @@ function OrderDetails() {
         }
       }
     },
-    [
-      id,
-      isAuthenticated
-    ]
+    [id, isAuthenticated],
   );
 
   useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !order ||
-      !id ||
-      order.status ===
-        "PENDING_PAYMENT"
-    ) {
+    if (!isAuthenticated || !id || order?.status === "PENDING_PAYMENT") {
       return undefined;
     }
 
     let isMounted = true;
     let intervalId = null;
 
+    const refreshOrderIfShipmentChanged = async (latestShipment) => {
+      if (!isMounted || !latestShipment) {
+        return;
+      }
+
+      const latestShipmentStatus = latestShipment.status;
+      const previousShipmentStatus = previousShipmentStatusRef.current;
+
+      // First shipment load: just remember its status.
+      if (previousShipmentStatus === null) {
+        previousShipmentStatusRef.current = latestShipmentStatus;
+        return;
+      }
+
+      // Shipment status has not changed.
+      if (previousShipmentStatus === latestShipmentStatus) {
+        return;
+      }
+
+      // Shipment status changed, so refresh the order once.
+      previousShipmentStatusRef.current = latestShipmentStatus;
+
+      try {
+        const latestOrder = await getOrder(id);
+
+        if (!isMounted || !latestOrder) {
+          return;
+        }
+
+        setOrder(latestOrder);
+      } catch {
+        // Don't stop shipment polling if order refresh temporarily fails.
+      }
+    };
+
     async function loadInitialShipment() {
-      const response =
-        await loadShipment(true);
+      const response = await loadShipment(true);
 
       if (!isMounted) {
         return;
       }
 
+      if (response) {
+        previousShipmentStatusRef.current = response.status;
+      }
+
       if (
-        response?.status ===
-          "DELIVERED" ||
-        response?.status ===
-          "CANCELLED" ||
-        response?.status ===
-          "FAILED"
+        response?.status === "DELIVERED" ||
+        response?.status === "CANCELLED" ||
+        response?.status === "FAILED"
       ) {
         return;
       }
 
-      intervalId =
-        window.setInterval(
-          async () => {
-            if (!isMounted) {
-              return;
-            }
+      intervalId = window.setInterval(async () => {
+        if (!isMounted) {
+          return;
+        }
 
-            const latestShipment =
-              await loadShipment(false);
+        const latestShipment = await loadShipment(false);
 
-            if (
-              latestShipment?.status ===
-                "DELIVERED" ||
-              latestShipment?.status ===
-                "CANCELLED" ||
-              latestShipment?.status ===
-                "FAILED"
-            ) {
-              if (intervalId) {
-                window.clearInterval(
-                  intervalId
-                );
+        if (!isMounted) {
+          return;
+        }
 
-                intervalId = null;
-              }
-            }
-          },
-          SHIPMENT_POLL_INTERVAL
-        );
+        await refreshOrderIfShipmentChanged(latestShipment);
+
+        if (
+          latestShipment?.status === "DELIVERED" ||
+          latestShipment?.status === "CANCELLED" ||
+          latestShipment?.status === "FAILED"
+        ) {
+          if (intervalId) {
+            window.clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
+      }, SHIPMENT_POLL_INTERVAL);
     }
 
     loadInitialShipment();
@@ -745,375 +617,409 @@ function OrderDetails() {
       isMounted = false;
 
       if (intervalId) {
-        window.clearInterval(
-          intervalId
-        );
+        window.clearInterval(intervalId);
       }
     };
-  }, [
-    isAuthenticated,
-    order,
-    id,
-    loadShipment
-  ]);
+  }, [isAuthenticated, id, loadShipment]);
 
-  const findPaymentForOrder =
-    useCallback(
-      async () => {
-        const response =
-          await getMyPayments({
-            page: 0,
-            size: 100
-          });
+  const findPaymentForOrder = useCallback(async () => {
+    const response = await getMyPayments({
+      page: 0,
+      size: 100,
+      sort: "createdAt,desc",
+    });
 
-        const payments =
-          response?.content || [];
+    const payments = response?.content || [];
 
-        const matchingPayment =
-          payments.find(
-            (item) =>
-              Number(item.orderId) ===
-              Number(id)
-          );
+    const matchingPayments = payments
+      .filter((item) => Number(item.orderId) === Number(id))
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
 
-        if (matchingPayment) {
-          setPayment(
-            matchingPayment
-          );
-        }
+        return dateB - dateA;
+      });
 
-        return (
-          matchingPayment || null
-        );
-      },
-      [id]
-    );
+    const latestPayment = matchingPayments[0] || null;
+
+    if (latestPayment) {
+      setPayment(latestPayment);
+    }
+
+    return latestPayment;
+  }, [id]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function discoverPayment() {
-      if (
-        !order ||
-        order.status !==
-          "PENDING_PAYMENT"
-      ) {
+      if (!isAuthenticated || !id) {
         return;
       }
 
       setIsPaymentLoading(true);
       setPaymentError("");
 
-      for (
-        let attempt = 0;
-        attempt <
-        PAYMENT_POLL_ATTEMPTS;
-        attempt += 1
-      ) {
-        try {
-          const foundPayment =
-            await findPaymentForOrder();
+      /*
+       * Try to find the latest payment attempt.
+       *
+       * This is independent of order.status.
+       *
+       * Once we have a payment, we stop. We do NOT keep
+       * calling getMyPayments repeatedly.
+       */
+      try {
+        const foundPayment = await findPaymentForOrder();
 
-          if (foundPayment) {
-            if (isMounted) {
-              setPayment(
-                foundPayment
-              );
-            }
-
-            return;
-          }
-        } catch (requestError) {
-          if (isMounted) {
-            setPaymentError(
-              requestError?.message ||
-                "Unable to find the payment for this order."
-            );
-          }
-
+        if (!isMounted) {
           return;
         }
 
-        await new Promise(
-          (resolve) => {
-            setTimeout(
-              resolve,
-              PAYMENT_POLL_INTERVAL
-            );
-          }
-        );
-      }
+        if (foundPayment) {
+          setPayment(foundPayment);
+          return;
+        }
 
-      if (isMounted) {
+        /*
+         * A payment may not exist immediately after the order
+         * is created, so only poll while the order is still
+         * waiting for payment.
+         */
+        if (order?.status !== "PENDING_PAYMENT") {
+          return;
+        }
+
+        for (
+          let attempt = 0;
+          attempt < PAYMENT_POLL_ATTEMPTS - 1;
+          attempt += 1
+        ) {
+          await new Promise((resolve) => {
+            window.setTimeout(resolve, PAYMENT_POLL_INTERVAL);
+          });
+
+          if (!isMounted) {
+            return;
+          }
+
+          const latestPayment = await findPaymentForOrder();
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (latestPayment) {
+            setPayment(latestPayment);
+            return;
+          }
+        }
+
         setPaymentError(
-          "Your payment is still being prepared. Please refresh the page and try again."
+          "Your payment is still being prepared. Please refresh the page and try again.",
         );
+      } catch (requestError) {
+        if (isMounted) {
+          setPaymentError(
+            requestError?.message ||
+              "Unable to find the payment for this order.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsPaymentLoading(false);
+        }
       }
     }
 
-    if (
-      isAuthenticated &&
-      order?.status ===
-        "PENDING_PAYMENT"
-    ) {
-      discoverPayment().finally(
-        () => {
-          if (isMounted) {
-            setIsPaymentLoading(
-              false
-            );
-          }
-        }
-      );
+    if (isAuthenticated && id) {
+      discoverPayment();
     }
 
     return () => {
       isMounted = false;
     };
-  }, [
-    order,
-    isAuthenticated,
-    findPaymentForOrder
-  ]);
+  }, [id, isAuthenticated, findPaymentForOrder]);
 
-  const waitForPaymentResult =
-    useCallback(
-      async (paymentId) => {
-        setPaymentMessage(
-          "Payment submitted. Waiting for confirmation..."
-        );
+  const waitForPaymentResult = useCallback(
+    async (paymentId) => {
+      if (!paymentId) {
+        return null;
+      }
 
-        setPaymentError("");
+      setPaymentMessage("Checking payment status...");
+      setPaymentError("");
 
-        for (
-          let attempt = 0;
-          attempt <
-          PAYMENT_POLL_ATTEMPTS;
-          attempt += 1
-        ) {
-          try {
-            const latestPayment =
-              await getPayment(
-                paymentId
-              );
+      for (let attempt = 0; attempt < PAYMENT_POLL_ATTEMPTS; attempt += 1) {
+        try {
+          const latestPayment = await getPayment(paymentId);
 
-            setPayment(
-              latestPayment
+          /*
+           * Always keep React state synchronized with the backend.
+           */
+          setPayment(latestPayment);
+
+          if (latestPayment.status === "SUCCESS") {
+            setPaymentMessage("Payment completed successfully.");
+            setPaymentError("");
+
+            try {
+              const latestOrder = await getOrder(id);
+              setOrder(latestOrder);
+            } catch {
+              // Payment is already confirmed.
+            }
+
+            return latestPayment;
+          }
+
+          if (
+            latestPayment.status === "FAILED" ||
+            latestPayment.status === "CANCELLED"
+          ) {
+            setPaymentMessage("");
+
+            setPaymentError(
+              latestPayment.failureReason ||
+                "Payment was not completed. You can retry the payment.",
             );
 
-            if (
-              latestPayment.status ===
-              "SUCCESS"
-            ) {
-              setPaymentMessage(
-                "Payment completed successfully."
-              );
+            return latestPayment;
+          }
 
-              try {
-                const latestOrder =
-                  await getOrder(id);
+          /*
+           * PENDING / PROCESSING
+           */
+          setPaymentMessage(
+            attempt === 0
+              ? "Payment status is being confirmed..."
+              : "Still waiting for payment confirmation...",
+          );
+        } catch (requestError) {
+          /*
+           * Only show the error after the final attempt.
+           */
+          if (attempt === PAYMENT_POLL_ATTEMPTS - 1) {
+            setPaymentMessage("");
 
-                setOrder(
-                  latestOrder
-                );
-              } catch {
-                // Payment is already confirmed.
-              }
-
-              return latestPayment;
-            }
-
-            if (
-              latestPayment.status ===
-                "FAILED" ||
-              latestPayment.status ===
-                "CANCELLED"
-            ) {
-              setPaymentError(
-                latestPayment.failureReason ||
-                  "Payment was not completed."
-              );
-
-              return latestPayment;
-            }
-          } catch (requestError) {
             setPaymentError(
-              requestError?.message ||
-                "Unable to check payment status."
+              requestError?.message || "Unable to confirm the payment status.",
             );
 
             return null;
           }
+        }
 
-          await new Promise(
-            (resolve) => {
-              setTimeout(
-                resolve,
-                PAYMENT_POLL_INTERVAL
-              );
-            }
+        /*
+         * Don't wait after the final attempt.
+         */
+        if (attempt < PAYMENT_POLL_ATTEMPTS - 1) {
+          await new Promise((resolve) => {
+            window.setTimeout(resolve, PAYMENT_POLL_INTERVAL);
+          });
+        }
+      }
+
+      /*
+       * Final status fetch.
+       */
+      try {
+        const latestPayment = await getPayment(paymentId);
+
+        setPayment(latestPayment);
+
+        if (
+          latestPayment.status === "FAILED" ||
+          latestPayment.status === "CANCELLED"
+        ) {
+          setPaymentMessage("");
+
+          setPaymentError(
+            latestPayment.failureReason ||
+              "Payment was not completed. You can retry the payment.",
+          );
+        } else if (latestPayment.status === "SUCCESS") {
+          setPaymentMessage("Payment completed successfully.");
+          setPaymentError("");
+        } else {
+          setPaymentMessage(
+            "Payment status is still being processed. Please try again shortly.",
           );
         }
 
+        return latestPayment;
+      } catch {
         setPaymentMessage(
-          "Payment is still being processed. The order will update after the backend receives the payment confirmation."
+          "Payment status is still being processed. Please try again shortly.",
         );
 
         return null;
-      },
-      [id]
-    );
+      }
+    },
+    [id],
+  );
 
-  const handleCompletePayment =
-    useCallback(
-      async () => {
-        if (
-          !payment?.id ||
-          payment.status !==
-            "PENDING" ||
-          isProcessingPayment
-        ) {
-          return;
+  const handleCompletePayment = useCallback(async () => {
+    const canStartPayment =
+      payment?.status === "PENDING" ||
+      payment?.status === "FAILED" ||
+      payment?.status === "CANCELLED";
+
+    if (!payment?.id || !canStartPayment || isProcessingPayment) {
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    setPaymentError("");
+    setPaymentMessage("");
+
+    try {
+      let paymentForCheckout = payment;
+
+      /*
+       * FAILED/CANCELLED payments cannot be reused.
+       *
+       * Ask the backend to create a new payment attempt.
+       *
+       * Example:
+       *
+       * old payment = 101 FAILED
+       * retry       = 102 PENDING
+       *
+       * Checkout must use payment 102.
+       */
+      if (payment.status === "FAILED" || payment.status === "CANCELLED") {
+        setPaymentMessage("Preparing a new payment attempt...");
+
+        paymentForCheckout = await retryPayment(payment.id);
+
+        if (!paymentForCheckout?.id) {
+          throw new Error("Unable to create a new payment attempt.");
         }
 
-        setIsProcessingPayment(
-          true
-        );
+        /*
+         * IMPORTANT:
+         *
+         * Immediately replace the old FAILED/CANCELLED payment
+         * in React state with the new payment attempt.
+         */
+        setPayment(paymentForCheckout);
+      }
 
-        setPaymentError("");
-        setPaymentMessage("");
+      /*
+       * Initialize checkout using the CURRENT payment ID.
+       *
+       * Never use the old failed payment ID here.
+       */
+      const checkout = await initializeCheckout(paymentForCheckout.id);
 
-        try {
-          const checkout =
-            await initializeCheckout(
-              payment.id
-            );
+      if (!checkout?.providerKeyId || !checkout?.providerOrderId) {
+        throw new Error("Payment checkout information is incomplete.");
+      }
 
-          if (
-            !checkout?.providerKeyId ||
-            !checkout?.providerOrderId
-          ) {
-            throw new Error(
-              "Payment checkout information is incomplete."
-            );
+      setPaymentMessage("");
+
+      await openRazorpayCheckout({
+        key: checkout.providerKeyId,
+        amount: toRazorpayAmount(checkout.amount),
+        currency: checkout.currency,
+        orderId: checkout.providerOrderId,
+        name: "EcommerceHub",
+        description: `Order #${id}`,
+
+        /*
+         * Razorpay reported success.
+         *
+         * Now ask our backend for the final payment state.
+         */
+        onSuccess: async () => {
+          try {
+            await waitForPaymentResult(paymentForCheckout.id);
+          } finally {
+            setIsProcessingPayment(false);
           }
+        },
 
-          await openRazorpayCheckout({
-            key:
-              checkout.providerKeyId,
+        /*
+         * Razorpay reported a payment failure.
+         *
+         * DO NOT only display the Razorpay error.
+         *
+         * The backend/webhook may need a short amount of time
+         * to change our payment from PENDING -> FAILED.
+         *
+         * Poll the backend so the UI changes to:
+         *
+         * Retry Payment
+         */
+        onFailure: async (response) => {
+          setPaymentMessage("Payment failed. Confirming payment status...");
 
-            amount:
-              toRazorpayAmount(
-                checkout.amount
-              ),
+          setPaymentError("");
 
-            currency:
-              checkout.currency,
+          try {
+            await waitForPaymentResult(paymentForCheckout.id);
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        onDismiss: () => {
+          /*
+           * The user closed Razorpay without completing payment.
+           *
+           * IMPORTANT:
+           * Do not wait for backend polling here.
+           *
+           * The payment attempt already exists, so simply release
+           * the UI and allow the user to click Complete Payment again.
+           */
+          setIsProcessingPayment(false);
 
-            orderId:
-              checkout.providerOrderId,
+          setPaymentMessage("");
+          setPaymentError("");
+        },
+      });
+    } catch (requestError) {
+      setPaymentError(requestError?.message || "Unable to start the payment.");
 
-            name:
-              "EcommerceHub",
+      setPaymentMessage("");
+      setIsProcessingPayment(false);
+    }
+  }, [id, payment, isProcessingPayment, waitForPaymentResult]);
 
-            description:
-              `Order #${id}`,
+  const handleCancel = async () => {
+    if (!order?.id || isCancelling) {
+      return;
+    }
 
-            onSuccess:
-              async () => {
-                await waitForPaymentResult(
-                  payment.id
-                );
-
-                setIsProcessingPayment(
-                  false
-                );
-              },
-
-            onFailure:
-              (response) => {
-                setPaymentError(
-                  response?.error
-                    ?.description ||
-                    "Razorpay reported that the payment failed."
-                );
-
-                setIsProcessingPayment(
-                  false
-                );
-              },
-
-            onDismiss: () => {
-              setPaymentMessage(
-                "Payment window was closed. Your order is still awaiting payment."
-              );
-
-              setIsProcessingPayment(
-                false
-              );
-            }
-          });
-        } catch (requestError) {
-          setPaymentError(
-            requestError?.message ||
-              "Unable to start the payment."
-          );
-
-          setIsProcessingPayment(
-            false
-          );
-        }
-      },
-      [
-        id,
-        payment,
-        isProcessingPayment,
-        waitForPaymentResult
-      ]
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order?",
     );
 
-  const handleCancel =
-    async () => {
-      if (
-        !order?.id ||
-        isCancelling
-      ) {
-        return;
-      }
+    if (!confirmed) {
+      return;
+    }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to cancel this order?"
-        );
+    setIsCancelling(true);
+    setCancelError("");
 
-      if (!confirmed) {
-        return;
-      }
+    try {
+      const response = await cancelOrder(order.id);
 
-      setIsCancelling(true);
-      setCancelError("");
+      setOrder(response);
+    } catch (requestError) {
+      setCancelError(requestError?.message || "Unable to cancel this order.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
-      try {
-        const response =
-          await cancelOrder(
-            order.id
-          );
+  const canRetryPayment =
+    payment?.status === "PENDING" ||
+    payment?.status === "FAILED" ||
+    payment?.status === "CANCELLED";
 
-        setOrder(response);
-      } catch (requestError) {
-        setCancelError(
-          requestError?.message ||
-            "Unable to cancel this order."
-        );
-      } finally {
-        setIsCancelling(false);
-      }
-    };
-
-  if (
-    isAuthLoading ||
-    isLoading
-  ) {
+  if (isAuthLoading || isLoading) {
     return (
       <main className="page order-details-page">
         <div className="container">
@@ -1142,22 +1048,13 @@ function OrderDetails() {
               <OrderIcon />
             </div>
 
-            <p className="order-details-state-eyebrow">
-              EcommerceHub
-            </p>
+            <p className="order-details-state-eyebrow">EcommerceHub</p>
 
-            <h1 className="page-title">
-              Order Details
-            </h1>
+            <h1 className="page-title">Order Details</h1>
 
-            <p>
-              Please sign in to view your order.
-            </p>
+            <p>Please sign in to view your order.</p>
 
-            <Link
-              className="button order-details-primary-button"
-              to="/login"
-            >
+            <Link className="button order-details-primary-button" to="/login">
               <span>Sign In</span>
               <ArrowIcon />
             </Link>
@@ -1176,18 +1073,11 @@ function OrderDetails() {
               <AlertIcon />
             </div>
 
-            <p className="order-details-state-eyebrow">
-              Unable to load order
-            </p>
+            <p className="order-details-state-eyebrow">Unable to load order</p>
 
-            <p className="order-details-error">
-              {error}
-            </p>
+            <p className="order-details-error">{error}</p>
 
-            <Link
-              className="button order-details-primary-button"
-              to="/orders"
-            >
+            <Link className="button order-details-primary-button" to="/orders">
               <ArrowIcon direction="left" />
               <span>Back to Orders</span>
             </Link>
@@ -1201,48 +1091,29 @@ function OrderDetails() {
     return null;
   }
 
-  const isPaymentPending =
-    order.status ===
-    "PENDING_PAYMENT";
+  const isPaymentPending = order.status === "PENDING_PAYMENT";
 
-  const canCancel =
-    ![
-      "CANCELLED",
-      "SHIPPED",
-      "DELIVERED"
-    ].includes(
-      order.status
-    );
+  const canReview = order.status === "DELIVERED";
 
-  const shipmentStatus =
-    String(
-      shipment?.status ||
-        "CREATED"
-    ).toUpperCase();
+  const canCancel = !["CANCELLED", "SHIPPED", "DELIVERED"].includes(
+    order.status,
+  );
 
-  const shipmentStepIndex =
-    getShipmentStepIndex(
-      shipmentStatus
-    );
+  const shipmentStatus = String(shipment?.status || "CREATED").toUpperCase();
+
+  const shipmentStepIndex = getShipmentStepIndex(shipmentStatus);
 
   const shipmentIsTerminal =
-    shipmentStatus ===
-      "DELIVERED" ||
-    shipmentStatus ===
-      "CANCELLED" ||
-    shipmentStatus ===
-      "FAILED";
+    shipmentStatus === "DELIVERED" ||
+    shipmentStatus === "CANCELLED" ||
+    shipmentStatus === "FAILED";
 
   return (
     <main className="page order-details-page">
       <div className="container">
-
         <header className="order-details-header">
           <div className="order-details-header-main">
-            <Link
-              className="order-back-link"
-              to="/orders"
-            >
+            <Link className="order-back-link" to="/orders">
               <ArrowIcon direction="left" />
               <span>Back to Orders</span>
             </Link>
@@ -1253,20 +1124,15 @@ function OrderDetails() {
               </div>
 
               <div>
-                <p className="order-details-eyebrow">
-                  Order Details
-                </p>
+                <p className="order-details-eyebrow">Order Details</p>
 
-                <h1 className="page-title">
-                  Order #{order.id}
-                </h1>
+                <h1 className="page-title">Order #{order.id}</h1>
               </div>
             </div>
 
             <p className="order-details-description">
-              Review your order, payment,
-              shipment progress, items, and
-              delivery information.
+              Review your order, payment, shipment progress, items, and delivery
+              information.
             </p>
           </div>
         </header>
@@ -1278,18 +1144,13 @@ function OrderDetails() {
             </div>
 
             <div className="order-payment-content">
-              <p className="order-section-eyebrow">
-                Payment
-              </p>
+              <p className="order-section-eyebrow">Payment</p>
 
-              <h2>
-                Payment Required
-              </h2>
+              <h2>Payment Required</h2>
 
               <p>
-                Your order has been created,
-                but payment has not been
-                completed yet.
+                Your order has been created, but payment has not been completed
+                yet.
               </p>
 
               {isPaymentLoading && (
@@ -1307,10 +1168,7 @@ function OrderDetails() {
               )}
 
               {paymentError && (
-                <p
-                  className="order-payment-error"
-                  role="alert"
-                >
+                <p className="order-payment-error" role="alert">
                   <AlertIcon />
                   {paymentError}
                 </p>
@@ -1321,15 +1179,12 @@ function OrderDetails() {
               <button
                 type="button"
                 className="button order-complete-payment-button"
-                onClick={
-                  handleCompletePayment
-                }
+                onClick={handleCompletePayment}
                 disabled={
                   isPaymentLoading ||
                   isProcessingPayment ||
                   !payment?.id ||
-                  payment?.status !==
-                    "PENDING"
+                  !canRetryPayment
                 }
               >
                 <PaymentIcon />
@@ -1337,7 +1192,10 @@ function OrderDetails() {
                 <span>
                   {isProcessingPayment
                     ? "Processing Payment..."
-                    : "Complete Payment"}
+                    : payment?.status === "FAILED" ||
+                        payment?.status === "CANCELLED"
+                      ? "Retry Payment"
+                      : "Complete Payment"}
                 </span>
               </button>
             </div>
@@ -1346,9 +1204,7 @@ function OrderDetails() {
 
         <section
           className={`shipment-tracking-section ${
-            isPaymentPending
-              ? "shipment-payment-pending"
-              : ""
+            isPaymentPending ? "shipment-payment-pending" : ""
           }`}
         >
           <div className="shipment-section-heading">
@@ -1357,17 +1213,13 @@ function OrderDetails() {
             </div>
 
             <div>
-              <p className="shipment-eyebrow">
-                Shipment Tracking
-              </p>
+              <p className="shipment-eyebrow">Shipment Tracking</p>
 
               <h2>
                 {isPaymentPending
                   ? "Payment Not Completed"
                   : shipment
-                    ? getShipmentStatusLabel(
-                        shipment.status
-                      )
+                    ? getShipmentStatusLabel(shipment.status)
                     : "Preparing Shipment"}
               </h2>
 
@@ -1376,8 +1228,7 @@ function OrderDetails() {
                   ? "Your order has not been shipped because payment has not been completed."
                   : shipment
                     ? shipmentIsTerminal
-                      ? shipmentStatus ===
-                        "DELIVERED"
+                      ? shipmentStatus === "DELIVERED"
                         ? "Your shipment has reached its destination."
                         : "Your shipment is no longer moving through the delivery process."
                       : "Your shipment is progressing through the delivery process."
@@ -1400,9 +1251,7 @@ function OrderDetails() {
                 {isPaymentPending
                   ? "Awaiting Payment"
                   : shipment
-                    ? getShipmentStatusLabel(
-                        shipment.status
-                      )
+                    ? getShipmentStatusLabel(shipment.status)
                     : "Preparing"}
               </span>
             </div>
@@ -1412,71 +1261,51 @@ function OrderDetails() {
             <>
               <div className="shipment-pending-notice">
                 <div className="shipment-pending-icon">
-                  <PaymentIcon />
+                  <PackageIcon />
                 </div>
 
                 <div>
-                  <strong>
-                    Order Not Shipped
-                  </strong>
+                  <strong>Order Not Shipped</strong>
 
                   <p>
-                    Complete your payment first.
-                    Shipment tracking will become
-                    available after your payment is
-                    confirmed and the order enters
-                    fulfillment.
+                    Complete your payment first. Shipment tracking will become
+                    available after your payment is confirmed and the order
+                    enters fulfillment.
                   </p>
                 </div>
               </div>
 
               <div className="shipment-progress shipment-progress-pending">
-                {SHIPMENT_STEPS.map(
-                  (step) => (
-                    <div
-                      className="shipment-step shipment-step-disabled"
-                      key={
-                        step.status
-                      }
-                    >
-                      <div className="shipment-step-marker">
-                        <PackageIcon />
-                      </div>
-
-                      <div className="shipment-step-content">
-                        <strong>
-                          {step.label}
-                        </strong>
-
-                        <span>
-                          Waiting for payment
-                        </span>
-                      </div>
+                {SHIPMENT_STEPS.map((step) => (
+                  <div
+                    className="shipment-step shipment-step-disabled"
+                    key={step.status}
+                  >
+                    <div className="shipment-step-marker">
+                      <PackageIcon />
                     </div>
-                  )
-                )}
+
+                    <div className="shipment-step-content">
+                      <strong>{step.label}</strong>
+
+                      <span>Waiting for payment</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           ) : (
             <>
               {isShipmentLoading && (
-                <div
-                  className="shipment-loading"
-                  aria-live="polite"
-                >
+                <div className="shipment-loading" aria-live="polite">
                   <span className="shipment-loading-spinner" />
 
-                  <span>
-                    Loading shipment tracking...
-                  </span>
+                  <span>Loading shipment tracking...</span>
                 </div>
               )}
 
               {shipmentError && (
-                <p
-                  className="shipment-error"
-                  role="alert"
-                >
+                <p className="shipment-error" role="alert">
                   <AlertIcon />
                   {shipmentError}
                 </p>
@@ -1485,116 +1314,66 @@ function OrderDetails() {
               {shipment && (
                 <>
                   <div className="shipment-progress">
-                    {SHIPMENT_STEPS.map(
-                      (
-                        step,
-                        index
-                      ) => {
-                        const isCompleted =
-                          shipmentStepIndex >=
-                            0 &&
-                          index <=
-                            shipmentStepIndex;
+                    {SHIPMENT_STEPS.map((step, index) => {
+                      const isCompleted =
+                        shipmentStepIndex >= 0 && index <= shipmentStepIndex;
 
-                        const isCurrent =
-                          shipmentStatus ===
-                          step.status;
+                      const isCurrent = shipmentStatus === step.status;
 
-                        return (
-                          <div
-                            className={`shipment-step ${
-                              isCompleted
-                                ? "shipment-step-completed"
-                                : ""
-                            } ${
-                              isCurrent
-                                ? "shipment-step-current"
-                                : ""
-                            }`}
-                            key={
-                              step.status
-                            }
-                          >
-                            <div className="shipment-step-marker">
-                              {isCompleted ? (
-                                <CheckIcon />
-                              ) : (
-                                <span />
-                              )}
-                            </div>
-
-                            <div className="shipment-step-content">
-                              <strong>
-                                {
-                                  step.label
-                                }
-                              </strong>
-
-                              <span>
-                                {
-                                  step.description
-                                }
-                              </span>
-                            </div>
+                      return (
+                        <div
+                          className={`shipment-step ${
+                            isCompleted ? "shipment-step-completed" : ""
+                          } ${isCurrent ? "shipment-step-current" : ""}`}
+                          key={step.status}
+                        >
+                          <div className="shipment-step-marker">
+                            {isCompleted ? <CheckIcon /> : <span />}
                           </div>
-                        );
-                      }
-                    )}
+
+                          <div className="shipment-step-content">
+                            <strong>{step.label}</strong>
+
+                            <span>{step.description}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="shipment-information">
                     {shipment.trackingNumber && (
                       <div className="shipment-information-item">
-                        <span>
-                          Tracking Number
-                        </span>
+                        <span>Tracking Number</span>
 
-                        <strong>
-                          {
-                            shipment.trackingNumber
-                          }
-                        </strong>
+                        <strong>{shipment.trackingNumber}</strong>
                       </div>
                     )}
 
                     {shipment.carrier && (
                       <div className="shipment-information-item">
-                        <span>
-                          Carrier
-                        </span>
+                        <span>Carrier</span>
 
-                        <strong>
-                          {
-                            shipment.carrier
-                          }
-                        </strong>
+                        <strong>{shipment.carrier}</strong>
                       </div>
                     )}
 
                     {shipment.shippedAt && (
                       <div className="shipment-information-item">
-                        <span>
-                          Shipped
-                        </span>
+                        <span>Shipped</span>
 
                         <strong>
-                          {formatShipmentDate(
-                            shipment.shippedAt
-                          )}
+                          {formatShipmentDate(shipment.shippedAt)}
                         </strong>
                       </div>
                     )}
 
                     {shipment.deliveredAt && (
                       <div className="shipment-information-item">
-                        <span>
-                          Delivered
-                        </span>
+                        <span>Delivered</span>
 
                         <strong>
-                          {formatShipmentDate(
-                            shipment.deliveredAt
-                          )}
+                          {formatShipmentDate(shipment.deliveredAt)}
                         </strong>
                       </div>
                     )}
@@ -1603,40 +1382,32 @@ function OrderDetails() {
                   {!shipmentIsTerminal && (
                     <p className="shipment-live-message">
                       <span className="shipment-live-dot" />
-
-                      Shipment status updates
-                      automatically.
+                      Shipment status updates automatically.
                     </p>
                   )}
                 </>
               )}
 
-              {!shipment &&
-                !isShipmentLoading &&
-                !shipmentError && (
-                  <div className="shipment-empty">
-                    <PackageIcon />
+              {!shipment && !isShipmentLoading && !shipmentError && (
+                <div className="shipment-empty">
+                  <PackageIcon />
 
-                    <p>
-                      Shipment tracking will
-                      become available once your
-                      shipment has been created.
-                    </p>
-                  </div>
-                )}
+                  <p>
+                    Shipment tracking will become available once your shipment
+                    has been created.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </section>
 
         <div className="order-details-layout">
           <section className="order-details-main">
-
             <div className="order-details-section">
               <div className="order-section-heading">
                 <div>
-                  <p className="order-section-eyebrow">
-                    Order Contents
-                  </p>
+                  <p className="order-section-eyebrow">Order Contents</p>
                 </div>
               </div>
 
@@ -1648,10 +1419,7 @@ function OrderDetails() {
               )}
 
               {reviewError && (
-                <p
-                  className="order-details-error"
-                  role="alert"
-                >
+                <p className="order-details-error" role="alert">
                   <AlertIcon />
                   {reviewError}
                 </p>
@@ -1659,8 +1427,7 @@ function OrderDetails() {
 
               <div className="order-items">
                 {order.items?.map((item, index) => {
-                  const itemReview =
-                    getReviewForProduct(item.productId);
+                  const itemReview = getReviewForProduct(item.productId);
 
                   const isReviewFormOpen =
                     reviewFormProductId === item.productId;
@@ -1670,7 +1437,7 @@ function OrderDetails() {
                       className="order-item"
                       key={item.id}
                       style={{
-                        "--order-item-delay": `${index * 60}ms`
+                        "--order-item-delay": `${index * 60}ms`,
                       }}
                     >
                       <div className="order-item-content">
@@ -1682,103 +1449,98 @@ function OrderDetails() {
                           <div>
                             <h3>{item.productName}</h3>
 
-                            {item.sku && (
-                              <p>
-                                SKU: {item.sku}
-                              </p>
-                            )}
+                            {item.sku && <p>SKU: {item.sku}</p>}
 
-                            <p>
-                              Quantity: {item.quantity}
-                            </p>
+                            <p>Quantity: {item.quantity}</p>
                           </div>
                         </div>
 
                         <div className="order-item-price">
                           <span>
-                            {order.currency}{" "}
-                            {Number(item.unitPrice).toFixed(2)} each
+                            {order.currency} {Number(item.unitPrice).toFixed(2)}{" "}
+                            each
                           </span>
 
                           <strong>
-                            {order.currency}{" "}
-                            {Number(item.lineTotal).toFixed(2)}
+                            {order.currency} {Number(item.lineTotal).toFixed(2)}
                           </strong>
                         </div>
                       </div>
 
                       <div className="order-item-review">
-                        {itemReview ? (
+                        {canReview && (
                           <>
-                            <div className="order-item-review-header">
-                              <span className="order-item-review-label">
-                                <ReviewIcon />
-                                Your Review
-                              </span>
-
-                              <ReviewCard
-                                review={itemReview}
-                                isOwnReview
-                                onEdit={handleEditReview}
-                                onDelete={handleDeleteReview}
-                                isDeleting={
-                                  deletingReviewId === itemReview.id
-                                }
-                              />
-                            </div>
-
-                            {editingReview?.id === itemReview.id && (
-                              <ReviewForm
-                                review={editingReview}
-                                onSubmit={handleReviewSubmit}
-                                onCancel={() => {
-                                  setEditingReview(null);
-                                  setReviewFormProductId(null);
-                                  setReviewError("");
-                                }}
-                                isSubmitting={isReviewSubmitting}
-                                error={reviewError}
-                              />
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {!isReviewFormOpen && (
-                              <button
-                                type="button"
-                                className="order-review-button"
-                                onClick={() => {
-                                  setReviewError("");
-                                  setEditingReview(null);
-                                  setReviewFormProductId(
-                                    item.productId
-                                  );
-                                }}
-                              >
-                                <ReviewIcon />
-                                <span>Write a Review</span>
-                              </button>
-                            )}
-
-                            {isReviewFormOpen && (
-                              <div className="order-review-form-wrapper">
+                            {itemReview ? (
+                              <>
                                 <div className="order-item-review-header">
                                   <span className="order-item-review-label">
                                     <ReviewIcon />
-                                    Review {item.productName}
+                                    Your Review
                                   </span>
+
+                                  <ReviewCard
+                                    review={itemReview}
+                                    isOwnReview
+                                    onEdit={handleEditReview}
+                                    onDelete={handleDeleteReview}
+                                    isDeleting={
+                                      deletingReviewId === itemReview.id
+                                    }
+                                  />
                                 </div>
 
-                                <ReviewForm
-                                  onSubmit={handleReviewSubmit}
-                                  onCancel={() => {
-                                    setReviewFormProductId(null);
-                                    setReviewError("");
-                                  }}
-                                  isSubmitting={isReviewSubmitting}
-                                  error={reviewError}
-                                />
-                              </div>
+                                {editingReview?.id === itemReview.id && (
+                                  <ReviewForm
+                                    review={editingReview}
+                                    onSubmit={handleReviewSubmit}
+                                    onCancel={() => {
+                                      setEditingReview(null);
+                                      setReviewFormProductId(null);
+                                      setReviewError("");
+                                    }}
+                                    isSubmitting={isReviewSubmitting}
+                                    error={reviewError}
+                                  />
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {!isReviewFormOpen && (
+                                  <button
+                                    type="button"
+                                    className="order-review-button"
+                                    onClick={() => {
+                                      setReviewError("");
+                                      setEditingReview(null);
+                                      setReviewFormProductId(item.productId);
+                                    }}
+                                  >
+                                    <ReviewIcon />
+                                    <span>Write a Review</span>
+                                  </button>
+                                )}
+
+                                {isReviewFormOpen && (
+                                  <div className="order-review-form-wrapper">
+                                    <div className="order-item-review-header">
+                                      <span className="order-item-review-label">
+                                        <ReviewIcon />
+                                        Review {item.productName}
+                                      </span>
+                                    </div>
+
+                                    <ReviewForm
+                                      onSubmit={handleReviewSubmit}
+                                      onCancel={() => {
+                                        setReviewFormProductId(null);
+                                        setReviewError("");
+                                      }}
+                                      isSubmitting={isReviewSubmitting}
+                                      error={reviewError}
+                                    />
+                                  </div>
+                                )}
+                              </>
                             )}
                           </>
                         )}
@@ -1796,82 +1558,30 @@ function OrderDetails() {
                 </div>
 
                 <div>
-                  <p className="order-section-eyebrow">
-                    Delivery
-                  </p>
+                  <p className="order-section-eyebrow">Delivery</p>
 
-                  <h2>
-                    Shipping Address
-                  </h2>
+                  <h2>Shipping Address</h2>
                 </div>
               </div>
 
               <address>
-                <strong>
-                  {
-                    order
-                      .shippingAddress
-                      ?.recipientName
-                  }
-                </strong>
+                <strong>{order.shippingAddress?.recipientName}</strong>
 
-                <span>
-                  {
-                    order
-                      .shippingAddress
-                      ?.phone
-                  }
-                </span>
+                <span>{order.shippingAddress?.phone}</span>
 
-                <span>
-                  {
-                    order
-                      .shippingAddress
-                      ?.addressLine1
-                  }
-                </span>
+                <span>{order.shippingAddress?.addressLine1}</span>
 
-                {order
-                  .shippingAddress
-                  ?.addressLine2 && (
-                  <span>
-                    {
-                      order
-                        .shippingAddress
-                        .addressLine2
-                    }
-                  </span>
+                {order.shippingAddress?.addressLine2 && (
+                  <span>{order.shippingAddress.addressLine2}</span>
                 )}
 
                 <span>
-                  {
-                    order
-                      .shippingAddress
-                      ?.city
-                  }
-                  ,{" "}
-                  {
-                    order
-                      .shippingAddress
-                      ?.state
-                  }
+                  {order.shippingAddress?.city}, {order.shippingAddress?.state}
                 </span>
 
-                <span>
-                  {
-                    order
-                      .shippingAddress
-                      ?.postalCode
-                  }
-                </span>
+                <span>{order.shippingAddress?.postalCode}</span>
 
-                <span>
-                  {
-                    order
-                      .shippingAddress
-                      ?.country
-                  }
-                </span>
+                <span>{order.shippingAddress?.country}</span>
               </address>
             </div>
           </section>
@@ -1883,43 +1593,29 @@ function OrderDetails() {
               </div>
 
               <div>
-                <p className="order-section-eyebrow">
-                  Overview
-                </p>
+                <p className="order-section-eyebrow">Overview</p>
 
-                <h2>
-                  Order Summary
-                </h2>
+                <h2>Order Summary</h2>
               </div>
             </div>
 
             <div className="order-summary-row">
-              <span>Status</span>
+              <span>Order Status</span>
 
-              <strong>
-                {order.status}
-              </strong>
+              <strong>{order.status}</strong>
             </div>
 
             <div className="order-summary-row">
               <span>Payment Method</span>
 
-              <strong>
-                {
-                  order.paymentMethod
-                }
-              </strong>
+              <strong>{order.paymentMethod}</strong>
             </div>
 
             {payment && (
               <div className="order-summary-row">
                 <span>Payment Status</span>
 
-                <strong>
-                  {
-                    payment.status
-                  }
-                </strong>
+                <strong>{payment.status}</strong>
               </div>
             )}
 
@@ -1927,11 +1623,7 @@ function OrderDetails() {
               <div className="order-summary-row">
                 <span>Shipment Status</span>
 
-                <strong>
-                  {getShipmentStatusLabel(
-                    shipment.status
-                  )}
-                </strong>
+                <strong>{getShipmentStatusLabel(shipment.status)}</strong>
               </div>
             )}
 
@@ -1939,9 +1631,7 @@ function OrderDetails() {
               <div className="order-summary-row">
                 <span>Shipment</span>
 
-                <strong>
-                  Not Shipped
-                </strong>
+                <strong>Not Shipped</strong>
               </div>
             )}
 
@@ -1949,18 +1639,12 @@ function OrderDetails() {
               <span>Total</span>
 
               <strong>
-                {order.currency}{" "}
-                {Number(
-                  order.totalAmount
-                ).toFixed(2)}
+                {order.currency} {Number(order.totalAmount).toFixed(2)}
               </strong>
             </div>
 
             {cancelError && (
-              <p
-                className="order-details-error"
-                role="alert"
-              >
+              <p className="order-details-error" role="alert">
                 <AlertIcon />
                 {cancelError}
               </p>
@@ -1970,16 +1654,10 @@ function OrderDetails() {
               <button
                 type="button"
                 className="button order-cancel-button"
-                onClick={
-                  handleCancel
-                }
-                disabled={
-                  isCancelling
-                }
+                onClick={handleCancel}
+                disabled={isCancelling}
               >
-                {isCancelling
-                  ? "Cancelling..."
-                  : "Cancel Order"}
+                {isCancelling ? "Cancelling..." : "Cancel Order"}
               </button>
             )}
           </aside>
@@ -1990,4 +1668,3 @@ function OrderDetails() {
 }
 
 export default OrderDetails;
-
