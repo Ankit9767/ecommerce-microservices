@@ -41,4 +41,24 @@ public class ProductSearchController {
                 )
                 .map(ProductSearchResponse::from);
     }
+
+    @GetMapping("/public")
+    public Page<ProductSearchResponse> searchPublicProducts(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            Pageable pageable) {
+
+        return productSearchService
+                .searchProducts(
+                        q,
+                        category,
+                        minPrice,
+                        maxPrice,
+                        true,
+                        pageable
+                )
+                .map(ProductSearchResponse::from);
+    }
 }
