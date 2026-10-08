@@ -189,10 +189,6 @@ function Register() {
           {/* REGISTER CARD */}
           <div className="register-card">
             <div className="register-card-header">
-              <div className="register-card-icon">
-                <UserIcon />
-              </div>
-
               <p className="register-card-eyebrow">Create your account</p>
 
               <h2>Get started</h2>
