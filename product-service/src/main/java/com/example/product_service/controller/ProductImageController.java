@@ -100,6 +100,38 @@ public class ProductImageController {
                 .body(content);
     }
 
+    @GetMapping("/{imageId}/content/public")
+    public ResponseEntity<byte[]> getPublicImageContent(
+            @PathVariable Long productId,
+            @PathVariable Long imageId) {
+
+        byte[] content = service.getImageContent(
+                productId,
+                imageId
+        );
+
+        String contentType = service.getImageContentType(
+                productId,
+                imageId
+        );
+
+        MediaType mediaType;
+
+        try {
+            mediaType = MediaType.parseMediaType(contentType);
+        } catch (IllegalArgumentException ex) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline"
+                )
+                .contentType(mediaType)
+                .body(content);
+    }
+
     @PutMapping("/{imageId}/primary")
     @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
     public ResponseEntity<ProductImageResponse> setPrimaryImage(
