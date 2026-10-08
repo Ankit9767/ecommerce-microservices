@@ -41,6 +41,13 @@ public class CategoryController {
         );
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<List<CategoryResponse>> getPublicCategories() {
+        return ResponseEntity.ok(
+                service.getAllCategories()
+        );
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('CATEGORY_READ')")
     public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id) {
