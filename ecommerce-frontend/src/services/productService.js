@@ -67,7 +67,11 @@ function getProductImage(productId, imageId) {
 }
 
 function getProductImageContentUrl(productId, imageId) {
-  return `/api/products/${productId}/images/${imageId}/content`;
+  return `/products/${productId}/images/${imageId}/content`;
+}
+
+function getPublicProductImageContentUrl(productId, imageId) {
+  return `/products/${productId}/images/${imageId}/content/public`;
 }
 
 function uploadProductImage(
@@ -105,6 +109,7 @@ export {
   getProductImages,
   getProductImage,
   getProductImageContentUrl,
+  getPublicProductImageContentUrl,
   uploadProductImage,
   setPrimaryProductImage,
   deleteProductImage,

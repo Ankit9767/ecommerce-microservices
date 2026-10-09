@@ -4,6 +4,10 @@ function getCategories() {
   return apiGet("/categories");
 }
 
+function getPublicCategories() {
+  return apiGet("/categories/public");
+}
+
 function getCategory(categoryId) {
   return apiGet(`/categories/${categoryId}`);
 }
@@ -22,6 +26,7 @@ function deleteCategory(categoryId) {
 
 export {
   getCategories,
+  getPublicCategories,
   getCategory,
   createCategory,
   updateCategory,
