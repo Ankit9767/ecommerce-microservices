@@ -78,6 +78,13 @@ public class SecurityConfig {
                         .permitAll()
 
                         .pathMatchers(
+                                "/api/search/products/public",
+                                "/api/categories/public",
+                                "/api/products/*/images/*/content/public"
+                        )
+                        .permitAll()
+
+                        .pathMatchers(
                                 "/api/payments/webhook/razorpay"
                         )
                         .permitAll()
