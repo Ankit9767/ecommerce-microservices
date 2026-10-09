@@ -42,6 +42,43 @@ function searchProducts({
   return apiGet(`/search/products?${params.toString()}`);
 }
 
+function searchPublicProducts({
+  q,
+  category,
+  minPrice,
+  maxPrice,
+  page = 0,
+  size = 20,
+  sort,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (q) {
+    params.set("q", q);
+  }
+
+  if (category) {
+    params.set("category", category);
+  }
+
+  if (minPrice !== undefined && minPrice !== "") {
+    params.set("minPrice", minPrice);
+  }
+
+  if (maxPrice !== undefined && maxPrice !== "") {
+    params.set("maxPrice", maxPrice);
+  }
+
+  params.set("page", page);
+  params.set("size", size);
+
+  if (sort) {
+    params.set("sort", sort);
+  }
+
+  return apiGet(`/search/products/public?${params.toString()}`);
+}
+
 function searchProductReviews(productId, { page = 0, size = 20, sort } = {}) {
   const params = new URLSearchParams();
 
@@ -55,4 +92,4 @@ function searchProductReviews(productId, { page = 0, size = 20, sort } = {}) {
   return apiGet(`/search/reviews/product/${productId}?${params.toString()}`);
 }
 
-export { searchProducts, searchProductReviews };
+export { searchProducts, searchPublicProducts, searchProductReviews };
