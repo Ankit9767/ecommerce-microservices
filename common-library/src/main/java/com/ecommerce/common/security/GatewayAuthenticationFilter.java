@@ -22,7 +22,10 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
 
         return requestUri.startsWith("/actuator/")
-                || requestUri.equals("/api/payments/webhook/razorpay");
+                || requestUri.equals("/api/payments/webhook/razorpay")
+                || requestUri.equals("/api/search/products/public")
+                || requestUri.equals("/api/categories/public")
+                || requestUri.matches("/api/products/\\d+/images/\\d+/content/public");
     }
 
     @Override
