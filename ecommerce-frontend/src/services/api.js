@@ -11,7 +11,7 @@ async function apiGetBlob(path, options = {}) {
     requestHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`http://ecommercehub.com/api${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
     headers: requestHeaders,
   });
