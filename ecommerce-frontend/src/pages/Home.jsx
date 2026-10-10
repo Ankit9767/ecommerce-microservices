@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import ProductGrid from "../components/ProductGrid";
 import CategoryCard from "../components/CategoryCard";
 
-import { searchProducts } from "../services/searchService";
-import { getCategories } from "../services/categoryService";
+import { searchPublicProducts } from "../services/searchService";
+import { getPublicCategories } from "../services/categoryService";
 
 import "./styles/Home.css";
 
@@ -57,6 +57,20 @@ function PackageIcon() {
   );
 }
 
+function mapProductSearchResult(product) {
+  return {
+    id: product.productId,
+    name: product.name,
+    sku: product.sku,
+    category: product.category,
+    price: Number(product.price),
+    primaryImageId: product.primaryImageId,
+    rating: product.averageRating,
+    reviewCount: product.reviewCount,
+    active: product.active,
+  };
+}
+
 function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -77,7 +91,7 @@ function Home() {
       setProductsError("");
 
       try {
-        const response = await searchProducts({
+        const response = await searchPublicProducts({
           page: 0,
           size: 8,
         });
@@ -86,7 +100,11 @@ function Home() {
           return;
         }
 
-        setProducts(response?.content || []);
+        const mappedProducts = (response?.content || []).map(
+          mapProductSearchResult,
+        );
+
+        setProducts(mappedProducts);
       } catch (requestError) {
         if (!isMounted) {
           return;
@@ -115,7 +133,7 @@ function Home() {
       setCategoriesError("");
 
       try {
-        const response = await getCategories();
+        const response = await getPublicCategories();
 
         if (!isMounted) {
           return;
