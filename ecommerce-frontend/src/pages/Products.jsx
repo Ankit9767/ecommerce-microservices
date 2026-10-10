@@ -4,8 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import ProductFilters from "../components/ProductFilters";
 import ProductGrid from "../components/ProductGrid";
 
-import { getCategories } from "../services/categoryService";
-import { searchProducts } from "../services/searchService";
+import { getPublicCategories } from "../services/categoryService";
+import { searchPublicProducts } from "../services/searchService";
 
 import "./styles/Products.css";
 
@@ -117,7 +117,7 @@ function Products() {
       setCategoryError("");
 
       try {
-        const response = await getCategories();
+        const response = await getPublicCategories();
 
         if (!isMounted) {
           return;
@@ -163,7 +163,7 @@ function Products() {
         setError("");
 
         try {
-          const response = await searchProducts({
+          const response = await searchPublicProducts({
             q: search || undefined,
             category: category || undefined,
 
