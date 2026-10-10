@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 import { apiGetBlob } from "../services/api";
+import { getPublicProductImageContentUrl } from "../services/productService";
 
 import QuantitySelector from "./QuantitySelector";
 
@@ -53,7 +54,10 @@ function ProductCard({ product }) {
 
       try {
         const imageBlob = await apiGetBlob(
-          `/products/${product.id}/images/${product.primaryImageId}/content`,
+          getPublicProductImageContentUrl(product.id, product.primaryImageId),
+          {
+            token: null,
+          },
         );
 
         if (isCancelled) {
