@@ -7,6 +7,9 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME}
 
+  main:
+    web-application-type: reactive
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -257,8 +260,8 @@ spring:
 
 
       httpclient:
-        connect-timeout: 2000
-        response-timeout: 5s
+        connect-timeout: 5000
+        response-timeout: 30s
 
       default-filters:
         - name: RequestSize
