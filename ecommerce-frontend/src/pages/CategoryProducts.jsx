@@ -3,8 +3,18 @@ import { Link, useParams } from "react-router-dom";
 
 import ProductGrid from "../components/ProductGrid";
 
-import { getCategory } from "../services/categoryService";
-import { searchProducts } from "../services/searchService";
+import {
+  getCategory,
+  getCategories,
+  getPublicCategories,
+} from "../services/categoryService";
+
+import {
+  searchProducts,
+  searchPublicProducts,
+} from "../services/searchService";
+
+import { useAuth } from "../context/AuthContext";
 
 import "./styles/CategoryProducts.css";
 
@@ -93,7 +103,7 @@ function mapProductSearchResult(product) {
     sku: product.sku,
     category: product.category,
     price: Number(product.price),
-    image: product.primaryImageUrl,
+    primaryImageId: product.primaryImageId,
     rating: product.averageRating,
     reviewCount: product.reviewCount,
     active: product.active,
@@ -105,6 +115,8 @@ function CategoryProducts() {
 
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
+
+  const { isAuthenticated } = useAuth();
 
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -126,7 +138,19 @@ function CategoryProducts() {
       setTotalPages(0);
 
       try {
-        const categoryResponse = await getCategory(id);
+        const getCategoriesFunction = isAuthenticated
+          ? getCategories
+          : getPublicCategories;
+
+        const categoriesResponse = await getCategoriesFunction();
+
+        const categoryList = Array.isArray(categoriesResponse)
+          ? categoriesResponse
+          : categoriesResponse?.content || [];
+
+        const categoryResponse = categoryList.find(
+          (item) => String(item.id) === String(id),
+        );
 
         if (!isMounted) {
           return;
@@ -144,11 +168,15 @@ function CategoryProducts() {
 
         setCategory(categoryResponse);
 
-        const productResponse = await searchProducts({
+        const searchFunction = isAuthenticated
+          ? searchProducts
+          : searchPublicProducts;
+
+        const productResponse = await searchFunction({
           category: categoryResponse.name,
-          active: true,
           page: 0,
           size: DEFAULT_PAGE_SIZE,
+          ...(isAuthenticated ? { active: true } : {}),
         });
 
         if (!isMounted) {
@@ -212,11 +240,15 @@ function CategoryProducts() {
       setError("");
 
       try {
-        const response = await searchProducts({
+        const searchFunction = isAuthenticated
+          ? searchProducts
+          : searchPublicProducts;
+
+        const response = await searchFunction({
           category: category.name,
-          active: true,
           page,
           size: DEFAULT_PAGE_SIZE,
+          ...(isAuthenticated ? { active: true } : {}),
         });
 
         if (!isMounted) {
