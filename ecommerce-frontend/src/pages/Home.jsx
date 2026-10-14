@@ -4,9 +4,17 @@ import { Link } from "react-router-dom";
 import ProductGrid from "../components/ProductGrid";
 import CategoryCard from "../components/CategoryCard";
 
-import { searchPublicProducts } from "../services/searchService";
-import { getPublicCategories } from "../services/categoryService";
+import {
+  searchProducts,
+  searchPublicProducts,
+} from "../services/searchService";
 
+import {
+  getCategories,
+  getPublicCategories,
+} from "../services/categoryService";
+
+import { useAuth } from "../context/AuthContext";
 import "./styles/Home.css";
 
 function ArrowIcon() {
@@ -83,6 +91,8 @@ function Home() {
 
   const [categoriesError, setCategoriesError] = useState("");
 
+  const { isAuthenticated } = useAuth();
+
   useEffect(() => {
     let isMounted = true;
 
@@ -91,9 +101,14 @@ function Home() {
       setProductsError("");
 
       try {
-        const response = await searchPublicProducts({
+        const searchFunction = isAuthenticated
+          ? searchProducts
+          : searchPublicProducts;
+
+        const response = await searchFunction({
           page: 0,
           size: 8,
+          ...(isAuthenticated ? { active: true } : {}),
         });
 
         if (!isMounted) {
@@ -123,7 +138,7 @@ function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let isMounted = true;
@@ -133,7 +148,11 @@ function Home() {
       setCategoriesError("");
 
       try {
-        const response = await getPublicCategories();
+        const getCategoriesFunction = isAuthenticated
+          ? getCategories
+          : getPublicCategories;
+
+        const response = await getCategoriesFunction();
 
         if (!isMounted) {
           return;
@@ -164,7 +183,7 @@ function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <div className="home-page">
