@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getCategories } from "../services/categoryService";
+import {
+  getCategories,
+  getPublicCategories,
+} from "../services/categoryService";
+
+import { useAuth } from "../context/AuthContext";
 
 import "./styles/Categories.css";
 
@@ -38,6 +43,7 @@ function ArrowIcon() {
 
 function Categories() {
   const [categories, setCategories] = useState([]);
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -49,7 +55,11 @@ function Categories() {
       setError("");
 
       try {
-        const response = await getCategories();
+        const getCategoriesFunction = isAuthenticated
+          ? getCategories
+          : getPublicCategories;
+
+        const response = await getCategoriesFunction();
 
         if (!isMounted) {
           return;
@@ -70,6 +80,7 @@ function Categories() {
         }
 
         setCategories([]);
+
         setError(
           requestError.message ||
             "Unable to load categories. Please try again.",
@@ -86,7 +97,7 @@ function Categories() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
