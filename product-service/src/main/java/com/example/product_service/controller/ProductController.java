@@ -42,6 +42,12 @@ public class ProductController {
         return ResponseEntity.ok(service.getProduct(id));
     }
 
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ProductResponse> getPublicProduct(@PathVariable Long id) {
+
+        return ResponseEntity.ok(service.getProduct(id));
+    }
+
     @GetMapping("/internal/{id}")
     @PreAuthorize("hasAuthority('ROLE_INTERNAL_SERVICE')")
     public ResponseEntity<ProductResponse> getProductInternal(@PathVariable Long id) {
