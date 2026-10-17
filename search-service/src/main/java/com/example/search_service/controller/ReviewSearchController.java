@@ -26,4 +26,16 @@ public class ReviewSearchController {
                 )
         );
     }
+
+    @GetMapping("/public/product/{productId}")
+    public ResponseEntity<Page<ReviewSearchDocument>> getPublicReviewsByProductId(
+            @PathVariable Long productId, Pageable pageable) {
+
+        return ResponseEntity.ok(
+                reviewSearchService.getReviewsByProductId(
+                        productId,
+                        pageable
+                )
+        );
+    }
 }
