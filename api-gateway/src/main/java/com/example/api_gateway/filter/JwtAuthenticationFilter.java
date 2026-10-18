@@ -123,6 +123,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 || path.equals("/api/payments/webhook/razorpay")
                 || path.equals("/api/search/products/public")
                 || path.equals("/api/categories/public")
+                || path.startsWith("/api/products/public/")
+                || path.startsWith("/api/search/reviews/public/")
                 || path.matches("/api/products/\\d+/images/\\d+/content/public");
     }
 
