@@ -64,7 +64,9 @@ public class GatewaySecurityConfiguration {
                         .requestMatchers(
                                 "/api/search/products/public",
                                 "/api/categories/public",
-                                "/api/products/*/images/*/content/public"
+                                "/api/products/*/images/*/content/public",
+                                "/api/products/public/**",
+                                "/api/search/reviews/public/**"
                         )
                         .permitAll()
 

@@ -80,7 +80,9 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/api/search/products/public",
                                 "/api/categories/public",
-                                "/api/products/*/images/*/content/public"
+                                "/api/products/*/images/*/content/public",
+                                "/api/products/public/**",
+                                "/api/search/reviews/public/**"
                         )
                         .permitAll()
 
