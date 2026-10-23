@@ -89,7 +89,9 @@ function searchProductReviews(productId, { page = 0, size = 20, sort } = {}) {
     params.set("sort", sort);
   }
 
-  return apiGet(`/search/reviews/product/${productId}?${params.toString()}`);
+  return apiGet(
+    `/search/reviews/public/product/${productId}?${params.toString()}`,
+  );
 }
 
 export { searchProducts, searchPublicProducts, searchProductReviews };
