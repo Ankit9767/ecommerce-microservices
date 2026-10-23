@@ -10,7 +10,7 @@ import { useCart } from "../context/CartContext";
 import { apiGetBlob } from "../services/api";
 
 import { getProduct, getProductImages } from "../services/productService";
-import { getProductReviews } from "../services/reviewService";
+import { searchProductReviews } from "../services/searchService";
 
 import "./styles/ProductDetails.css";
 
@@ -332,7 +332,7 @@ function ProductDetails() {
       setReviewsError("");
 
       try {
-        const response = await getProductReviews(id, {
+        const response = await searchProductReviews(id, {
           page: 0,
           size: 20,
           sort: "createdAt,desc",
