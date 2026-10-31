@@ -9,8 +9,11 @@ import { useCart } from "../context/CartContext";
 
 import { apiGetBlob } from "../services/api";
 
-import { getProduct, getProductImages } from "../services/productService";
-import { searchProductReviews } from "../services/searchService";
+import {
+  getPublicProduct,
+  getPublicProductImages,
+} from "../services/productService";
+import { searchPublicProductReviews } from "../services/searchService";
 
 import "./styles/ProductDetails.css";
 
@@ -227,7 +230,7 @@ function ProductDetails() {
       }
 
       try {
-        const images = await getProductImages(product.id);
+        const images = await getPublicProductImages(product.id);
 
         if (!isMounted) {
           return;
@@ -287,7 +290,7 @@ function ProductDetails() {
       setAddedToCart(false);
 
       try {
-        const response = await getProduct(id);
+        const response = await getPublicProduct(id);
 
         if (!isMounted) {
           return;
@@ -332,7 +335,7 @@ function ProductDetails() {
       setReviewsError("");
 
       try {
-        const response = await searchProductReviews(id, {
+        const response = await searchPublicProductReviews(id, {
           page: 0,
           size: 20,
           sort: "createdAt,desc",
