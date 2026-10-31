@@ -25,6 +25,8 @@ public class GatewayAuthenticationFilter extends OncePerRequestFilter {
                 || requestUri.equals("/api/payments/webhook/razorpay")
                 || requestUri.equals("/api/search/products/public")
                 || requestUri.equals("/api/categories/public")
+                || requestUri.startsWith("/api/products/public/")
+                || requestUri.startsWith("/api/search/reviews/public/")
                 || requestUri.matches("/api/products/\\d+/images/\\d+/content/public");
     }
 
