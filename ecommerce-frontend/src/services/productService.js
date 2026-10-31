@@ -46,6 +46,10 @@ function getProduct(productId) {
   return apiGet(`/products/${productId}`);
 }
 
+function getPublicProduct(productId) {
+  return apiGet(`/products/public/${productId}`);
+}
+
 function createProduct(request) {
   return apiPost("/products", request);
 }
@@ -60,6 +64,12 @@ function deleteProduct(productId) {
 
 function getProductImages(productId) {
   return apiGet(`/products/${productId}/images`);
+}
+
+function getPublicProductImages(productId) {
+  return apiGet(`/products/${productId}/images/public`, {
+    token: null,
+  });
 }
 
 function getProductImage(productId, imageId) {
@@ -103,10 +113,12 @@ function deleteProductImage(productId, imageId) {
 export {
   searchProducts,
   getProduct,
+  getPublicProduct,
   createProduct,
   updateProduct,
   deleteProduct,
   getProductImages,
+  getPublicProductImages,
   getProductImage,
   getProductImageContentUrl,
   getPublicProductImageContentUrl,
