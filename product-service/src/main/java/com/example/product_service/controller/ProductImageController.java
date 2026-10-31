@@ -53,6 +53,15 @@ public class ProductImageController {
         );
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<List<ProductImageResponse>> getPublicProductImages(
+            @PathVariable Long productId) {
+
+        return ResponseEntity.ok(
+                service.getProductImages(productId)
+        );
+    }
+
     @GetMapping("/{imageId}")
     @PreAuthorize("hasAuthority('PRODUCT_READ')")
     public ResponseEntity<ProductImageResponse> getProductImage(
