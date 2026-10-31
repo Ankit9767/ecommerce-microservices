@@ -85,13 +85,24 @@ function searchProductReviews(productId, { page = 0, size = 20, sort } = {}) {
   params.set("page", page);
   params.set("size", size);
 
-  if (sort) {
-    params.set("sort", sort);
-  }
+  return apiGet(`/search/reviews/product/${productId}?${params.toString()}`);
+}
+
+function searchPublicProductReviews(productId, { page = 0, size = 20 } = {}) {
+  const params = new URLSearchParams();
+
+  params.set("page", page);
+  params.set("size", size);
 
   return apiGet(
     `/search/reviews/public/product/${productId}?${params.toString()}`,
+    { token: null },
   );
 }
 
-export { searchProducts, searchPublicProducts, searchProductReviews };
+export {
+  searchProducts,
+  searchPublicProducts,
+  searchProductReviews,
+  searchPublicProductReviews,
+};
